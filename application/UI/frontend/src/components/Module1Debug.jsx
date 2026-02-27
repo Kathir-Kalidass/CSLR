@@ -115,7 +115,7 @@ export default function Module1Debug({ data }) {
           <div>✓ Motion-based filtering</div>
           <div>✓ Temporal subsampling (1/2)</div>
           <div>✓ ROI cropping enabled</div>
-          <div>✓ MediaPipe complexity: 1</div>
+          <div>✓ YOLOv8 pose (17 kpts, 34-dim)</div>
         </div>
       </div>
     </motion.div>

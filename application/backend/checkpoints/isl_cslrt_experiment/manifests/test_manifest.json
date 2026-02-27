@@ -1,0 +1,2255 @@
+[
+  {
+    "sample_id": "This place is beautiful/6",
+    "sentence": "This place is beautiful",
+    "sequence_id": "6",
+    "num_frames_in_sequence": 39,
+    "gloss_tokens": [
+      "THIS",
+      "PLACE",
+      "BEAUTIFUL"
+    ]
+  },
+  {
+    "sample_id": "how can i help you/video::how can i help you (7)",
+    "sentence": "how can i help you",
+    "sequence_id": "video::how can i help you (7).MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "HOW",
+      "I",
+      "HELP",
+      "YOU"
+    ]
+  },
+  {
+    "sample_id": "i do not agree/7",
+    "sentence": "i do not agree",
+    "sequence_id": "7",
+    "num_frames_in_sequence": 30,
+    "gloss_tokens": [
+      "I",
+      "DONOT",
+      "AGREE"
+    ]
+  },
+  {
+    "sample_id": "what do you think/video::what do you think (5)",
+    "sentence": "what do you think",
+    "sequence_id": "video::what do you think (5).MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "WHAT",
+      "DO",
+      "YOU",
+      "THINK"
+    ]
+  },
+  {
+    "sample_id": "how old are you/video::how old are you (6)",
+    "sentence": "how old are you",
+    "sequence_id": "video::how old are you (6).MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "HOW",
+      "OLD",
+      "YOU"
+    ]
+  },
+  {
+    "sample_id": "i was stopped by some one/video::stopped (3)",
+    "sentence": "i was stopped by some one",
+    "sequence_id": "video::stopped (3).MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "I",
+      "STOPPED",
+      "BY",
+      "SOMEONE"
+    ]
+  },
+  {
+    "sample_id": "where are you from/7",
+    "sentence": "where are you from",
+    "sequence_id": "7",
+    "num_frames_in_sequence": 48,
+    "gloss_tokens": [
+      "WHERE",
+      "YOU",
+      "FROM"
+    ]
+  },
+  {
+    "sample_id": "do not make me angry/video::me angry (3)",
+    "sentence": "do not make me angry",
+    "sequence_id": "video::me angry (3).MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "DO",
+      "NOT",
+      "MAKE",
+      "ME",
+      "ANGRY"
+    ]
+  },
+  {
+    "sample_id": "do me a favour/1",
+    "sentence": "do me a favour",
+    "sequence_id": "1",
+    "num_frames_in_sequence": 22,
+    "gloss_tokens": [
+      "DO",
+      "ME",
+      "FAVOUR"
+    ]
+  },
+  {
+    "sample_id": "who are you/video::who are you (7)",
+    "sentence": "who are you",
+    "sequence_id": "video::who are you (7).mp4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "WHO",
+      "YOU"
+    ]
+  },
+  {
+    "sample_id": "i am crying/5",
+    "sentence": "i am crying",
+    "sequence_id": "5",
+    "num_frames_in_sequence": 27,
+    "gloss_tokens": [
+      "I",
+      "CRY"
+    ]
+  },
+  {
+    "sample_id": "i am feeling cold/video::cold (2)",
+    "sentence": "i am feeling cold",
+    "sequence_id": "video::cold (2).MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "I",
+      "FEELING",
+      "COLD"
+    ]
+  },
+  {
+    "sample_id": "i am crying/video::i am crying (5)",
+    "sentence": "i am crying",
+    "sequence_id": "video::i am crying (5).MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "I",
+      "CRY"
+    ]
+  },
+  {
+    "sample_id": "prepare the bed/video::prepare the bed (2)",
+    "sentence": "prepare the bed",
+    "sequence_id": "video::prepare the bed (2).mp4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "PREPARE",
+      "BED"
+    ]
+  },
+  {
+    "sample_id": "could you please talk slower/video::could you please talk slower (7)",
+    "sentence": "could you please talk slower",
+    "sequence_id": "video::could you please talk slower (7).MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "YOU",
+      "PLEASE",
+      "TALK",
+      "SLOWER"
+    ]
+  },
+  {
+    "sample_id": "i enjoyed a lot/2",
+    "sentence": "i enjoyed a lot",
+    "sequence_id": "2",
+    "num_frames_in_sequence": 14,
+    "gloss_tokens": [
+      "I",
+      "ENJOYED",
+      "A",
+      "LOT"
+    ]
+  },
+  {
+    "sample_id": "what happened/3",
+    "sentence": "what happened",
+    "sequence_id": "3",
+    "num_frames_in_sequence": 22,
+    "gloss_tokens": [
+      "WHAT",
+      "HAPPENED"
+    ]
+  },
+  {
+    "sample_id": "turn on light turn off light/video::turn on lightturn off light",
+    "sentence": "turn on light turn off light",
+    "sequence_id": "video::turn on lightturn off light.mp4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "TURN",
+      "ON",
+      "LIGHT",
+      "TURN",
+      "OFF",
+      "LIGHT"
+    ]
+  },
+  {
+    "sample_id": "serve the food/video::serve food",
+    "sentence": "serve the food",
+    "sequence_id": "video::serve food.MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "SERVE",
+      "FOOD"
+    ]
+  },
+  {
+    "sample_id": "i need water/5",
+    "sentence": "i need water",
+    "sequence_id": "5",
+    "num_frames_in_sequence": 43,
+    "gloss_tokens": [
+      "I",
+      "NEED",
+      "WATER"
+    ]
+  },
+  {
+    "sample_id": "what did you tell him/4",
+    "sentence": "what did you tell him",
+    "sequence_id": "4",
+    "num_frames_in_sequence": 18,
+    "gloss_tokens": [
+      "WHAT",
+      "YOU",
+      "TELL",
+      "HIM"
+    ]
+  },
+  {
+    "sample_id": "do not abuse him/video::abuse",
+    "sentence": "do not abuse him",
+    "sequence_id": "video::abuse.MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "DONOT",
+      "ABUSE",
+      "HIM"
+    ]
+  },
+  {
+    "sample_id": "can i help you/7",
+    "sentence": "can i help you",
+    "sequence_id": "7",
+    "num_frames_in_sequence": 28,
+    "gloss_tokens": [
+      "I",
+      "HELP",
+      "YOU"
+    ]
+  },
+  {
+    "sample_id": "how can i trust you/4",
+    "sentence": "how can i trust you",
+    "sequence_id": "4",
+    "num_frames_in_sequence": 40,
+    "gloss_tokens": [
+      "HOW",
+      "I",
+      "TRUST",
+      "YOU"
+    ]
+  },
+  {
+    "sample_id": "i do not mean it/2",
+    "sentence": "i do not mean it",
+    "sequence_id": "2",
+    "num_frames_in_sequence": 20,
+    "gloss_tokens": [
+      "I",
+      "DO",
+      "NOT",
+      "MEAN",
+      "IT"
+    ]
+  },
+  {
+    "sample_id": "you are good/video::good (3)",
+    "sentence": "you are good",
+    "sequence_id": "video::good (3).MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "YOU",
+      "GOOD"
+    ]
+  },
+  {
+    "sample_id": "i somehow got to know about it/3",
+    "sentence": "i somehow got to know about it",
+    "sequence_id": "3",
+    "num_frames_in_sequence": 27,
+    "gloss_tokens": [
+      "I",
+      "SOMEHOW",
+      "GOT",
+      "KNOW",
+      "ABOUT",
+      "IT"
+    ]
+  },
+  {
+    "sample_id": "it does not make any difference to me/6",
+    "sentence": "it does not make any difference to me",
+    "sequence_id": "6",
+    "num_frames_in_sequence": 49,
+    "gloss_tokens": [
+      "IT",
+      "DO",
+      "NOT",
+      "MAKE",
+      "ANY",
+      "DIFFERENCE",
+      "TO",
+      "ME"
+    ]
+  },
+  {
+    "sample_id": "you need a medicine, take this one/6",
+    "sentence": "you need a medicine, take this one",
+    "sequence_id": "6",
+    "num_frames_in_sequence": 45,
+    "gloss_tokens": [
+      "YOU",
+      "NEED",
+      "A",
+      "MEDICINE",
+      "TAKE",
+      "THIS",
+      "ONE"
+    ]
+  },
+  {
+    "sample_id": "you are welcome/video::you are welcome (2)",
+    "sentence": "you are welcome",
+    "sequence_id": "video::you are welcome (2).mp4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "YOU",
+      "WELCOME"
+    ]
+  },
+  {
+    "sample_id": "do not be stubborn/video::stubborn (4)",
+    "sentence": "do not be stubborn",
+    "sequence_id": "video::stubborn (4).MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "DONOT",
+      "BE",
+      "STUBBORN"
+    ]
+  },
+  {
+    "sample_id": "how are things/video::how are things",
+    "sentence": "how are things",
+    "sequence_id": "video::how are things.mp4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "HOW",
+      "THINGS"
+    ]
+  },
+  {
+    "sample_id": "i like you i love you/2",
+    "sentence": "i like you i love you",
+    "sequence_id": "2",
+    "num_frames_in_sequence": 22,
+    "gloss_tokens": [
+      "I",
+      "LIKE",
+      "YOU",
+      "I",
+      "LOVE",
+      "YOU"
+    ]
+  },
+  {
+    "sample_id": "what do you want to become/video::become (2)",
+    "sentence": "what do you want to become",
+    "sequence_id": "video::become (2).MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "WHAT",
+      "DO",
+      "YOU",
+      "WANT",
+      "BECOME"
+    ]
+  },
+  {
+    "sample_id": "do not take it to the heart/5",
+    "sentence": "do not take it to the heart",
+    "sequence_id": "5",
+    "num_frames_in_sequence": 50,
+    "gloss_tokens": [
+      "DO",
+      "NOT",
+      "TAKE",
+      "IT",
+      "HEART"
+    ]
+  },
+  {
+    "sample_id": "why are you crying/3",
+    "sentence": "why are you crying",
+    "sequence_id": "3",
+    "num_frames_in_sequence": 24,
+    "gloss_tokens": [
+      "WHY",
+      "YOU",
+      "CRY"
+    ]
+  },
+  {
+    "sample_id": "can you repeat that please/6",
+    "sentence": "can you repeat that please",
+    "sequence_id": "6",
+    "num_frames_in_sequence": 41,
+    "gloss_tokens": [
+      "YOU",
+      "REPEAT",
+      "PLEASE"
+    ]
+  },
+  {
+    "sample_id": "do not worry/1",
+    "sentence": "do not worry",
+    "sequence_id": "1",
+    "num_frames_in_sequence": 18,
+    "gloss_tokens": [
+      "DO",
+      "NOT",
+      "WORRY"
+    ]
+  },
+  {
+    "sample_id": "i got hurt/video::got hurt (5)",
+    "sentence": "i got hurt",
+    "sequence_id": "video::got hurt (5).MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "I",
+      "GOT",
+      "HURT"
+    ]
+  },
+  {
+    "sample_id": "i am hungry/3",
+    "sentence": "i am hungry",
+    "sequence_id": "3",
+    "num_frames_in_sequence": 51,
+    "gloss_tokens": [
+      "I",
+      "HUNGRY"
+    ]
+  },
+  {
+    "sample_id": "how dare you/6",
+    "sentence": "how dare you",
+    "sequence_id": "6",
+    "num_frames_in_sequence": 19,
+    "gloss_tokens": [
+      "HOW",
+      "DARE",
+      "YOU"
+    ]
+  },
+  {
+    "sample_id": "bring water for me/video::bring water for me (6)",
+    "sentence": "bring water for me",
+    "sequence_id": "video::bring water for me (6).mp4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "BRING",
+      "WATER",
+      "ME"
+    ]
+  },
+  {
+    "sample_id": "i am feeling cold/video::cold",
+    "sentence": "i am feeling cold",
+    "sequence_id": "video::cold.MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "I",
+      "FEELING",
+      "COLD"
+    ]
+  },
+  {
+    "sample_id": "i am so sorry to hear that/1",
+    "sentence": "i am so sorry to hear that",
+    "sequence_id": "1",
+    "num_frames_in_sequence": 13,
+    "gloss_tokens": [
+      "I",
+      "AM",
+      "SO",
+      "SORRY",
+      "TO",
+      "HEAR",
+      "THAT"
+    ]
+  },
+  {
+    "sample_id": "you do anything, i do not care/video::dont care (2)",
+    "sentence": "you do anything, i do not care",
+    "sequence_id": "video::dont care (2).MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "YOU",
+      "DO",
+      "ANYTHING",
+      "I",
+      "DO",
+      "NOT",
+      "CARE"
+    ]
+  },
+  {
+    "sample_id": "he she is my friend/6",
+    "sentence": "he she is my friend",
+    "sequence_id": "6",
+    "num_frames_in_sequence": 32,
+    "gloss_tokens": [
+      "HE",
+      "SHE",
+      "MY",
+      "FRIEND"
+    ]
+  },
+  {
+    "sample_id": "i am very happy/video::very happy (2)",
+    "sentence": "i am very happy",
+    "sequence_id": "video::very happy (2).MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "I",
+      "VERY",
+      "HAPPY"
+    ]
+  },
+  {
+    "sample_id": "what are you doing/video::what are you doing (4)",
+    "sentence": "what are you doing",
+    "sequence_id": "video::what are you doing (4).MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "WHAT",
+      "YOU",
+      "DO"
+    ]
+  },
+  {
+    "sample_id": "i do not mean it/4",
+    "sentence": "i do not mean it",
+    "sequence_id": "4",
+    "num_frames_in_sequence": 31,
+    "gloss_tokens": [
+      "I",
+      "DO",
+      "NOT",
+      "MEAN",
+      "IT"
+    ]
+  },
+  {
+    "sample_id": "i can not help you there/2",
+    "sentence": "i can not help you there",
+    "sequence_id": "2",
+    "num_frames_in_sequence": 21,
+    "gloss_tokens": [
+      "I",
+      "NOT",
+      "HELP",
+      "YOU",
+      "THERE"
+    ]
+  },
+  {
+    "sample_id": "why are you disappointed/2",
+    "sentence": "why are you disappointed",
+    "sequence_id": "2",
+    "num_frames_in_sequence": 14,
+    "gloss_tokens": [
+      "WHY",
+      "YOU",
+      "DISAPPOINTED"
+    ]
+  },
+  {
+    "sample_id": "what did you tell him/7",
+    "sentence": "what did you tell him",
+    "sequence_id": "7",
+    "num_frames_in_sequence": 24,
+    "gloss_tokens": [
+      "WHAT",
+      "YOU",
+      "TELL",
+      "HIM"
+    ]
+  },
+  {
+    "sample_id": "i need water/video::i need water 4",
+    "sentence": "i need water",
+    "sequence_id": "video::i need water 4.MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "I",
+      "NEED",
+      "WATER"
+    ]
+  },
+  {
+    "sample_id": "what are you doing/video::what are you doing (8)",
+    "sentence": "what are you doing",
+    "sequence_id": "video::what are you doing (8).mp4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "WHAT",
+      "YOU",
+      "DO"
+    ]
+  },
+  {
+    "sample_id": "pour some more water into the glass/3",
+    "sentence": "pour some more water into the glass",
+    "sequence_id": "3",
+    "num_frames_in_sequence": 23,
+    "gloss_tokens": [
+      "POUR",
+      "SOME",
+      "MORE",
+      "WATER",
+      "INTO",
+      "THE",
+      "GLASS"
+    ]
+  },
+  {
+    "sample_id": "go and sleep/3",
+    "sentence": "go and sleep",
+    "sequence_id": "3",
+    "num_frames_in_sequence": 20,
+    "gloss_tokens": [
+      "GO",
+      "SLEEP"
+    ]
+  },
+  {
+    "sample_id": "you are bad/2",
+    "sentence": "you are bad",
+    "sequence_id": "2",
+    "num_frames_in_sequence": 7,
+    "gloss_tokens": [
+      "YOU",
+      "BAD"
+    ]
+  },
+  {
+    "sample_id": "i am hungry/1",
+    "sentence": "i am hungry",
+    "sequence_id": "1",
+    "num_frames_in_sequence": 21,
+    "gloss_tokens": [
+      "I",
+      "HUNGRY"
+    ]
+  },
+  {
+    "sample_id": "speak softly/4",
+    "sentence": "speak softly",
+    "sequence_id": "4",
+    "num_frames_in_sequence": 22,
+    "gloss_tokens": [
+      "SPEAK",
+      "SOFTLY"
+    ]
+  },
+  {
+    "sample_id": "i do not agree/video::agree (2)",
+    "sentence": "i do not agree",
+    "sequence_id": "video::agree (2).MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "I",
+      "DONOT",
+      "AGREE"
+    ]
+  },
+  {
+    "sample_id": "he came by train/5",
+    "sentence": "he came by train",
+    "sequence_id": "5",
+    "num_frames_in_sequence": 25,
+    "gloss_tokens": [
+      "HE",
+      "CAME",
+      "TRAIN"
+    ]
+  },
+  {
+    "sample_id": "we are all with you/video::MVI_6208",
+    "sentence": "we are all with you",
+    "sequence_id": "video::MVI_6208.MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "WE",
+      "ALL",
+      "WITH",
+      "YOU"
+    ]
+  },
+  {
+    "sample_id": "bring water for me/4",
+    "sentence": "bring water for me",
+    "sequence_id": "4",
+    "num_frames_in_sequence": 37,
+    "gloss_tokens": [
+      "BRING",
+      "WATER",
+      "ME"
+    ]
+  },
+  {
+    "sample_id": "i do not like it/6",
+    "sentence": "i do not like it",
+    "sequence_id": "6",
+    "num_frames_in_sequence": 25,
+    "gloss_tokens": [
+      "I",
+      "DO",
+      "NOT",
+      "LIKE",
+      "IT"
+    ]
+  },
+  {
+    "sample_id": "why are you crying/video::crying (5)",
+    "sentence": "why are you crying",
+    "sequence_id": "video::crying (5).MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "WHY",
+      "YOU",
+      "CRY"
+    ]
+  },
+  {
+    "sample_id": "comb your hair/video::comb your hair (2)",
+    "sentence": "comb your hair",
+    "sequence_id": "video::comb your hair (2).mp4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "COMB",
+      "YOU",
+      "HAIR"
+    ]
+  },
+  {
+    "sample_id": "prepare the bed/6",
+    "sentence": "prepare the bed",
+    "sequence_id": "6",
+    "num_frames_in_sequence": 25,
+    "gloss_tokens": [
+      "PREPARE",
+      "BED"
+    ]
+  },
+  {
+    "sample_id": "wear the shirt/4",
+    "sentence": "wear the shirt",
+    "sequence_id": "4",
+    "num_frames_in_sequence": 22,
+    "gloss_tokens": [
+      "WEAR",
+      "SHIRT"
+    ]
+  },
+  {
+    "sample_id": "i am fine. thank you sir/video::fine thank",
+    "sentence": "i am fine. thank you sir",
+    "sequence_id": "video::fine thank.MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "I",
+      "FINE",
+      "THANK",
+      "YOU",
+      "SIR"
+    ]
+  },
+  {
+    "sample_id": "i am afraid of that/video::afraid (5)",
+    "sentence": "i am afraid of that",
+    "sequence_id": "video::afraid (5).MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "I",
+      "AFRAID",
+      "THAT"
+    ]
+  },
+  {
+    "sample_id": "how can i trust you/video::trust (3)",
+    "sentence": "how can i trust you",
+    "sequence_id": "video::trust (3).MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "HOW",
+      "I",
+      "TRUST",
+      "YOU"
+    ]
+  },
+  {
+    "sample_id": "i am sitting in the class/7",
+    "sentence": "i am sitting in the class",
+    "sequence_id": "7",
+    "num_frames_in_sequence": 37,
+    "gloss_tokens": [
+      "I",
+      "SITTING",
+      "IN",
+      "THE",
+      "CLASS"
+    ]
+  },
+  {
+    "sample_id": "i am (age)/6",
+    "sentence": "i am (age)",
+    "sequence_id": "6",
+    "num_frames_in_sequence": 27,
+    "gloss_tokens": [
+      "I",
+      "(AGE)"
+    ]
+  },
+  {
+    "sample_id": "do not abuse him/7",
+    "sentence": "do not abuse him",
+    "sequence_id": "7",
+    "num_frames_in_sequence": 22,
+    "gloss_tokens": [
+      "DONOT",
+      "ABUSE",
+      "HIM"
+    ]
+  },
+  {
+    "sample_id": "i was stopped by some one/video::stopped (2)",
+    "sentence": "i was stopped by some one",
+    "sequence_id": "video::stopped (2).MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "I",
+      "STOPPED",
+      "BY",
+      "SOMEONE"
+    ]
+  },
+  {
+    "sample_id": "it does not make any difference to me/2",
+    "sentence": "it does not make any difference to me",
+    "sequence_id": "2",
+    "num_frames_in_sequence": 22,
+    "gloss_tokens": [
+      "IT",
+      "DO",
+      "NOT",
+      "MAKE",
+      "ANY",
+      "DIFFERENCE",
+      "TO",
+      "ME"
+    ]
+  },
+  {
+    "sample_id": "i am really grateful/video::i am really grateful (2)",
+    "sentence": "i am really grateful",
+    "sequence_id": "video::i am really grateful (2).mp4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "I",
+      "REALLY",
+      "GRATEFUL"
+    ]
+  },
+  {
+    "sample_id": "thank you so much/4",
+    "sentence": "thank you so much",
+    "sequence_id": "4",
+    "num_frames_in_sequence": 40,
+    "gloss_tokens": [
+      "THANK",
+      "YOU",
+      "SO",
+      "MUCH"
+    ]
+  },
+  {
+    "sample_id": "try to understand/video::try to understand",
+    "sentence": "try to understand",
+    "sequence_id": "video::try to understand.mp4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "TRY",
+      "TO",
+      "UNDERSTAND"
+    ]
+  },
+  {
+    "sample_id": "take care of yourself/video::take care (4)",
+    "sentence": "take care of yourself",
+    "sequence_id": "video::take care (4).MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "TAKE",
+      "CARE",
+      "OF",
+      "YOURSELF"
+    ]
+  },
+  {
+    "sample_id": "he came by train/video::train (2)",
+    "sentence": "he came by train",
+    "sequence_id": "video::train (2).MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "HE",
+      "CAME",
+      "TRAIN"
+    ]
+  },
+  {
+    "sample_id": "i got hurt/video::i got hurt (2)",
+    "sentence": "i got hurt",
+    "sequence_id": "video::i got hurt (2).mp4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "I",
+      "GOT",
+      "HURT"
+    ]
+  },
+  {
+    "sample_id": "speak softly/video::softly (3)",
+    "sentence": "speak softly",
+    "sequence_id": "video::softly (3).MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "SPEAK",
+      "SOFTLY"
+    ]
+  },
+  {
+    "sample_id": "i am feeling bored/6",
+    "sentence": "i am feeling bored",
+    "sequence_id": "6",
+    "num_frames_in_sequence": 34,
+    "gloss_tokens": [
+      "I",
+      "FEELING",
+      "BORED"
+    ]
+  },
+  {
+    "sample_id": "when will the train leave/1",
+    "sentence": "when will the train leave",
+    "sequence_id": "1",
+    "num_frames_in_sequence": 19,
+    "gloss_tokens": [
+      "WHEN",
+      "TRAIN",
+      "LEAVE"
+    ]
+  },
+  {
+    "sample_id": "do not be stubborn/video::stubborn (3)",
+    "sentence": "do not be stubborn",
+    "sequence_id": "video::stubborn (3).MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "DONOT",
+      "BE",
+      "STUBBORN"
+    ]
+  },
+  {
+    "sample_id": "He is going into the room/6",
+    "sentence": "He is going into the room",
+    "sequence_id": "6",
+    "num_frames_in_sequence": 32,
+    "gloss_tokens": [
+      "HE",
+      "GO",
+      "INTO",
+      "ROOM"
+    ]
+  },
+  {
+    "sample_id": "what is your phone number/video::what is your phone number (5)",
+    "sentence": "what is your phone number",
+    "sequence_id": "video::what is your phone number (5).MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "WHAT",
+      "YOUR",
+      "PHONE",
+      "NUMBER"
+    ]
+  },
+  {
+    "sample_id": "why are you angry/video::angry (3)",
+    "sentence": "why are you angry",
+    "sequence_id": "video::angry (3).MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "WHY",
+      "YOU",
+      "ANGRY"
+    ]
+  },
+  {
+    "sample_id": "it was nice chatting with you/3",
+    "sentence": "it was nice chatting with you",
+    "sequence_id": "3",
+    "num_frames_in_sequence": 52,
+    "gloss_tokens": [
+      "IT",
+      "NICE",
+      "CHAT",
+      "WITH",
+      "YOU"
+    ]
+  },
+  {
+    "sample_id": "can i help you/3",
+    "sentence": "can i help you",
+    "sequence_id": "3",
+    "num_frames_in_sequence": 31,
+    "gloss_tokens": [
+      "I",
+      "HELP",
+      "YOU"
+    ]
+  },
+  {
+    "sample_id": "why are you angry/6",
+    "sentence": "why are you angry",
+    "sequence_id": "6",
+    "num_frames_in_sequence": 24,
+    "gloss_tokens": [
+      "WHY",
+      "YOU",
+      "ANGRY"
+    ]
+  },
+  {
+    "sample_id": "i can not help you there/6",
+    "sentence": "i can not help you there",
+    "sequence_id": "6",
+    "num_frames_in_sequence": 35,
+    "gloss_tokens": [
+      "I",
+      "NOT",
+      "HELP",
+      "YOU",
+      "THERE"
+    ]
+  },
+  {
+    "sample_id": "hi how are you/video::hi how are you (7)",
+    "sentence": "hi how are you",
+    "sequence_id": "video::hi how are you (7).MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "HI",
+      "HOW",
+      "YOU"
+    ]
+  },
+  {
+    "sample_id": "i am suffering from fever/video::fever (3)",
+    "sentence": "i am suffering from fever",
+    "sequence_id": "video::fever (3).MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "I",
+      "SUFFERING",
+      "FROM",
+      "FEVER"
+    ]
+  },
+  {
+    "sample_id": "i really appreciate it/7",
+    "sentence": "i really appreciate it",
+    "sequence_id": "7",
+    "num_frames_in_sequence": 42,
+    "gloss_tokens": [
+      "I",
+      "REALLY",
+      "APPRECIATE",
+      "IT"
+    ]
+  },
+  {
+    "sample_id": "why are you disappointed/4",
+    "sentence": "why are you disappointed",
+    "sequence_id": "4",
+    "num_frames_in_sequence": 22,
+    "gloss_tokens": [
+      "WHY",
+      "YOU",
+      "DISAPPOINTED"
+    ]
+  },
+  {
+    "sample_id": "where are you from/video::where are you from (4)",
+    "sentence": "where are you from",
+    "sequence_id": "video::where are you from (4).MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "WHERE",
+      "YOU",
+      "FROM"
+    ]
+  },
+  {
+    "sample_id": "i do not like it/1",
+    "sentence": "i do not like it",
+    "sequence_id": "1",
+    "num_frames_in_sequence": 20,
+    "gloss_tokens": [
+      "I",
+      "DO",
+      "NOT",
+      "LIKE",
+      "IT"
+    ]
+  },
+  {
+    "sample_id": "what do you do/3",
+    "sentence": "what do you do",
+    "sequence_id": "3",
+    "num_frames_in_sequence": 37,
+    "gloss_tokens": [
+      "WHAT",
+      "YOU",
+      "DO"
+    ]
+  },
+  {
+    "sample_id": "He is going into the room/video::room",
+    "sentence": "He is going into the room",
+    "sequence_id": "video::room.MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "HE",
+      "GO",
+      "INTO",
+      "ROOM"
+    ]
+  },
+  {
+    "sample_id": "he she is my friend/video::she is my friend",
+    "sentence": "he she is my friend",
+    "sequence_id": "video::she is my friend.mp4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "HE",
+      "SHE",
+      "MY",
+      "FRIEND"
+    ]
+  },
+  {
+    "sample_id": "try to understand/3",
+    "sentence": "try to understand",
+    "sequence_id": "3",
+    "num_frames_in_sequence": 19,
+    "gloss_tokens": [
+      "TRY",
+      "TO",
+      "UNDERSTAND"
+    ]
+  },
+  {
+    "sample_id": "i enjoyed a lot/video::enjoyed",
+    "sentence": "i enjoyed a lot",
+    "sequence_id": "video::enjoyed.MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "I",
+      "ENJOYED",
+      "A",
+      "LOT"
+    ]
+  },
+  {
+    "sample_id": "you need a medicine, take this one/video::medicine (3)",
+    "sentence": "you need a medicine, take this one",
+    "sequence_id": "video::medicine (3).MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "YOU",
+      "NEED",
+      "A",
+      "MEDICINE",
+      "TAKE",
+      "THIS",
+      "ONE"
+    ]
+  },
+  {
+    "sample_id": "do you need something/4",
+    "sentence": "do you need something",
+    "sequence_id": "4",
+    "num_frames_in_sequence": 20,
+    "gloss_tokens": [
+      "DO",
+      "YOU",
+      "NEED",
+      "SOMETHING"
+    ]
+  },
+  {
+    "sample_id": "shall we go outside/2",
+    "sentence": "shall we go outside",
+    "sequence_id": "2",
+    "num_frames_in_sequence": 13,
+    "gloss_tokens": [
+      "WE",
+      "GO",
+      "OUTSIDE"
+    ]
+  },
+  {
+    "sample_id": "go and sleep/video::go and sleep (2)",
+    "sentence": "go and sleep",
+    "sequence_id": "video::go and sleep (2).mp4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "GO",
+      "SLEEP"
+    ]
+  },
+  {
+    "sample_id": "are you free today/video::are you free today (2)",
+    "sentence": "are you free today",
+    "sequence_id": "video::are you free today (2).mp4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "YOU",
+      "FREE",
+      "TODAY"
+    ]
+  },
+  {
+    "sample_id": "do you need something/video::do you need something (2)",
+    "sentence": "do you need something",
+    "sequence_id": "video::do you need something (2).mp4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "DO",
+      "YOU",
+      "NEED",
+      "SOMETHING"
+    ]
+  },
+  {
+    "sample_id": "my name is xxxxxxxx/1",
+    "sentence": "my name is xxxxxxxx",
+    "sequence_id": "1",
+    "num_frames_in_sequence": 31,
+    "gloss_tokens": [
+      "MY",
+      "NAME",
+      "XXXXXXXX"
+    ]
+  },
+  {
+    "sample_id": "i am afraid of that/video::afraid (3)",
+    "sentence": "i am afraid of that",
+    "sequence_id": "video::afraid (3).MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "I",
+      "AFRAID",
+      "THAT"
+    ]
+  },
+  {
+    "sample_id": "do me a favour/video::favour",
+    "sentence": "do me a favour",
+    "sequence_id": "video::favour.MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "DO",
+      "ME",
+      "FAVOUR"
+    ]
+  },
+  {
+    "sample_id": "do not hurt me/video::hurt me",
+    "sentence": "do not hurt me",
+    "sequence_id": "video::hurt me.MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "DONOT",
+      "HURT",
+      "ME"
+    ]
+  },
+  {
+    "sample_id": "congratulations/video::congratulations (5)",
+    "sentence": "congratulations",
+    "sequence_id": "video::congratulations (5).MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "CONGRATULATIIONS"
+    ]
+  },
+  {
+    "sample_id": "wear the shirt/video::shirt (4)",
+    "sentence": "wear the shirt",
+    "sequence_id": "video::shirt (4).MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "WEAR",
+      "SHIRT"
+    ]
+  },
+  {
+    "sample_id": "you are bad/video::bad (2)",
+    "sentence": "you are bad",
+    "sequence_id": "video::bad (2).MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "YOU",
+      "BAD"
+    ]
+  },
+  {
+    "sample_id": "comb your hair/2",
+    "sentence": "comb your hair",
+    "sequence_id": "2",
+    "num_frames_in_sequence": 13,
+    "gloss_tokens": [
+      "COMB",
+      "YOU",
+      "HAIR"
+    ]
+  },
+  {
+    "sample_id": "he would be coming today/video::today (2)",
+    "sentence": "he would be coming today",
+    "sequence_id": "video::today (2).MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "HE",
+      "COMING",
+      "TODAY"
+    ]
+  },
+  {
+    "sample_id": "take care of yourself/1",
+    "sentence": "take care of yourself",
+    "sequence_id": "1",
+    "num_frames_in_sequence": 17,
+    "gloss_tokens": [
+      "TAKE",
+      "CARE",
+      "OF",
+      "YOURSELF"
+    ]
+  },
+  {
+    "sample_id": "how dare you/7",
+    "sentence": "how dare you",
+    "sequence_id": "7",
+    "num_frames_in_sequence": 22,
+    "gloss_tokens": [
+      "HOW",
+      "DARE",
+      "YOU"
+    ]
+  },
+  {
+    "sample_id": "you can do it/video::can do (2)",
+    "sentence": "you can do it",
+    "sequence_id": "video::can do (2).MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "YOU",
+      "DO",
+      "IT"
+    ]
+  },
+  {
+    "sample_id": "which collegeschool are you from/7",
+    "sentence": "which collegeschool are you from",
+    "sequence_id": "7",
+    "num_frames_in_sequence": 19,
+    "gloss_tokens": [
+      "WHICH",
+      "COLLEGE",
+      "SCHOOL",
+      "YOU",
+      "FROM"
+    ]
+  },
+  {
+    "sample_id": "it was nice chatting with you/1",
+    "sentence": "it was nice chatting with you",
+    "sequence_id": "1",
+    "num_frames_in_sequence": 41,
+    "gloss_tokens": [
+      "IT",
+      "NICE",
+      "CHAT",
+      "WITH",
+      "YOU"
+    ]
+  },
+  {
+    "sample_id": "i am so sorry to hear that/video::sorry hear",
+    "sentence": "i am so sorry to hear that",
+    "sequence_id": "video::sorry hear.MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "I",
+      "AM",
+      "SO",
+      "SORRY",
+      "TO",
+      "HEAR",
+      "THAT"
+    ]
+  },
+  {
+    "sample_id": "i somehow got to know about it/1",
+    "sentence": "i somehow got to know about it",
+    "sequence_id": "1",
+    "num_frames_in_sequence": 23,
+    "gloss_tokens": [
+      "I",
+      "SOMEHOW",
+      "GOT",
+      "KNOW",
+      "ABOUT",
+      "IT"
+    ]
+  },
+  {
+    "sample_id": "i am sitting in the class/3",
+    "sentence": "i am sitting in the class",
+    "sequence_id": "3",
+    "num_frames_in_sequence": 31,
+    "gloss_tokens": [
+      "I",
+      "SITTING",
+      "IN",
+      "THE",
+      "CLASS"
+    ]
+  },
+  {
+    "sample_id": "what happened/5",
+    "sentence": "what happened",
+    "sequence_id": "5",
+    "num_frames_in_sequence": 21,
+    "gloss_tokens": [
+      "WHAT",
+      "HAPPENED"
+    ]
+  },
+  {
+    "sample_id": "that is so kind of you/1",
+    "sentence": "that is so kind of you",
+    "sequence_id": "1",
+    "num_frames_in_sequence": 31,
+    "gloss_tokens": [
+      "THAT",
+      "KIND",
+      "YOU"
+    ]
+  },
+  {
+    "sample_id": "i am not really sure/2",
+    "sentence": "i am not really sure",
+    "sequence_id": "2",
+    "num_frames_in_sequence": 21,
+    "gloss_tokens": [
+      "I",
+      "NOT",
+      "REALLY",
+      "SURE"
+    ]
+  },
+  {
+    "sample_id": "i am very happy/video::very happy (3)",
+    "sentence": "i am very happy",
+    "sequence_id": "video::very happy (3).MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "I",
+      "VERY",
+      "HAPPY"
+    ]
+  },
+  {
+    "sample_id": "are you hiding something/video::MVI_6209",
+    "sentence": "are you hiding something",
+    "sequence_id": "video::MVI_6209.MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "YOU",
+      "HIDE",
+      "SOMETHING"
+    ]
+  },
+  {
+    "sample_id": "what do you do/video::what do you do (6)",
+    "sentence": "what do you do",
+    "sequence_id": "video::what do you do (6).mp4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "WHAT",
+      "YOU",
+      "DO"
+    ]
+  },
+  {
+    "sample_id": "i am feeling bored/video::i am feeling bored (2)",
+    "sentence": "i am feeling bored",
+    "sequence_id": "video::i am feeling bored (2).mp4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "I",
+      "FEELING",
+      "BORED"
+    ]
+  },
+  {
+    "sample_id": "let him take time/video::let him take time",
+    "sentence": "let him take time",
+    "sequence_id": "video::let him take time.mp4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "LET",
+      "HIM",
+      "TAKE",
+      "TIME"
+    ]
+  },
+  {
+    "sample_id": "he is on the way/1",
+    "sentence": "he is on the way",
+    "sequence_id": "1",
+    "num_frames_in_sequence": 22,
+    "gloss_tokens": [
+      "HE",
+      "ON",
+      "WAY"
+    ]
+  },
+  {
+    "sample_id": "you are welcome/4",
+    "sentence": "you are welcome",
+    "sequence_id": "4",
+    "num_frames_in_sequence": 22,
+    "gloss_tokens": [
+      "YOU",
+      "WELCOME"
+    ]
+  },
+  {
+    "sample_id": "do not worry/video::do not worry (2)",
+    "sentence": "do not worry",
+    "sequence_id": "video::do not worry (2).mp4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "DO",
+      "NOT",
+      "WORRY"
+    ]
+  },
+  {
+    "sample_id": "how are things/video::things (3)",
+    "sentence": "how are things",
+    "sequence_id": "video::things (3).MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "HOW",
+      "THINGS"
+    ]
+  },
+  {
+    "sample_id": "i am fine. thank you sir/7",
+    "sentence": "i am fine. thank you sir",
+    "sequence_id": "7",
+    "num_frames_in_sequence": 22,
+    "gloss_tokens": [
+      "I",
+      "FINE",
+      "THANK",
+      "YOU",
+      "SIR"
+    ]
+  },
+  {
+    "sample_id": "my name is xxxxxxxx/5",
+    "sentence": "my name is xxxxxxxx",
+    "sequence_id": "5",
+    "num_frames_in_sequence": 29,
+    "gloss_tokens": [
+      "MY",
+      "NAME",
+      "XXXXXXXX"
+    ]
+  },
+  {
+    "sample_id": "shall we go outside/video::outside",
+    "sentence": "shall we go outside",
+    "sequence_id": "video::outside.MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "WE",
+      "GO",
+      "OUTSIDE"
+    ]
+  },
+  {
+    "sample_id": "had your food/video::food",
+    "sentence": "had your food",
+    "sequence_id": "video::food.MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "YOUR",
+      "FOOD"
+    ]
+  },
+  {
+    "sample_id": "what do you think/1",
+    "sentence": "what do you think",
+    "sequence_id": "1",
+    "num_frames_in_sequence": 41,
+    "gloss_tokens": [
+      "WHAT",
+      "DO",
+      "YOU",
+      "THINK"
+    ]
+  },
+  {
+    "sample_id": "tell me truth/video::truth (3)",
+    "sentence": "tell me truth",
+    "sequence_id": "video::truth (3).MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "TELL",
+      "ME",
+      "TRUTH"
+    ]
+  },
+  {
+    "sample_id": "that is so kind of you/3",
+    "sentence": "that is so kind of you",
+    "sequence_id": "3",
+    "num_frames_in_sequence": 47,
+    "gloss_tokens": [
+      "THAT",
+      "KIND",
+      "YOU"
+    ]
+  },
+  {
+    "sample_id": "let him take time/video::time (2)",
+    "sentence": "let him take time",
+    "sequence_id": "video::time (2).MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "LET",
+      "HIM",
+      "TAKE",
+      "TIME"
+    ]
+  },
+  {
+    "sample_id": "i am in dilemma what to do/video::dilemma (4)",
+    "sentence": "i am in dilemma what to do",
+    "sequence_id": "video::dilemma (4).MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "I",
+      "IN",
+      "DILEMMA",
+      "WHAT",
+      "TO",
+      "DO"
+    ]
+  },
+  {
+    "sample_id": "i am tired/video::tired (4)",
+    "sentence": "i am tired",
+    "sequence_id": "video::tired (4).MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "I",
+      "TIRED"
+    ]
+  },
+  {
+    "sample_id": "do not take it to the heart/7",
+    "sentence": "do not take it to the heart",
+    "sequence_id": "7",
+    "num_frames_in_sequence": 45,
+    "gloss_tokens": [
+      "DO",
+      "NOT",
+      "TAKE",
+      "IT",
+      "HEART"
+    ]
+  },
+  {
+    "sample_id": "turn on light turn off light/6",
+    "sentence": "turn on light turn off light",
+    "sequence_id": "6",
+    "num_frames_in_sequence": 28,
+    "gloss_tokens": [
+      "TURN",
+      "ON",
+      "LIGHT",
+      "TURN",
+      "OFF",
+      "LIGHT"
+    ]
+  },
+  {
+    "sample_id": "i am really grateful/6",
+    "sentence": "i am really grateful",
+    "sequence_id": "6",
+    "num_frames_in_sequence": 44,
+    "gloss_tokens": [
+      "I",
+      "REALLY",
+      "GRATEFUL"
+    ]
+  },
+  {
+    "sample_id": "are you hiding something/video::are you hiding something (2)",
+    "sentence": "are you hiding something",
+    "sequence_id": "video::are you hiding something (2).mp4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "YOU",
+      "HIDE",
+      "SOMETHING"
+    ]
+  },
+  {
+    "sample_id": "what do you want to become/4",
+    "sentence": "what do you want to become",
+    "sequence_id": "4",
+    "num_frames_in_sequence": 22,
+    "gloss_tokens": [
+      "WHAT",
+      "DO",
+      "YOU",
+      "WANT",
+      "BECOME"
+    ]
+  },
+  {
+    "sample_id": "i am not really sure/1",
+    "sentence": "i am not really sure",
+    "sequence_id": "1",
+    "num_frames_in_sequence": 31,
+    "gloss_tokens": [
+      "I",
+      "NOT",
+      "REALLY",
+      "SURE"
+    ]
+  },
+  {
+    "sample_id": "hi how are you/3",
+    "sentence": "hi how are you",
+    "sequence_id": "3",
+    "num_frames_in_sequence": 63,
+    "gloss_tokens": [
+      "HI",
+      "HOW",
+      "YOU"
+    ]
+  },
+  {
+    "sample_id": "serve the food/video::serve (2)",
+    "sentence": "serve the food",
+    "sequence_id": "video::serve (2).MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "SERVE",
+      "FOOD"
+    ]
+  },
+  {
+    "sample_id": "i like you i love you/1",
+    "sentence": "i like you i love you",
+    "sequence_id": "1",
+    "num_frames_in_sequence": 22,
+    "gloss_tokens": [
+      "I",
+      "LIKE",
+      "YOU",
+      "I",
+      "LOVE",
+      "YOU"
+    ]
+  },
+  {
+    "sample_id": "what have you planned for your career/video::what have you planned for your career (2)",
+    "sentence": "what have you planned for your career",
+    "sequence_id": "video::what have you planned for your career (2).mp4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "WHAT",
+      "HAVE",
+      "YOU",
+      "PLAN",
+      "YOUR",
+      "CAREER"
+    ]
+  },
+  {
+    "sample_id": "help me/2",
+    "sentence": "help me",
+    "sequence_id": "2",
+    "num_frames_in_sequence": 11,
+    "gloss_tokens": [
+      "HELP",
+      "ME"
+    ]
+  },
+  {
+    "sample_id": "i really appreciate it/video::i really appreciate it (7)",
+    "sentence": "i really appreciate it",
+    "sequence_id": "video::i really appreciate it (7).MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "I",
+      "REALLY",
+      "APPRECIATE",
+      "IT"
+    ]
+  },
+  {
+    "sample_id": "help me/video::help me (7)",
+    "sentence": "help me",
+    "sequence_id": "video::help me (7).mp4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "HELP",
+      "ME"
+    ]
+  },
+  {
+    "sample_id": "can you repeat that please/video::can you repeat that please (3)",
+    "sentence": "can you repeat that please",
+    "sequence_id": "video::can you repeat that please (3).MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "YOU",
+      "REPEAT",
+      "PLEASE"
+    ]
+  },
+  {
+    "sample_id": "thank you so much/video::thank you so much (5)",
+    "sentence": "thank you so much",
+    "sequence_id": "video::thank you so much (5).MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "THANK",
+      "YOU",
+      "SO",
+      "MUCH"
+    ]
+  },
+  {
+    "sample_id": "you do anything, i do not care/5",
+    "sentence": "you do anything, i do not care",
+    "sequence_id": "5",
+    "num_frames_in_sequence": 31,
+    "gloss_tokens": [
+      "YOU",
+      "DO",
+      "ANYTHING",
+      "I",
+      "DO",
+      "NOT",
+      "CARE"
+    ]
+  },
+  {
+    "sample_id": "we are all with you/5",
+    "sentence": "we are all with you",
+    "sequence_id": "5",
+    "num_frames_in_sequence": 32,
+    "gloss_tokens": [
+      "WE",
+      "ALL",
+      "WITH",
+      "YOU"
+    ]
+  },
+  {
+    "sample_id": "do not hurt me/video::hurt me (4)",
+    "sentence": "do not hurt me",
+    "sequence_id": "video::hurt me (4).MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "DONOT",
+      "HURT",
+      "ME"
+    ]
+  },
+  {
+    "sample_id": "could you please talk slower/video::could you please talk slower (6)",
+    "sentence": "could you please talk slower",
+    "sequence_id": "video::could you please talk slower (6).MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "YOU",
+      "PLEASE",
+      "TALK",
+      "SLOWER"
+    ]
+  },
+  {
+    "sample_id": "what you want/6",
+    "sentence": "what you want",
+    "sequence_id": "6",
+    "num_frames_in_sequence": 38,
+    "gloss_tokens": [
+      "WHAT",
+      "YOU",
+      "WANT"
+    ]
+  },
+  {
+    "sample_id": "now onwards he will never hurt you/video::never hurt (2)",
+    "sentence": "now onwards he will never hurt you",
+    "sequence_id": "video::never hurt (2).MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "NOW",
+      "ONWARDS",
+      "HE",
+      "NEVER",
+      "HURT",
+      "YOU"
+    ]
+  },
+  {
+    "sample_id": "i am suffering from fever/3",
+    "sentence": "i am suffering from fever",
+    "sequence_id": "3",
+    "num_frames_in_sequence": 29,
+    "gloss_tokens": [
+      "I",
+      "SUFFERING",
+      "FROM",
+      "FEVER"
+    ]
+  },
+  {
+    "sample_id": "i am in dilemma what to do/5",
+    "sentence": "i am in dilemma what to do",
+    "sequence_id": "5",
+    "num_frames_in_sequence": 50,
+    "gloss_tokens": [
+      "I",
+      "IN",
+      "DILEMMA",
+      "WHAT",
+      "TO",
+      "DO"
+    ]
+  },
+  {
+    "sample_id": "how can i help you/6",
+    "sentence": "how can i help you",
+    "sequence_id": "6",
+    "num_frames_in_sequence": 37,
+    "gloss_tokens": [
+      "HOW",
+      "I",
+      "HELP",
+      "YOU"
+    ]
+  },
+  {
+    "sample_id": "what you want/5",
+    "sentence": "what you want",
+    "sequence_id": "5",
+    "num_frames_in_sequence": 38,
+    "gloss_tokens": [
+      "WHAT",
+      "YOU",
+      "WANT"
+    ]
+  },
+  {
+    "sample_id": "pour some more water into the glass/7",
+    "sentence": "pour some more water into the glass",
+    "sequence_id": "7",
+    "num_frames_in_sequence": 22,
+    "gloss_tokens": [
+      "POUR",
+      "SOME",
+      "MORE",
+      "WATER",
+      "INTO",
+      "THE",
+      "GLASS"
+    ]
+  },
+  {
+    "sample_id": "nice to meet you/3",
+    "sentence": "nice to meet you",
+    "sequence_id": "3",
+    "num_frames_in_sequence": 46,
+    "gloss_tokens": [
+      "NICE",
+      "MEET",
+      "YOU"
+    ]
+  },
+  {
+    "sample_id": "when will the train leave/3",
+    "sentence": "when will the train leave",
+    "sequence_id": "3",
+    "num_frames_in_sequence": 22,
+    "gloss_tokens": [
+      "WHEN",
+      "TRAIN",
+      "LEAVE"
+    ]
+  },
+  {
+    "sample_id": "i promise/5",
+    "sentence": "i promise",
+    "sequence_id": "5",
+    "num_frames_in_sequence": 20,
+    "gloss_tokens": [
+      "I",
+      "PROMISE"
+    ]
+  },
+  {
+    "sample_id": "he is on the way/6",
+    "sentence": "he is on the way",
+    "sequence_id": "6",
+    "num_frames_in_sequence": 94,
+    "gloss_tokens": [
+      "HE",
+      "ON",
+      "WAY"
+    ]
+  },
+  {
+    "sample_id": "This place is beautiful/2",
+    "sentence": "This place is beautiful",
+    "sequence_id": "2",
+    "num_frames_in_sequence": 22,
+    "gloss_tokens": [
+      "THIS",
+      "PLACE",
+      "BEAUTIFUL"
+    ]
+  },
+  {
+    "sample_id": "are you free today/7",
+    "sentence": "are you free today",
+    "sequence_id": "7",
+    "num_frames_in_sequence": 48,
+    "gloss_tokens": [
+      "YOU",
+      "FREE",
+      "TODAY"
+    ]
+  },
+  {
+    "sample_id": "had your food/video::food (5)",
+    "sentence": "had your food",
+    "sequence_id": "video::food (5).MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "YOUR",
+      "FOOD"
+    ]
+  },
+  {
+    "sample_id": "who are you/video::who are you (3)",
+    "sentence": "who are you",
+    "sequence_id": "video::who are you (3).MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "WHO",
+      "YOU"
+    ]
+  },
+  {
+    "sample_id": "you can do it/3",
+    "sentence": "you can do it",
+    "sequence_id": "3",
+    "num_frames_in_sequence": 22,
+    "gloss_tokens": [
+      "YOU",
+      "DO",
+      "IT"
+    ]
+  },
+  {
+    "sample_id": "nice to meet you/2",
+    "sentence": "nice to meet you",
+    "sequence_id": "2",
+    "num_frames_in_sequence": 21,
+    "gloss_tokens": [
+      "NICE",
+      "MEET",
+      "YOU"
+    ]
+  },
+  {
+    "sample_id": "you are good/1",
+    "sentence": "you are good",
+    "sequence_id": "1",
+    "num_frames_in_sequence": 16,
+    "gloss_tokens": [
+      "YOU",
+      "GOOD"
+    ]
+  },
+  {
+    "sample_id": "i am tired/video::tired (2)",
+    "sentence": "i am tired",
+    "sequence_id": "video::tired (2).MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "I",
+      "TIRED"
+    ]
+  },
+  {
+    "sample_id": "i promise/video::promise (2)",
+    "sentence": "i promise",
+    "sequence_id": "video::promise (2).MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "I",
+      "PROMISE"
+    ]
+  },
+  {
+    "sample_id": "do not make me angry/5",
+    "sentence": "do not make me angry",
+    "sequence_id": "5",
+    "num_frames_in_sequence": 44,
+    "gloss_tokens": [
+      "DO",
+      "NOT",
+      "MAKE",
+      "ME",
+      "ANGRY"
+    ]
+  },
+  {
+    "sample_id": "congratulations/video::congratulations (7)",
+    "sentence": "congratulations",
+    "sequence_id": "video::congratulations (7).MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "CONGRATULATIIONS"
+    ]
+  },
+  {
+    "sample_id": "i am (age)/7",
+    "sentence": "i am (age)",
+    "sequence_id": "7",
+    "num_frames_in_sequence": 35,
+    "gloss_tokens": [
+      "I",
+      "(AGE)"
+    ]
+  },
+  {
+    "sample_id": "what is your phone number/video::what is your phone number (7)",
+    "sentence": "what is your phone number",
+    "sequence_id": "video::what is your phone number (7).mp4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "WHAT",
+      "YOUR",
+      "PHONE",
+      "NUMBER"
+    ]
+  },
+  {
+    "sample_id": "how old are you/video::how old are you (3)",
+    "sentence": "how old are you",
+    "sequence_id": "video::how old are you (3).MP4",
+    "num_frames_in_sequence": 0,
+    "gloss_tokens": [
+      "HOW",
+      "OLD",
+      "YOU"
+    ]
+  },
+  {
+    "sample_id": "tell me truth/1",
+    "sentence": "tell me truth",
+    "sequence_id": "1",
+    "num_frames_in_sequence": 15,
+    "gloss_tokens": [
+      "TELL",
+      "ME",
+      "TRUTH"
+    ]
+  },
+  {
+    "sample_id": "which collegeschool are you from/3",
+    "sentence": "which collegeschool are you from",
+    "sequence_id": "3",
+    "num_frames_in_sequence": 16,
+    "gloss_tokens": [
+      "WHICH",
+      "COLLEGE",
+      "SCHOOL",
+      "YOU",
+      "FROM"
+    ]
+  }
+]

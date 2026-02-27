@@ -1,9 +1,9 @@
 import { motion } from 'framer-motion'
-import { Gauge, Timer, Sparkles, AudioLines } from 'lucide-react'
+import { Gauge, Timer, Sparkles, AudioLines, TrendingDown, Award } from 'lucide-react'
 
-function MetricPill({ icon: Icon, label, value }) {
+function MetricPill({ icon: Icon, label, value, highlight }) {
   return (
-    <div className="rounded-xl border border-white/20 bg-white/10 px-3 py-2 text-sm text-slate-100">
+    <div className={`rounded-xl border bg-white/10 px-3 py-2 text-sm text-slate-100 ${highlight ? 'border-amber-300/40' : 'border-white/20'}`}>
       <div className="flex items-center gap-2 font-semibold">
         <Icon size={16} />
         <span>{label}</span>
@@ -15,6 +15,11 @@ function MetricPill({ icon: Icon, label, value }) {
 
 export default function StatusBoard({ data }) {
   const confidencePct = Math.max(0, Math.min(100, Math.round((data.confidence || 0) * 100)))
+  const wer = data.metrics?.wer
+  const bleu = data.metrics?.bleu
+  const werDisplay = (wer && wer > 0) ? wer.toFixed(3) : 'N/A'
+  const bleuDisplay = (bleu && bleu > 0) ? bleu.toFixed(3) : 'N/A'
+
   return (
     <div className="space-y-4">
       <motion.section

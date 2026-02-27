@@ -406,3 +406,13 @@ huggingface_cache/
 
 # Plotly/Dash assets
 .dash/
+dataset/
+
+# ============================================================================
+# Git LFS tracked model exceptions
+# Allow best.pt checkpoint via Git LFS (unignore the full directory chain)
+# ============================================================================
+!application/backend/checkpoints/
+!application/backend/checkpoints/isl_cslrt_experiment/
+!application/backend/checkpoints/isl_cslrt_experiment/checkpoints/
+!application/backend/checkpoints/isl_cslrt_experiment/checkpoints/best.pt

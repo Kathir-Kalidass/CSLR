@@ -4,6 +4,7 @@ import ControlBar from './components/ControlBar'
 import StatusBoard from './components/StatusBoard'
 import Module1Debug from './components/Module1Debug'
 import LiveProcessingView from './components/LiveProcessingView'
+import TrainingMonitor from './components/TrainingMonitor'
 
 const DEFAULT_DATA = {
   status: 'idle',
@@ -44,6 +45,7 @@ export default function App() {
   const [data, setData] = useState(DEFAULT_DATA)
   const [selectedModule, setSelectedModule] = useState('module1')
   const [notice, setNotice] = useState('')
+  const [wsStatus, setWsStatus] = useState('connecting') // 'connecting' | 'connected' | 'disconnected'
 
   const wsUrl = useMemo(() => {
     const fromEnv = import.meta.env.VITE_WS_URL
@@ -105,11 +107,13 @@ export default function App() {
       }
 
       ws.onopen = () => {
+        setWsStatus('connected')
         setNotice('Connected to backend')
         setTimeout(() => setNotice(''), 1500)
       }
 
       ws.onclose = () => {
+        setWsStatus('disconnected')
         setNotice('Disconnected. Reconnecting...')
         reconnectTimer = setTimeout(connect, 900)
       }
@@ -148,6 +152,20 @@ export default function App() {
         </motion.h1>
 
         <div className="mx-auto mt-4 flex max-w-4xl flex-wrap items-center justify-center gap-3 text-sm">
+          {/* WebSocket status */}
+          <span className={`flex items-center gap-2 rounded-full border px-3 py-1 ${
+            wsStatus === 'connected'
+              ? 'border-emerald-300/60 bg-emerald-500/20'
+              : wsStatus === 'connecting'
+              ? 'border-yellow-300/60 bg-yellow-500/20'
+              : 'border-rose-300/60 bg-rose-500/20'
+          }`}>
+            <span className={`inline-block h-2 w-2 rounded-full ${
+              wsStatus === 'connected' ? 'bg-emerald-400 animate-pulse' :
+              wsStatus === 'connecting' ? 'bg-yellow-400 animate-pulse' : 'bg-rose-400'
+            }`} />
+            WS: {wsStatus === 'connected' ? 'Connected' : wsStatus === 'connecting' ? 'Connecting…' : 'Disconnected'}
+          </span>
           <span className={`rounded-full border px-3 py-1 ${data.control_state?.camera_active ? 'border-cyan-300/60 bg-cyan-500/20' : 'border-slate-300/50 bg-slate-700/30'}`}>
             Camera: {data.control_state?.camera_active ? 'Active' : 'Off'}
           </span>
@@ -217,6 +235,7 @@ export default function App() {
           </div>
           <div className="lg:col-span-4 space-y-6">
             <Module1Debug data={data} />
+            <TrainingMonitor />
           </div>
         </div>
 

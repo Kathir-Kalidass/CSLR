@@ -20,7 +20,8 @@ class RGBStream(nn.Module):
         feature_dim: int = 512,
         pretrained: bool = True,
         freeze_backbone: bool = False,
-        dropout: float = 0.1
+        dropout: float = 0.1,
+        backbone_chunk_size: int = 0,
     ):
         super().__init__()
         
@@ -71,6 +72,7 @@ class RGBStream(nn.Module):
         
         self.feature_dim = feature_dim
         self.out_dim = feature_dim
+        self.backbone_chunk_size = max(0, int(backbone_chunk_size))
     
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
@@ -86,10 +88,17 @@ class RGBStream(nn.Module):
         
         # Reshape to process all frames
         x = x.view(B * T, C, H, W)
-        
-        # Extract features
-        features = self.backbone(x)  # (B*T, backbone_dim, 1, 1)
-        features = features.flatten(1)  # (B*T, backbone_dim)
+
+        # Extract features (optionally in chunks to reduce peak VRAM)
+        if self.backbone_chunk_size > 0 and x.shape[0] > self.backbone_chunk_size:
+            feature_chunks = []
+            for start_idx in range(0, x.shape[0], self.backbone_chunk_size):
+                end_idx = min(start_idx + self.backbone_chunk_size, x.shape[0])
+                chunk_features = self.backbone(x[start_idx:end_idx]).flatten(1)
+                feature_chunks.append(chunk_features)
+            features = torch.cat(feature_chunks, dim=0)
+        else:
+            features = self.backbone(x).flatten(1)  # (B*T, backbone_dim)
         
         # Project to target dimension
         features = self.feature_proj(features)  # (B*T, feature_dim)

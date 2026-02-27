@@ -1,0 +1,23 @@
+PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:128 \
+python scripts/train_isl_cslrt.py \
+  --resume checkpoints/isl_cslrt_experiment/checkpoints/best.pt \
+  --epochs 80 \
+  --batch-size 2 \
+  --workers 2 \
+  --grad-accumulation 4 \
+  --device cuda \
+  --num-frames 0 \
+  --target-fps 10 \
+  --min-video-frames 8 \
+  --image-size 112 \
+  --feature-dim 256 \
+  --rgb-backbone-chunk-size 16 \
+  --pose-hidden-dims 256,128 \
+  --temporal-hidden-dim 256 \
+  --temporal-layers 2 \
+  --learning-rate 3e-4 \
+  --weight-decay 1e-3 \
+  --grad-clip 5.0 \
+  --checkpoint-strategy best_only \
+  --pose-cache-dir dataset/.pose_cache_isl_cslrt \
+  --output-dir checkpoints/isl_cslrt_experiment

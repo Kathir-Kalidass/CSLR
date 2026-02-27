@@ -1,0 +1,24 @@
+{
+  "train": {
+    "num_samples": 960,
+    "num_classes": 101,
+    "avg_frames": 13.742708333333333,
+    "min_frames": 0,
+    "max_frames": 147
+  },
+  "val": {
+    "num_samples": 195,
+    "num_classes": 99,
+    "avg_frames": 13.569230769230769,
+    "min_frames": 0,
+    "max_frames": 80
+  },
+  "test": {
+    "num_samples": 195,
+    "num_classes": 99,
+    "avg_frames": 15.507692307692308,
+    "min_frames": 0,
+    "max_frames": 94
+  },
+  "vocab_size_without_blank": 170
+}

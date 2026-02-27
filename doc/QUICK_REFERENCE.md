@@ -15,6 +15,27 @@
 - **Model Loading:** Download trained model from Colab/Drive to local system
 - **Inference Mode:** CPU-only sufficient for real-time recognition (<500ms latency)
 
+### Current Backend Training Storage Policy (Efficient)
+- **Default checkpoint strategy:** `best_only` (saves only `best.pt`)
+- **Optional strategies:**
+   - `best_and_last` → saves `best.pt` + `last.pt`
+   - `all` → saves `best.pt` + `last.pt` + periodic `epoch_XXX.pt`
+- **Default module export:** disabled (prevents extra `rgb_stream_best.pt`, `pose_stream_best.pt`, etc. unless explicitly enabled)
+- **Training logs:**
+   - Append-only run log: `train_full_run.log`
+   - Append-only epoch metrics: `training_history.jsonl`
+   - Snapshot history: `history.json`
+
+**Recommended command (low storage):**
+```bash
+PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True,max_split_size_mb:32 \
+/home/kathir/CSLR/.venv/bin/python application/backend/scripts/train_isl_cslrt.py \
+   --epochs 60 --batch-size 1 --workers 0 --device cuda \
+   --num-frames 24 --image-size 112 --feature-dim 128 \
+   --pose-hidden-dims 128,64 --temporal-hidden-dim 64 --temporal-layers 1 \
+   --no-pose --checkpoint-strategy best_only --log-interval 10
+```
+
 ### Why This Architecture?
 1. **Training:** Requires GPU (hours of training) → Colab provides free GPU access
 2. **Deployment:** Requires webcam access → Must run locally for real-time capture

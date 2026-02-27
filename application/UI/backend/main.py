@@ -7,16 +7,30 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import csv
 import json
+import os
 import time
+from pathlib import Path
 from typing import Dict, List, Optional
 
 import cv2
 import numpy as np
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from realtime_engine import RealtimeCSLREngine, PreprocessingStats
+
+# Default CSV path: two levels up from this file → application/backend/checkpoints/…
+_DEFAULT_CSV = str(
+    Path(__file__).resolve().parent.parent.parent
+    / "backend"
+    / "checkpoints"
+    / "isl_cslrt_experiment"
+    / "training_metrics.csv"
+)
+TRAINING_METRICS_CSV = os.environ.get("TRAINING_METRICS_CSV", _DEFAULT_CSV)
 
 app = FastAPI(title="CSLR Real-Time Server", version="3.0.0")
 
@@ -92,6 +106,29 @@ async def health_check():
         "camera_active": manager.engine.camera is not None if manager.engine else False,
         "active_connections": len(manager.active_connections)
     }
+
+
+@app.get("/api/training-metrics")
+async def training_metrics():
+    """Return per-epoch training metrics from the CSV written by train_isl_cslrt.py."""
+    csv_path = Path(TRAINING_METRICS_CSV)
+    if not csv_path.exists():
+        return JSONResponse({"rows": [], "available": False})
+
+    rows: List[Dict] = []
+    with csv_path.open(newline="") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            # Convert numeric strings to floats where possible
+            cleaned: Dict = {}
+            for k, v in row.items():
+                try:
+                    cleaned[k] = float(v)
+                except (ValueError, TypeError):
+                    cleaned[k] = v
+            rows.append(cleaned)
+
+    return JSONResponse({"rows": rows, "available": True, "csv_path": str(csv_path)})
 
 
 async def realtime_processing_loop():
