@@ -105,6 +105,16 @@ def _free_space_gb(path: Path) -> float:
     return free / 1024**3
 
 
+def _report_pending_parts(local_dir: Path) -> None:
+    pending = sorted(local_dir.glob("*.crdownload"))
+    if not pending:
+        return
+    log.warning("Detected %d incomplete browser downloads:", len(pending))
+    for p in pending:
+        log.warning("  - %s", p.name)
+    log.warning("Use this script with --resume to download clean final part files.")
+
+
 # ---------------------------------------------------------------------------
 # Download individual file
 # ---------------------------------------------------------------------------
@@ -237,6 +247,7 @@ def main() -> None:
     local_dir.mkdir(parents=True, exist_ok=True)
     log.info("Target directory: %s", local_dir)
     log.info("Free disk space : %.1f GB", _free_space_gb(local_dir))
+    _report_pending_parts(local_dir)
 
     # Always get metadata
     download_metadata(local_dir, args.resume)

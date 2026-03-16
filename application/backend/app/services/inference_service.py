@@ -31,7 +31,7 @@ from app.pipeline import (
     VideoLoader,
 )
 from app.services.translation_service import TranslationService
-from app.utils.ctc_decoder import CTCDecoder
+from app.utils.ctc_decoder import CTCDecoder, CaptionPostProcessor
 from app.utils.grammar_correction import GrammarCorrector as UtilGrammarCorrector
 from app.utils.math_utils import moving_average
 from app.utils.sliding_window import SlidingWindowBuffer
@@ -49,6 +49,11 @@ class InferenceService:
         self.device = settings.DEVICE
         self.use_amp = settings.USE_AMP
         self.metrics = global_metrics
+        self.blocked_glosses = {
+            tok.strip().upper()
+            for tok in settings.GLOSS_BLOCKLIST.split(",")
+            if tok.strip()
+        }
 
         vocab = self._load_vocab(vocab_file)
         self.vocab_size = len(vocab)
@@ -96,7 +101,20 @@ class InferenceService:
         self.ctc_layer = CTCLayer(blank_idx=0, vocab_size=self.vocab_size)
 
         self.decoder = Decoder(labels=vocab)
-        self.ctc_decoder = CTCDecoder(labels=vocab, beam_width=settings.BEAM_WIDTH)
+        self.ctc_decoder = CTCDecoder(
+            labels=vocab,
+            beam_width=settings.BEAM_WIDTH,
+            min_token_run=settings.CTC_MIN_TOKEN_RUN,
+            min_token_margin=settings.CTC_MIN_TOKEN_MARGIN,
+            length_norm_alpha=settings.CTC_LENGTH_NORM_ALPHA,
+            repetition_penalty=settings.CTC_REPETITION_PENALTY,
+        )
+        self.caption_filter = CaptionPostProcessor(
+            max_history=settings.GLOSS_HISTORY_SIZE,
+            min_confidence=settings.CONFIDENCE_THRESHOLD,
+            vote_window=settings.GLOSS_VOTE_WINDOW,
+            min_votes=settings.GLOSS_MIN_VOTES,
+        )
 
         # Module 4: Language Processing
         logger.info("Initializing Module 4: Language Processing")
@@ -117,6 +135,92 @@ class InferenceService:
         self._load_pipeline_checkpoints()
 
         logger.info("All modules initialized successfully")
+
+    def _init_adaptive_state(self) -> Dict[str, float]:
+        return {
+            "strictness": 0.0,
+            "ema_noise": 0.0,
+            "ema_conf": settings.CONFIDENCE_THRESHOLD,
+        }
+
+    def _update_adaptive_strictness(
+        self,
+        confidence: float,
+        frame_confidences: Optional[List[float]],
+        adaptive_state: Optional[Dict[str, float]],
+    ) -> float:
+        if not settings.ENABLE_ADAPTIVE_FILTERING or adaptive_state is None:
+            return 0.0
+
+        arr = np.array(frame_confidences or [confidence], dtype=np.float32)
+        mean_conf = float(np.mean(arr)) if arr.size else confidence
+        var_conf = float(np.var(arr)) if arr.size else 0.0
+        noise = var_conf + max(0.0, settings.CONFIDENCE_THRESHOLD - mean_conf)
+
+        alpha = 0.35
+        adaptive_state["ema_noise"] = (1.0 - alpha) * adaptive_state.get("ema_noise", 0.0) + alpha * noise
+        adaptive_state["ema_conf"] = (1.0 - alpha) * adaptive_state.get("ema_conf", settings.CONFIDENCE_THRESHOLD) + alpha * confidence
+
+        strictness = float(adaptive_state.get("strictness", 0.0))
+        if confidence < settings.ADAPTIVE_CONF_LOW or adaptive_state["ema_noise"] > settings.ADAPTIVE_NOISE_VAR_THRESHOLD:
+            strictness += settings.ADAPTIVE_STRICTNESS_STEP_UP
+        elif confidence > settings.ADAPTIVE_CONF_HIGH and adaptive_state["ema_noise"] < settings.ADAPTIVE_NOISE_VAR_THRESHOLD * 0.7:
+            strictness -= settings.ADAPTIVE_STRICTNESS_STEP_DOWN
+
+        strictness = float(np.clip(strictness, 0.0, 1.0))
+        adaptive_state["strictness"] = strictness
+        return strictness
+
+    def _adaptive_filter_params(self, strictness: float) -> Dict[str, float]:
+        threshold = settings.CONFIDENCE_THRESHOLD + settings.ADAPTIVE_THRESHOLD_BOOST_MAX * strictness
+        max_tokens = int(max(3, round(settings.GLOSS_MAX_TOKENS * (1.0 - settings.ADAPTIVE_MAXTOK_REDUCTION * strictness))))
+        min_votes = int(settings.GLOSS_MIN_VOTES + round(settings.ADAPTIVE_VOTES_BONUS_MAX * strictness))
+        return {
+            "threshold": float(np.clip(threshold, 0.0, 0.99)),
+            "max_tokens": max_tokens,
+            "min_votes": min_votes,
+        }
+
+    def _filter_gloss_tokens(
+        self,
+        gloss_tokens: List[str],
+        confidence: float,
+        frame_confidences: Optional[List[float]] = None,
+        adaptive_state: Optional[Dict[str, float]] = None,
+        caption_filter: Optional[CaptionPostProcessor] = None,
+    ) -> List[str]:
+        """Filter noisy tokens to reduce unwanted sign outputs."""
+        strictness = self._update_adaptive_strictness(confidence, frame_confidences, adaptive_state)
+        adaptive = self._adaptive_filter_params(strictness)
+
+        if confidence < adaptive["threshold"]:
+            return []
+
+        if not settings.ENABLE_GLOSS_FILTER:
+            return gloss_tokens
+
+        filtered: List[str] = []
+        prev = None
+        for token in gloss_tokens:
+            token_up = token.strip().upper()
+            if not token_up:
+                continue
+            if token_up in self.blocked_glosses:
+                continue
+            if prev == token_up:
+                continue
+            filtered.append(token_up)
+            prev = token_up
+            if len(filtered) >= adaptive["max_tokens"]:
+                break
+        if settings.ENABLE_TEMPORAL_GLOSS_VOTING:
+            target_filter = caption_filter or self.caption_filter
+            return target_filter.update(
+                filtered,
+                confidence,
+                min_votes_override=adaptive["min_votes"],
+            )
+        return filtered
 
     def _load_vocab(self, vocab_file: Optional[str]) -> List[str]:
         candidates = []
@@ -222,12 +326,14 @@ class InferenceService:
         module1_time = module2_time = module3_time = module4_time = 0.0
 
         try:
+            self.caption_filter.reset()
+            adaptive_state = self._init_adaptive_state()
             # Module 1: Load and preprocess video
             if settings.ENABLE_METRICS:
                 self.metrics.start_timer("module1")
             frames, fps = self.video_loader.load_video(video_path)
             frames = self.frame_sampler.sample_frames(
-                frames, original_fps=fps, target_fps=25
+                frames, original_fps=fps, target_fps=settings.FPS_TARGET
             )
 
             rgb_frames: List[torch.Tensor] = []
@@ -240,12 +346,12 @@ class InferenceService:
                     rgb_frames.append(result.rgb_tensor)
                     pose_frames.append(result.pose_tensor)
 
-            if not rgb_frames:
+            if len(rgb_frames) < settings.MIN_VALID_FRAMES:
                 return {
                     "gloss": [],
                     "sentence": "",
                     "confidence": 0.0,
-                    "error": "No valid frames extracted",
+                    "error": "Not enough valid frames extracted",
                 }
             if settings.ENABLE_METRICS:
                 module1_time = self.metrics.stop_timer("module1")
@@ -277,7 +383,12 @@ class InferenceService:
                 logits.squeeze(0).cpu(),
                 beam_width=settings.BEAM_WIDTH,
             )
-            gloss_tokens = decode_result.gloss_tokens
+            gloss_tokens = self._filter_gloss_tokens(
+                decode_result.gloss_tokens,
+                decode_result.confidence,
+                frame_confidences=decode_result.frame_confidences,
+                adaptive_state=adaptive_state,
+            )
             confidence = decode_result.confidence
 
             # Module 4: Language processing
@@ -306,7 +417,7 @@ class InferenceService:
                 "sentence": sentence,
                 "confidence": confidence,
                 "frame_count": len(frames),
-                "fps": 25.0,
+                "fps": float(settings.FPS_TARGET),
                 "attention": {
                     "alpha": alpha.cpu().numpy().tolist() if alpha is not None else None,
                     "beta": beta.cpu().numpy().tolist() if beta is not None else None,
@@ -326,6 +437,8 @@ class InferenceService:
         module1_time = module2_time = module3_time = module4_time = 0.0
 
         try:
+            self.caption_filter.reset()
+            adaptive_state = self._init_adaptive_state()
             if settings.ENABLE_METRICS:
                 self.metrics.start_timer("module1")
 
@@ -338,7 +451,7 @@ class InferenceService:
                     rgb_frames.append(result.rgb_tensor)
                     pose_frames.append(result.pose_tensor)
 
-            if not rgb_frames:
+            if len(rgb_frames) < settings.MIN_VALID_FRAMES:
                 return {"gloss": [], "sentence": "", "confidence": 0.0, "partial": True}
             if settings.ENABLE_METRICS:
                 module1_time = self.metrics.stop_timer("module1")
@@ -363,7 +476,12 @@ class InferenceService:
                 module3_time = self.metrics.stop_timer("module3")
 
             decode_result = self.ctc_decoder.ctc_greedy_decode(logits.squeeze(0).cpu())
-            gloss_tokens = decode_result.gloss_tokens
+            gloss_tokens = self._filter_gloss_tokens(
+                decode_result.gloss_tokens,
+                decode_result.confidence,
+                frame_confidences=decode_result.frame_confidences,
+                adaptive_state=adaptive_state,
+            )
 
             if settings.ENABLE_METRICS:
                 self.metrics.start_timer("module4")
@@ -386,7 +504,7 @@ class InferenceService:
                 "gloss": gloss_tokens,
                 "sentence": sentence,
                 "confidence": decode_result.confidence,
-                "fps": 25.0,
+                "fps": float(settings.FPS_TARGET),
             }
         except Exception as e:
             logger.error(f"Frame processing failed: {e}")
@@ -403,6 +521,13 @@ class InferenceService:
                 "buffer": SlidingWindowBuffer(window_size=64, stride=32),
                 "last_gloss": [],
                 "last_sentence": "",
+                "adaptive": self._init_adaptive_state(),
+                "caption_filter": CaptionPostProcessor(
+                    max_history=settings.GLOSS_HISTORY_SIZE,
+                    min_confidence=settings.CONFIDENCE_THRESHOLD,
+                    vote_window=settings.GLOSS_VOTE_WINDOW,
+                    min_votes=settings.GLOSS_MIN_VOTES,
+                ),
             }
 
         try:
@@ -446,7 +571,16 @@ class InferenceService:
                 logits = self.temporal_model(fused_features)
 
             decode_result = self.ctc_decoder.ctc_greedy_decode(logits.squeeze(0).cpu())
-            gloss_tokens = decode_result.gloss_tokens
+            gloss_tokens = [
+                tok for tok in self._filter_gloss_tokens(
+                    decode_result.gloss_tokens,
+                    decode_result.confidence,
+                    frame_confidences=decode_result.frame_confidences,
+                    adaptive_state=state.get("adaptive"),
+                    caption_filter=state.get("caption_filter"),
+                )
+                if tok not in self.blocked_glosses
+            ]
             sentence = await self._build_sentence(gloss_tokens)
 
             state["last_gloss"] = gloss_tokens
@@ -456,7 +590,7 @@ class InferenceService:
                 "gloss": gloss_tokens,
                 "sentence": sentence,
                 "confidence": decode_result.confidence,
-                "fps": 25.0,
+                "fps": float(settings.FPS_TARGET),
                 "partial": state["buffer"].counts() < state["buffer"].window_size,
                 "state": state,
             }

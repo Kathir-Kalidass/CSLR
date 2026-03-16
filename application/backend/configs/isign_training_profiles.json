@@ -1,0 +1,71 @@
+{
+  "profiles": {
+    "quick_debug_cpu": {
+      "description": "Very fast debug run on CPU for pipeline validation",
+      "preprocess": {
+        "max_frames": 32,
+        "workers": 2,
+        "max_samples": 200,
+        "modality_mode": "rgb",
+        "min_frames": 8
+      },
+      "train": {
+        "epochs": 3,
+        "batch_size": 2,
+        "device": "cpu",
+        "use_rgb": true,
+        "use_pose": false,
+        "save_every_epoch": true
+      }
+    },
+    "balanced_gpu_rgb_only": {
+      "description": "Recommended while pose download/extraction is incomplete",
+      "preprocess": {
+        "max_frames": 64,
+        "workers": 4,
+        "modality_mode": "rgb",
+        "min_frames": 12,
+        "min_gloss_tokens": 1,
+        "max_gloss_tokens": 30
+      },
+      "train": {
+        "epochs": 30,
+        "batch_size": 8,
+        "learning_rate": 0.0001,
+        "weight_decay": 0.0001,
+        "device": "cuda",
+        "require_cuda": true,
+        "allow_tf32": true,
+        "use_rgb": true,
+        "use_pose": false,
+        "save_every_epoch": true,
+        "ckpt_dir": "checkpoints/isign_fast_v2"
+      }
+    },
+    "full_multimodal_gpu": {
+      "description": "Use after all pose parts are downloaded and merged",
+      "preprocess": {
+        "max_frames": 64,
+        "workers": 6,
+        "modality_mode": "multimodal",
+        "min_frames": 12,
+        "min_gloss_tokens": 1,
+        "max_gloss_tokens": 30
+      },
+      "train": {
+        "epochs": 60,
+        "batch_size": 8,
+        "learning_rate": 0.0001,
+        "weight_decay": 0.0001,
+        "device": "cuda",
+        "require_cuda": true,
+        "allow_tf32": true,
+        "use_rgb": true,
+        "use_pose": true,
+        "auto_disable_pose_if_missing": false,
+        "save_every_epoch": true,
+        "ckpt_dir": "checkpoints/isign_fast_v2_multimodal"
+      }
+    }
+  }
+}

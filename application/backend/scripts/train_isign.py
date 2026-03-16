@@ -35,6 +35,7 @@ python scripts/train_isign.py \\
 from __future__ import annotations
 
 import argparse
+import csv
 import json
 import logging
 import os
@@ -420,24 +421,57 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--warmup-epochs", type=int, default=3,              help="LR warmup epochs")
     p.add_argument("--no-amp",      action="store_true",                help="Disable automatic mixed precision")
     # Logging / checkpoints
-    p.add_argument("--ckpt-dir",    default="checkpoints/isign",        help="Checkpoint save directory")
+    p.add_argument("--ckpt-dir",    default="checkpoints/isign_fast_v2", help="Checkpoint save directory")
+    p.add_argument("--save-every-epoch", action="store_true", default=True, help="Save an epoch_{N}.pt checkpoint every epoch")
+    p.add_argument("--no-save-every-epoch", dest="save_every_epoch", action="store_false", help="Disable per-epoch checkpoint files")
     p.add_argument("--log-interval",type=int, default=50,               help="Log every N batches")
     p.add_argument("--resume",      default=None,                       help="Path to checkpoint to resume from")
     p.add_argument("--workers",     type=int, default=2,                help="DataLoader workers")
     p.add_argument("--seed",        type=int, default=42,               help="Random seed")
+    p.add_argument("--device", choices=["auto", "cuda", "cpu"], default="auto", help="Training device")
+    p.add_argument("--require-cuda", action="store_true", help="Fail if CUDA is not available")
+    p.add_argument("--allow-tf32", action="store_true", default=True, help="Enable TF32 matmul/cudnn on Ampere+")
+    p.add_argument("--no-allow-tf32", dest="allow_tf32", action="store_false", help="Disable TF32")
     return p.parse_args()
 
 
 def main() -> None:
     args = parse_args()
 
+    if args.batch_size < 1:
+        raise ValueError("--batch-size must be >= 1")
+    if args.epochs < 1:
+        raise ValueError("--epochs must be >= 1")
+    if args.lr <= 0:
+        raise ValueError("--lr must be > 0")
+    if args.weight_decay < 0:
+        raise ValueError("--weight-decay must be >= 0")
+    if args.no_rgb and args.no_pose:
+        raise ValueError("Cannot disable both streams. Use at least one of RGB or pose.")
+
     # Reproducibility
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
 
     # Device
-    device  = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    if args.device == "auto":
+        resolved = "cuda" if torch.cuda.is_available() else "cpu"
+    else:
+        resolved = args.device
+
+    if args.require_cuda and not torch.cuda.is_available():
+        raise RuntimeError("CUDA is required but not available. Remove --require-cuda or fix CUDA setup.")
+    if resolved == "cuda" and not torch.cuda.is_available():
+        raise RuntimeError("--device cuda requested but CUDA is not available.")
+
+    device  = torch.device(resolved)
     use_amp = not args.no_amp and device.type == "cuda"
+
+    if device.type == "cuda":
+        torch.backends.cudnn.benchmark = True
+        torch.backends.cuda.matmul.allow_tf32 = args.allow_tf32
+        torch.backends.cudnn.allow_tf32 = args.allow_tf32
+
     log.info("Device: %s  |  AMP: %s", device, use_amp)
     if device.type == "cuda":
         log.info("GPU: %s  |  VRAM: %.1f GB",
@@ -512,6 +546,26 @@ def main() -> None:
 
     ckpt_dir = Path(args.ckpt_dir)
     ckpt_dir.mkdir(parents=True, exist_ok=True)
+    history_jsonl = ckpt_dir / "history.jsonl"
+    history_csv = ckpt_dir / "history.csv"
+    train_config_path = ckpt_dir / "train_config.json"
+
+    with open(train_config_path, "w", encoding="utf-8") as f:
+        json.dump(vars(args), f, indent=2)
+
+    csv_header = [
+        "epoch",
+        "train_loss",
+        "val_loss",
+        "val_wer",
+        "learning_rate",
+        "epoch_seconds",
+        "is_best",
+    ]
+    if not history_csv.exists():
+        with open(history_csv, "w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=csv_header)
+            writer.writeheader()
 
     # Training loop
     log.info("Starting training for %d epochs …", args.epochs)
@@ -532,33 +586,57 @@ def main() -> None:
         scheduler.step()
 
         elapsed = time.time() - t0
+        lr_now = float(optimizer.param_groups[0]["lr"])
         log.info(
             "Epoch %03d/%03d  |  train_loss=%.4f  |  val_loss=%.4f  |  "
             "val_WER=%.4f  |  lr=%.2e  |  %.0fs",
             epoch, args.epochs,
             train_loss, val_loss, val_wer,
-            optimizer.param_groups[0]["lr"],
+            lr_now,
             elapsed,
         )
 
         # Save best
+        is_best = False
         if val_wer < best_wer:
             best_wer = val_wer
+            is_best = True
             save_checkpoint(
-                ckpt_dir / "best_model.pt",
+                ckpt_dir / "best.pt",
                 epoch, model, optimizer, scheduler, best_wer, args,
             )
             log.info("  *** New best WER: %.4f — checkpoint saved ***", best_wer)
 
+        history_row = {
+            "epoch": epoch,
+            "train_loss": float(train_loss),
+            "val_loss": float(val_loss),
+            "val_wer": float(val_wer),
+            "learning_rate": lr_now,
+            "epoch_seconds": float(elapsed),
+            "is_best": is_best,
+        }
+        with open(history_jsonl, "a", encoding="utf-8") as f:
+            f.write(json.dumps(history_row) + "\n")
+        with open(history_csv, "a", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=csv_header)
+            writer.writerow(history_row)
+
+        if args.save_every_epoch:
+            save_checkpoint(
+                ckpt_dir / f"epoch_{epoch:03d}.pt",
+                epoch, model, optimizer, scheduler, best_wer, args,
+            )
+
         # Save latest
         save_checkpoint(
-            ckpt_dir / "latest.pt",
+            ckpt_dir / "last.pt",
             epoch, model, optimizer, scheduler, best_wer, args,
         )
 
     # Final test evaluation
     log.info("=== Final evaluation on test set ===")
-    best_ckpt = ckpt_dir / "best_model.pt"
+    best_ckpt = ckpt_dir / "best.pt"
     if best_ckpt.exists():
         load_checkpoint(best_ckpt, model)
     test_loss, test_wer = evaluate(model, test_loader, criterion, device, blank_id)
@@ -571,6 +649,9 @@ def main() -> None:
         "best_val_wer": best_wer,
         "epochs": args.epochs,
         "vocab_size": vocab_size,
+        "history_jsonl": str(history_jsonl),
+        "history_csv": str(history_csv),
+        "train_config": str(train_config_path),
     }
     results_path = ckpt_dir / "results.json"
     with open(results_path, "w") as f:

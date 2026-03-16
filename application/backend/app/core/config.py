@@ -37,6 +37,10 @@ class Settings:
     ISIGN_PROCESSED_DIR: str = os.getenv("ISIGN_PROCESSED_DIR", "dataset/isign_processed")
     ISIGN_VOCAB_FILE: str = os.getenv("ISIGN_VOCAB_FILE", f"{ISIGN_PROCESSED_DIR}/vocab.json")
     ISIGN_CHECKPOINT_PATH: str = os.getenv("ISIGN_CHECKPOINT_PATH", "checkpoints/isign/best_model.pt")
+    ISIGN_TRAINING_OUTPUT_DIR: str = os.getenv("ISIGN_TRAINING_OUTPUT_DIR", "checkpoints/isign_fast_v2")
+    ISIGN_PENDING_EXT: str = os.getenv("ISIGN_PENDING_EXT", ".crdownload")
+    ISIGN_STRICT_DATA_CHECK: bool = os.getenv("ISIGN_STRICT_DATA_CHECK", "true").lower() == "true"
+    ISIGN_MIN_READY_POSE_FILES: int = int(os.getenv("ISIGN_MIN_READY_POSE_FILES", "100"))
     INFERENCE_DEFAULT_VOCAB_SIZE: int = int(os.getenv("INFERENCE_DEFAULT_VOCAB_SIZE", "2000"))
     
     # Model Paths
@@ -51,6 +55,27 @@ class Settings:
     FPS_TARGET: int = int(os.getenv("FPS_TARGET", "30"))
     BEAM_WIDTH: int = int(os.getenv("BEAM_WIDTH", "5"))
     CONFIDENCE_THRESHOLD: float = float(os.getenv("CONFIDENCE_THRESHOLD", "0.7"))
+    MIN_VALID_FRAMES: int = int(os.getenv("MIN_VALID_FRAMES", "8"))
+    ENABLE_GLOSS_FILTER: bool = os.getenv("ENABLE_GLOSS_FILTER", "true").lower() == "true"
+    GLOSS_MAX_TOKENS: int = int(os.getenv("GLOSS_MAX_TOKENS", "20"))
+    GLOSS_BLOCKLIST: str = os.getenv("GLOSS_BLOCKLIST", "<blank>,<unk>,<pad>,sil,noise")
+    ENABLE_TEMPORAL_GLOSS_VOTING: bool = os.getenv("ENABLE_TEMPORAL_GLOSS_VOTING", "true").lower() == "true"
+    GLOSS_HISTORY_SIZE: int = int(os.getenv("GLOSS_HISTORY_SIZE", "20"))
+    GLOSS_VOTE_WINDOW: int = int(os.getenv("GLOSS_VOTE_WINDOW", "5"))
+    GLOSS_MIN_VOTES: int = int(os.getenv("GLOSS_MIN_VOTES", "2"))
+    CTC_MIN_TOKEN_RUN: int = int(os.getenv("CTC_MIN_TOKEN_RUN", "2"))
+    CTC_MIN_TOKEN_MARGIN: float = float(os.getenv("CTC_MIN_TOKEN_MARGIN", "0.04"))
+    CTC_LENGTH_NORM_ALPHA: float = float(os.getenv("CTC_LENGTH_NORM_ALPHA", "0.35"))
+    CTC_REPETITION_PENALTY: float = float(os.getenv("CTC_REPETITION_PENALTY", "0.15"))
+    ENABLE_ADAPTIVE_FILTERING: bool = os.getenv("ENABLE_ADAPTIVE_FILTERING", "true").lower() == "true"
+    ADAPTIVE_STRICTNESS_STEP_UP: float = float(os.getenv("ADAPTIVE_STRICTNESS_STEP_UP", "0.12"))
+    ADAPTIVE_STRICTNESS_STEP_DOWN: float = float(os.getenv("ADAPTIVE_STRICTNESS_STEP_DOWN", "0.08"))
+    ADAPTIVE_NOISE_VAR_THRESHOLD: float = float(os.getenv("ADAPTIVE_NOISE_VAR_THRESHOLD", "0.03"))
+    ADAPTIVE_CONF_HIGH: float = float(os.getenv("ADAPTIVE_CONF_HIGH", "0.85"))
+    ADAPTIVE_CONF_LOW: float = float(os.getenv("ADAPTIVE_CONF_LOW", "0.55"))
+    ADAPTIVE_THRESHOLD_BOOST_MAX: float = float(os.getenv("ADAPTIVE_THRESHOLD_BOOST_MAX", "0.18"))
+    ADAPTIVE_MAXTOK_REDUCTION: float = float(os.getenv("ADAPTIVE_MAXTOK_REDUCTION", "0.40"))
+    ADAPTIVE_VOTES_BONUS_MAX: int = int(os.getenv("ADAPTIVE_VOTES_BONUS_MAX", "2"))
     
     # Redis Configuration (Optional)
     REDIS_HOST: str = os.getenv("REDIS_HOST", "localhost")

@@ -385,6 +385,48 @@ def preprocess(args: argparse.Namespace) -> None:
         log.info("Pose directory not found — skipping pose copy")
 
     # ------------------------------------------------------------------
+    # 4.1 Filter noisy / low-quality samples
+    # ------------------------------------------------------------------
+    filtered_annotations: List[Dict[str, Any]] = []
+    dropped_for_modality = 0
+    dropped_for_length = 0
+
+    for ann in annotations:
+        gloss_len = len(ann["gloss_tokens"])
+        if gloss_len < args.min_gloss_tokens or gloss_len > args.max_gloss_tokens:
+            dropped_for_length += 1
+            continue
+
+        frame_dir = frames_root / ann["video_id"]
+        num_frames = len(list(frame_dir.glob("*.jpg"))) if frame_dir.exists() else 0
+        has_rgb = num_frames >= args.min_frames
+        has_pose = (poses_out / f"{ann['video_id']}.npy").exists()
+
+        if args.modality_mode == "multimodal" and not (has_rgb and has_pose):
+            dropped_for_modality += 1
+            continue
+        if args.modality_mode == "rgb" and not has_rgb:
+            dropped_for_modality += 1
+            continue
+        if args.modality_mode == "pose" and not has_pose:
+            dropped_for_modality += 1
+            continue
+        if args.modality_mode == "auto" and not (has_rgb or has_pose):
+            dropped_for_modality += 1
+            continue
+
+        ann["num_frames"] = max(num_frames, ann.get("num_frames", args.max_frames))
+        filtered_annotations.append(ann)
+
+    annotations = filtered_annotations
+    log.info(
+        "Filtering summary: kept=%d, dropped_modality=%d, dropped_length=%d",
+        len(annotations),
+        dropped_for_modality,
+        dropped_for_length,
+    )
+
+    # ------------------------------------------------------------------
     # 5. Build vocabulary
     # ------------------------------------------------------------------
     log.info("Building vocabulary …")
@@ -458,11 +500,33 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--seed",        type=int, default=42,              help="Random seed for split")
     p.add_argument("--max-samples", type=int, default=0,               help="Limit total samples (0 = no limit, useful for testing)")
     p.add_argument("--skip-frames", action="store_true",               help="Skip frame extraction (use pre-extracted frames)")
+    p.add_argument("--min-frames", type=int, default=8, help="Minimum extracted RGB frames required per sample")
+    p.add_argument("--min-gloss-tokens", type=int, default=1, help="Minimum gloss token count per sample")
+    p.add_argument("--max-gloss-tokens", type=int, default=40, help="Maximum gloss token count per sample")
+    p.add_argument(
+        "--modality-mode",
+        choices=["auto", "multimodal", "rgb", "pose"],
+        default="auto",
+        help="Required modality presence for keeping samples",
+    )
     return p.parse_args()
 
 
 def main() -> None:
     args = parse_args()
+    if not (0.0 < args.val_ratio < 0.5):
+        raise ValueError("--val-ratio must be in (0, 0.5)")
+    if not (0.0 < args.test_ratio < 0.5):
+        raise ValueError("--test-ratio must be in (0, 0.5)")
+    if args.val_ratio + args.test_ratio >= 0.9:
+        raise ValueError("--val-ratio + --test-ratio must be < 0.9")
+    if args.max_frames < 8:
+        raise ValueError("--max-frames must be >= 8")
+    if args.min_frames < 1:
+        raise ValueError("--min-frames must be >= 1")
+    if args.max_gloss_tokens < args.min_gloss_tokens:
+        raise ValueError("--max-gloss-tokens must be >= --min-gloss-tokens")
+
     try:
         import pandas as pd  # noqa: F401
     except ImportError:

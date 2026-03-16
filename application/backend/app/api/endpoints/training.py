@@ -5,6 +5,7 @@ Launches preprocess/train scripts with modular hyperparameter control.
 
 from __future__ import annotations
 
+import json
 import subprocess
 import sys
 import time
@@ -12,7 +13,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from app.core.config import settings
 from app.core.logging import logger
@@ -30,6 +31,32 @@ class ISignPreprocessConfig(BaseModel):
     seed: int = 42
     max_samples: int = 0
     skip_frames: bool = False
+    min_frames: int = 8
+    min_gloss_tokens: int = 1
+    max_gloss_tokens: int = 40
+    modality_mode: str = "auto"
+
+    @model_validator(mode="after")
+    def _validate(self):
+        if not (0.0 < self.val_ratio < 0.5):
+            raise ValueError("val_ratio must be in (0, 0.5)")
+        if not (0.0 < self.test_ratio < 0.5):
+            raise ValueError("test_ratio must be in (0, 0.5)")
+        if self.val_ratio + self.test_ratio >= 0.9:
+            raise ValueError("val_ratio + test_ratio must be < 0.9")
+        if self.max_frames < 8:
+            raise ValueError("max_frames must be >= 8")
+        if self.min_frames < 1:
+            raise ValueError("min_frames must be >= 1")
+        if self.min_gloss_tokens < 1:
+            raise ValueError("min_gloss_tokens must be >= 1")
+        if self.max_gloss_tokens < self.min_gloss_tokens:
+            raise ValueError("max_gloss_tokens must be >= min_gloss_tokens")
+        if self.modality_mode not in {"auto", "multimodal", "rgb", "pose"}:
+            raise ValueError("modality_mode must be one of auto, multimodal, rgb, pose")
+        if self.workers < 0:
+            raise ValueError("workers must be >= 0")
+        return self
 
 
 class ISignTrainingConfig(BaseModel):
@@ -41,6 +68,7 @@ class ISignTrainingConfig(BaseModel):
     max_samples: int = 0
     use_rgb: bool = True
     use_pose: bool = True
+    auto_disable_pose_if_missing: bool = True
     pretrained_cnn: bool = True
     hidden_dim: int = 256
     num_layers: int = 2
@@ -52,12 +80,34 @@ class ISignTrainingConfig(BaseModel):
     clip_grad: float = 5.0
     warmup_epochs: int = 3
     use_amp: bool = True
-    ckpt_dir: str = "checkpoints/isign"
+    ckpt_dir: str = Field(default_factory=lambda: settings.ISIGN_TRAINING_OUTPUT_DIR)
+    save_every_epoch: bool = True
     workers: int = 2
     seed: int = 42
+    device: str = "auto"
+    require_cuda: bool = False
+    allow_tf32: bool = True
     resume: Optional[str] = None
     preprocess_first: bool = False
     preprocess: ISignPreprocessConfig = Field(default_factory=ISignPreprocessConfig)
+
+    @model_validator(mode="after")
+    def _validate(self):
+        if not self.use_rgb and not self.use_pose:
+            raise ValueError("At least one modality must be enabled (use_rgb or use_pose)")
+        if self.batch_size < 1:
+            raise ValueError("batch_size must be >= 1")
+        if self.epochs < 1:
+            raise ValueError("epochs must be >= 1")
+        if not (0.0 <= self.dropout < 0.9):
+            raise ValueError("dropout must be in [0.0, 0.9)")
+        if self.learning_rate <= 0.0:
+            raise ValueError("learning_rate must be > 0")
+        if self.weight_decay < 0.0:
+            raise ValueError("weight_decay must be >= 0")
+        if self.device not in {"auto", "cuda", "cpu"}:
+            raise ValueError("device must be one of: auto, cuda, cpu")
+        return self
 
 
 class TrainingStatus(BaseModel):
@@ -82,6 +132,32 @@ def _backend_root() -> Path:
     return Path(__file__).resolve().parents[3]
 
 
+def _dataset_download_status(isign_dir: Path) -> Dict[str, Any]:
+    pending_ext = settings.ISIGN_PENDING_EXT
+    pose_parts = sorted(isign_dir.glob("iSign-poses_v1.1_part_*"))
+    pending_parts = sorted(isign_dir.glob(f"*{pending_ext}"))
+    poses_dir = isign_dir / "poses"
+    videos_dir = isign_dir / "videos"
+    pose_npy_count = len(list(poses_dir.glob("**/*.npy"))) if poses_dir.exists() else 0
+    video_count = 0
+    if videos_dir.exists():
+        video_count = sum(len(list(videos_dir.glob(f"*{ext}"))) for ext in [".mp4", ".avi", ".mov", ".mkv", ".webm"])
+
+    metadata_ready = (isign_dir / "iSign_v1.1.csv").exists()
+
+    return {
+        "isign_dir": str(isign_dir),
+        "metadata_ready": metadata_ready,
+        "pose_parts_present": len(pose_parts),
+        "pending_download_parts": [p.name for p in pending_parts],
+        "poses_extracted": poses_dir.exists() and pose_npy_count > 0,
+        "pose_file_count": pose_npy_count,
+        "videos_extracted": videos_dir.exists() and video_count > 0,
+        "video_file_count": video_count,
+        "cuda_available": __import__("torch").cuda.is_available(),
+    }
+
+
 def _to_preprocess_command(cfg: ISignPreprocessConfig) -> List[str]:
     cmd = [
         sys.executable,
@@ -100,6 +176,14 @@ def _to_preprocess_command(cfg: ISignPreprocessConfig) -> List[str]:
         str(cfg.workers),
         "--seed",
         str(cfg.seed),
+        "--min-frames",
+        str(cfg.min_frames),
+        "--min-gloss-tokens",
+        str(cfg.min_gloss_tokens),
+        "--max-gloss-tokens",
+        str(cfg.max_gloss_tokens),
+        "--modality-mode",
+        cfg.modality_mode,
     ]
     if cfg.max_samples > 0:
         cmd.extend(["--max-samples", str(cfg.max_samples)])
@@ -139,10 +223,13 @@ def _to_training_command(cfg: ISignTrainingConfig) -> List[str]:
         str(cfg.warmup_epochs),
         "--ckpt-dir",
         cfg.ckpt_dir,
+        "--save-every-epoch" if cfg.save_every_epoch else "--no-save-every-epoch",
         "--workers",
         str(cfg.workers),
         "--seed",
         str(cfg.seed),
+        "--device",
+        cfg.device,
     ]
     if cfg.vocab:
         cmd.extend(["--vocab", cfg.vocab])
@@ -156,6 +243,10 @@ def _to_training_command(cfg: ISignTrainingConfig) -> List[str]:
         cmd.append("--no-pretrained")
     if not cfg.use_amp:
         cmd.append("--no-amp")
+    if cfg.require_cuda:
+        cmd.append("--require-cuda")
+    if not cfg.allow_tf32:
+        cmd.append("--no-allow-tf32")
     if cfg.resume:
         cmd.extend(["--resume", cfg.resume])
     return cmd
@@ -204,6 +295,36 @@ async def start_training(config: ISignTrainingConfig):
         raise HTTPException(status_code=400, detail="Training already in progress")
 
     backend_root = _backend_root()
+    isign_dir = (backend_root / settings.ISIGN_DATA_DIR).resolve()
+    ds_status = _dataset_download_status(isign_dir)
+
+    if settings.ISIGN_STRICT_DATA_CHECK and not ds_status["metadata_ready"]:
+        raise HTTPException(status_code=400, detail=f"Missing iSign metadata CSV in {isign_dir}")
+
+    if ds_status["pending_download_parts"]:
+        logger.warning(
+            "Detected pending iSign downloads: %s",
+            ds_status["pending_download_parts"],
+        )
+
+    if config.use_pose and config.auto_disable_pose_if_missing and ds_status["pose_file_count"] < settings.ISIGN_MIN_READY_POSE_FILES:
+        logger.warning("Poses are not ready yet. Auto-switching to RGB-only training for now.")
+        config = config.model_copy(update={"use_pose": False})
+
+    if not config.preprocess_first:
+        data_dir = (backend_root / config.data_dir).resolve()
+        required = [data_dir / "train.json", data_dir / "val.json", data_dir / "test.json", data_dir / "vocab.json"]
+        missing = [str(p) for p in required if not p.exists()]
+        if missing:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Processed dataset is incomplete. Missing files: "
+                    + ", ".join(missing)
+                    + ". Run /training/preprocess first or set preprocess_first=true."
+                ),
+            )
+
     if config.preprocess_first:
         preprocess_cmd = _to_preprocess_command(config.preprocess)
         logger.info("Running preprocess step before training")
@@ -217,7 +338,37 @@ async def start_training(config: ISignTrainingConfig):
         "status": "started",
         "phase": "train",
         "pid": pid,
+        "dataset_status": ds_status,
+        "effective_use_pose": config.use_pose,
         "message": f"iSign training started for {config.epochs} epochs",
+    }
+
+
+@router.get("/dataset-status")
+async def get_dataset_status(isign_dir: Optional[str] = None):
+    backend_root = _backend_root()
+    target = (backend_root / (isign_dir or settings.ISIGN_DATA_DIR)).resolve()
+    if not target.exists():
+        raise HTTPException(status_code=404, detail=f"iSign directory not found: {target}")
+    return _dataset_download_status(target)
+
+
+@router.get("/ready")
+async def get_training_readiness(data_dir: Optional[str] = None):
+    backend_root = _backend_root()
+    processed_dir = (backend_root / (data_dir or settings.ISIGN_PROCESSED_DIR)).resolve()
+    required = [processed_dir / "train.json", processed_dir / "val.json", processed_dir / "test.json", processed_dir / "vocab.json"]
+    missing = [str(p) for p in required if not p.exists()]
+
+    import torch
+
+    return {
+        "cuda_available": torch.cuda.is_available(),
+        "cuda_device_count": torch.cuda.device_count() if torch.cuda.is_available() else 0,
+        "processed_dataset_dir": str(processed_dir),
+        "processed_dataset_ready": len(missing) == 0,
+        "missing_processed_files": missing,
+        "recommended_output_dir": settings.ISIGN_TRAINING_OUTPUT_DIR,
     }
 
 
@@ -275,3 +426,68 @@ async def list_checkpoints(save_dir: str = "checkpoints/isign"):
         [str(p.relative_to(_backend_root())) for p in ckpt_dir.rglob("*.pt")],
     )
     return {"checkpoints": checkpoints, "count": len(checkpoints)}
+
+
+@router.get("/history")
+async def get_training_history(
+    save_dir: Optional[str] = None,
+    limit: int = 200,
+):
+    backend_root = _backend_root()
+    target_dir = backend_root / (save_dir or settings.ISIGN_TRAINING_OUTPUT_DIR)
+    history_path = target_dir / "history.jsonl"
+    if not history_path.exists():
+        raise HTTPException(status_code=404, detail=f"Training history not found: {history_path}")
+
+    if limit < 1:
+        raise HTTPException(status_code=400, detail="limit must be >= 1")
+
+    rows: List[Dict[str, Any]] = []
+    with open(history_path, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                rows.append(json.loads(line))
+            except json.JSONDecodeError:
+                continue
+
+    total = len(rows)
+    rows = rows[-limit:]
+    best_row = min(rows, key=lambda r: r.get("val_wer", 1e9)) if rows else None
+
+    return {
+        "history_file": str(history_path),
+        "total_epochs_logged": total,
+        "returned_epochs": len(rows),
+        "best_in_returned": best_row,
+        "rows": rows,
+    }
+
+
+@router.get("/artifacts")
+async def list_user_friendly_artifacts(
+    save_dir: Optional[str] = None,
+):
+    backend_root = _backend_root()
+    target_dir = backend_root / (save_dir or settings.ISIGN_TRAINING_OUTPUT_DIR)
+    ops_guide = backend_root / "TRAINING_USER_OPERATIONS.md"
+    presets = backend_root / "configs" / "isign_training_profiles.json"
+
+    files = {
+        "checkpoint_dir": str(target_dir),
+        "best": str(target_dir / "best.pt"),
+        "last": str(target_dir / "last.pt"),
+        "history_jsonl": str(target_dir / "history.jsonl"),
+        "history_csv": str(target_dir / "history.csv"),
+        "results_json": str(target_dir / "results.json"),
+        "train_config": str(target_dir / "train_config.json"),
+        "operations_guide": str(ops_guide),
+        "training_presets": str(presets),
+    }
+
+    return {
+        "files": files,
+        "exists": {k: Path(v).exists() for k, v in files.items()},
+    }

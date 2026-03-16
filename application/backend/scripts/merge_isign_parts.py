@@ -174,6 +174,7 @@ def process_group(
     src_dir: Path,
     out_dir: Path,
     do_extract: bool,
+    allow_partial: bool,
 ) -> None:
     cfg = GROUPS[group_name]
     parts = [src_dir / p for p in cfg["parts"]]
@@ -190,11 +191,17 @@ def process_group(
         return
 
     if len(available) < len(parts):
+        pending = list(src_dir.glob(f"{cfg['parts'][0][:-2]}*.crdownload"))
         log.warning(
-            "Only %d/%d parts found for '%s'.  "
-            "Merging with available parts only.",
+            "Only %d/%d parts found for '%s'.",
             len(available), len(parts), group_name,
         )
+        if pending:
+            log.warning("Pending browser downloads found: %s", [p.name for p in pending])
+        if not allow_partial:
+            log.warning("Skipping '%s' merge until all parts are fully downloaded.", group_name)
+            return
+        log.warning("Proceeding with partial parts due to --allow-partial")
         parts = available
 
     log.info("=== Processing: %s ===", group_name.upper())
@@ -221,6 +228,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--no-extract", action="store_true", help="Merge only; do not extract")
     p.add_argument("--poses-only", action="store_true", help="Process pose archives only")
     p.add_argument("--videos-only", action="store_true", help="Process video archives only")
+    p.add_argument("--allow-partial", action="store_true", help="Allow merge with incomplete part set (not recommended)")
     return p.parse_args()
 
 
@@ -242,7 +250,7 @@ def main() -> None:
         groups_to_run = ["poses", "videos"]
 
     for g in groups_to_run:
-        process_group(g, src_dir, out_dir, do_extract)
+        process_group(g, src_dir, out_dir, do_extract, args.allow_partial)
 
     log.info("All done.  Next step:")
     log.info(
