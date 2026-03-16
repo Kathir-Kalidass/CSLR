@@ -1,227 +1,277 @@
 """
-Training API Endpoints
-Manage training jobs via REST API
+iSign Training API Endpoints
+Launches preprocess/train scripts with modular hyperparameter control.
 """
 
-from typing import Dict, Optional
+from __future__ import annotations
 
-from fastapi import APIRouter, BackgroundTasks, HTTPException
-from pydantic import BaseModel
+import subprocess
+import sys
+import time
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel, Field
+
+from app.core.config import settings
 from app.core.logging import logger
-from app.training.trainer import CSLRTrainer
-from app.training.checkpoint_manager import CheckpointManager
-from app.data.video_dataset import CSLRVideoDataset, collate_fn
-from app.models.two_stream import TwoStreamNetwork
-
-from torch.utils.data import DataLoader
 
 router = APIRouter(prefix="/training", tags=["training"])
 
 
-class TrainingConfig(BaseModel):
-    """Training configuration"""
-    data_dir: str
-    num_epochs: int = 100
+class ISignPreprocessConfig(BaseModel):
+    isign_dir: str = Field(default_factory=lambda: settings.ISIGN_DATA_DIR)
+    out_dir: str = Field(default_factory=lambda: settings.ISIGN_PROCESSED_DIR)
+    max_frames: int = 64
+    val_ratio: float = 0.1
+    test_ratio: float = 0.1
+    workers: int = 4
+    seed: int = 42
+    max_samples: int = 0
+    skip_frames: bool = False
+
+
+class ISignTrainingConfig(BaseModel):
+    data_dir: str = Field(default_factory=lambda: settings.ISIGN_PROCESSED_DIR)
+    vocab: Optional[str] = None
+    num_frames: int = 64
+    frame_size_h: int = 224
+    frame_size_w: int = 224
+    max_samples: int = 0
+    use_rgb: bool = True
+    use_pose: bool = True
+    pretrained_cnn: bool = True
+    hidden_dim: int = 256
+    num_layers: int = 2
+    dropout: float = 0.3
+    epochs: int = 50
     batch_size: int = 4
-    learning_rate: float = 1e-3
-    weight_decay: float = 1e-3
-    scheduler: str = "cosine"
-    optimizer: str = "adam"
-    num_classes: int = 2000
-    val_freq: int = 1
-    save_dir: str = "checkpoints"
+    learning_rate: float = 1e-4
+    weight_decay: float = 1e-4
+    clip_grad: float = 5.0
+    warmup_epochs: int = 3
+    use_amp: bool = True
+    ckpt_dir: str = "checkpoints/isign"
+    workers: int = 2
+    seed: int = 42
+    resume: Optional[str] = None
+    preprocess_first: bool = False
+    preprocess: ISignPreprocessConfig = Field(default_factory=ISignPreprocessConfig)
 
 
 class TrainingStatus(BaseModel):
-    """Training job status"""
     status: str
-    current_epoch: int
-    total_epochs: int
-    best_score: float
+    phase: str
+    pid: int
+    started_at: float
+    config: Dict[str, Any]
     message: str
 
 
-# Global training state
-training_state = {
+training_state: Dict[str, Any] = {
     "active": False,
-    "trainer": None,
-    "current_epoch": 0,
-    "total_epochs": 0,
-    "best_score": 0.0,
+    "phase": "idle",
+    "process": None,
+    "started_at": 0.0,
+    "config": {},
 }
 
 
-@router.post("/start")
-async def start_training(
-    config: TrainingConfig,
-    background_tasks: BackgroundTasks,
-):
-    """
-    Start training job
-    
-    Args:
-        config: Training configuration
-        
-    Returns:
-        Job status
-    """
-    if training_state["active"]:
-        raise HTTPException(status_code=400, detail="Training already in progress")
-    
-    logger.info(f"Starting training: {config.dict()}")
-    
-    # Create model
-    model = TwoStreamNetwork(
-        num_classes=config.num_classes,
-        num_blocks=5,
-        freeze_blocks=(0, 0),
-        use_lateral=(True, True),
-    )
-    
-    # Create datasets
-    train_dataset = CSLRVideoDataset(
-        data_dir=config.data_dir,
-        split="train",
-        augment=True,
-    )
-    
-    val_dataset = CSLRVideoDataset(
-        data_dir=config.data_dir,
-        split="val",
-        augment=False,
-    )
-    
-    train_loader = DataLoader(
-        train_dataset,
-        batch_size=config.batch_size,
-        shuffle=True,
-        collate_fn=collate_fn,
-        num_workers=4,
-        pin_memory=True,
-    )
-    
-    val_loader = DataLoader(
-        val_dataset,
-        batch_size=config.batch_size,
-        shuffle=False,
-        collate_fn=collate_fn,
-        num_workers=2,
-        pin_memory=True,
-    )
-    
-    # Create trainer
-    from app.models.model_manager import ModelManager
-    model_manager = ModelManager()
-    
-    # Wrap model for training
-    class TrainingModelManager:
-        def __init__(self, model):
-            self.model = model
-    
-    training_model_manager = TrainingModelManager(model.cuda())
-    
-    trainer = CSLRTrainer(
-        model_manager=model_manager,
-        train_loader=train_loader,
-        val_loader=val_loader,
-        save_dir=config.save_dir,
-        use_amp=True,
-    )
-    
-    # Update state
-    training_state["trainer"] = trainer
-    training_state["total_epochs"] = config.num_epochs
+def _backend_root() -> Path:
+    return Path(__file__).resolve().parents[3]
+
+
+def _to_preprocess_command(cfg: ISignPreprocessConfig) -> List[str]:
+    cmd = [
+        sys.executable,
+        "scripts/preprocess_isign.py",
+        "--isign-dir",
+        cfg.isign_dir,
+        "--out-dir",
+        cfg.out_dir,
+        "--max-frames",
+        str(cfg.max_frames),
+        "--val-ratio",
+        str(cfg.val_ratio),
+        "--test-ratio",
+        str(cfg.test_ratio),
+        "--workers",
+        str(cfg.workers),
+        "--seed",
+        str(cfg.seed),
+    ]
+    if cfg.max_samples > 0:
+        cmd.extend(["--max-samples", str(cfg.max_samples)])
+    if cfg.skip_frames:
+        cmd.append("--skip-frames")
+    return cmd
+
+
+def _to_training_command(cfg: ISignTrainingConfig) -> List[str]:
+    cmd = [
+        sys.executable,
+        "scripts/train_isign.py",
+        "--data-dir",
+        cfg.data_dir,
+        "--num-frames",
+        str(cfg.num_frames),
+        "--frame-size",
+        str(cfg.frame_size_h),
+        str(cfg.frame_size_w),
+        "--hidden-dim",
+        str(cfg.hidden_dim),
+        "--num-layers",
+        str(cfg.num_layers),
+        "--dropout",
+        str(cfg.dropout),
+        "--epochs",
+        str(cfg.epochs),
+        "--batch-size",
+        str(cfg.batch_size),
+        "--lr",
+        str(cfg.learning_rate),
+        "--weight-decay",
+        str(cfg.weight_decay),
+        "--clip-grad",
+        str(cfg.clip_grad),
+        "--warmup-epochs",
+        str(cfg.warmup_epochs),
+        "--ckpt-dir",
+        cfg.ckpt_dir,
+        "--workers",
+        str(cfg.workers),
+        "--seed",
+        str(cfg.seed),
+    ]
+    if cfg.vocab:
+        cmd.extend(["--vocab", cfg.vocab])
+    if cfg.max_samples > 0:
+        cmd.extend(["--max-samples", str(cfg.max_samples)])
+    if not cfg.use_rgb:
+        cmd.append("--no-rgb")
+    if not cfg.use_pose:
+        cmd.append("--no-pose")
+    if not cfg.pretrained_cnn:
+        cmd.append("--no-pretrained")
+    if not cfg.use_amp:
+        cmd.append("--no-amp")
+    if cfg.resume:
+        cmd.extend(["--resume", cfg.resume])
+    return cmd
+
+
+def _launch_process(cmd: List[str], phase: str, config_dump: Dict[str, Any]) -> int:
+    backend_root = _backend_root()
+    logger.info("Launching %s job: %s", phase, " ".join(cmd))
+    proc = subprocess.Popen(cmd, cwd=str(backend_root))
     training_state["active"] = True
-    
-    # Start training in background
-    def train_job():
-        try:
-            trainer.train(
-                num_epochs=config.num_epochs,
-                optimizer_cfg={
-                    "optimizer_type": config.optimizer,
-                    "lr": config.learning_rate,
-                    "weight_decay": config.weight_decay,
-                },
-                scheduler_cfg={
-                    "scheduler_type": config.scheduler,
-                },
-                val_freq=config.val_freq,
-            )
-            training_state["active"] = False
-            logger.info("Training completed successfully")
-        except Exception as e:
-            logger.error(f"Training failed: {e}")
-            training_state["active"] = False
-            raise
-    
-    background_tasks.add_task(train_job)
-    
+    training_state["phase"] = phase
+    training_state["process"] = proc
+    training_state["started_at"] = time.time()
+    training_state["config"] = config_dump
+    return proc.pid
+
+
+def _refresh_state() -> None:
+    proc = training_state.get("process")
+    if not proc:
+        return
+    code = proc.poll()
+    if code is None:
+        return
+    training_state["active"] = False
+    training_state["phase"] = "completed" if code == 0 else "failed"
+
+
+@router.post("/preprocess")
+async def start_preprocess(config: ISignPreprocessConfig):
+    if training_state["active"]:
+        raise HTTPException(status_code=400, detail="Another training/preprocess job is already running")
+    cmd = _to_preprocess_command(config)
+    pid = _launch_process(cmd, phase="preprocess", config_dump=config.model_dump())
     return {
         "status": "started",
-        "message": f"Training started for {config.num_epochs} epochs",
+        "phase": "preprocess",
+        "pid": pid,
+        "message": "iSign preprocessing started",
+    }
+
+
+@router.post("/start")
+async def start_training(config: ISignTrainingConfig):
+    if training_state["active"]:
+        raise HTTPException(status_code=400, detail="Training already in progress")
+
+    backend_root = _backend_root()
+    if config.preprocess_first:
+        preprocess_cmd = _to_preprocess_command(config.preprocess)
+        logger.info("Running preprocess step before training")
+        preprocess_result = subprocess.run(preprocess_cmd, cwd=str(backend_root), check=False)
+        if preprocess_result.returncode != 0:
+            raise HTTPException(status_code=500, detail="Preprocess step failed. Check server logs.")
+
+    cmd = _to_training_command(config)
+    pid = _launch_process(cmd, phase="train", config_dump=config.model_dump())
+    return {
+        "status": "started",
+        "phase": "train",
+        "pid": pid,
+        "message": f"iSign training started for {config.epochs} epochs",
     }
 
 
 @router.get("/status", response_model=TrainingStatus)
 async def get_training_status():
-    """Get current training status"""
-    
-    trainer = training_state.get("trainer")
-    
+    _refresh_state()
+    proc = training_state.get("process")
+    if not proc:
+        return TrainingStatus(
+            status="idle",
+            phase="idle",
+            pid=0,
+            started_at=0.0,
+            config={},
+            message="No active job",
+        )
+
+    status = "running" if training_state["active"] else training_state["phase"]
     return TrainingStatus(
-        status="running" if training_state["active"] else "idle",
-        current_epoch=trainer.current_epoch if trainer else 0,
-        total_epochs=training_state["total_epochs"],
-        best_score=trainer.best_score if trainer else 0.0,
-        message="Training in progress" if training_state["active"] else "No active training",
+        status=status,
+        phase=training_state["phase"],
+        pid=proc.pid,
+        started_at=training_state["started_at"],
+        config=training_state["config"],
+        message=f"Current phase: {training_state['phase']}",
     )
 
 
 @router.post("/stop")
 async def stop_training():
-    """Stop current training job"""
-    
-    if not training_state["active"]:
-        raise HTTPException(status_code=400, detail="No active training")
-    
+    _refresh_state()
+    proc = training_state.get("process")
+    if not proc or not training_state["active"]:
+        raise HTTPException(status_code=400, detail="No active training job")
+
+    proc.terminate()
+    try:
+        proc.wait(timeout=10)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        proc.wait(timeout=5)
+
     training_state["active"] = False
-    logger.info("Training stopped by user")
-    
-    return {"status": "stopped", "message": "Training will stop after current epoch"}
+    training_state["phase"] = "stopped"
+    return {"status": "stopped", "message": "Training job stopped"}
 
 
 @router.get("/checkpoints")
-async def list_checkpoints(save_dir: str = "checkpoints"):
-    """List all saved checkpoints"""
-    
-    ckpt_manager = CheckpointManager(save_dir)
-    checkpoints = ckpt_manager.get_checkpoint_list()
-    
-    return {
-        "checkpoints": [str(ckpt) for ckpt in checkpoints],
-        "count": len(checkpoints),
-    }
+async def list_checkpoints(save_dir: str = "checkpoints/isign"):
+    ckpt_dir = _backend_root() / save_dir
+    if not ckpt_dir.exists():
+        return {"checkpoints": [], "count": 0}
 
-
-@router.post("/load-checkpoint")
-async def load_checkpoint(
-    checkpoint_path: str,
-    device: str = "cuda",
-):
-    """Load a checkpoint"""
-    
-    import torch
-    
-    try:
-        checkpoint = torch.load(checkpoint_path, map_location=device)
-        
-        return {
-            "status": "success",
-            "epoch": checkpoint.get("epoch", 0),
-            "best_score": checkpoint.get("best_score", 0.0),
-            "message": f"Checkpoint loaded from {checkpoint_path}",
-        }
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Failed to load checkpoint: {e}")
+    checkpoints = sorted(
+        [str(p.relative_to(_backend_root())) for p in ckpt_dir.rglob("*.pt")],
+    )
+    return {"checkpoints": checkpoints, "count": len(checkpoints)}

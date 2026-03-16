@@ -17,6 +17,7 @@ from app.monitoring.gpu_monitor import gpu_monitor
 from app.services.cache_service import CacheService
 from app.services.streaming_service import StreamingService
 from app.services.translation_service import TranslationService
+from app.services.audio_service import AudioService
 
 
 # Model initialization on startup
@@ -42,7 +43,7 @@ async def lifespan(app: FastAPI):
     logger.info("🔧 Initializing InferenceService...")
     try:
         app.state.inference_service = InferenceService(
-            vocab_file=settings.VOCAB_FILE if hasattr(settings, 'VOCAB_FILE') else None
+            vocab_file=settings.ISIGN_VOCAB_FILE
         )
         logger.info("✅ InferenceService initialized successfully")
     except Exception as e:
@@ -54,6 +55,7 @@ async def lifespan(app: FastAPI):
     app.state.cache_service = CacheService()
     app.state.streaming_service = StreamingService()
     app.state.translation_service = TranslationService()
+    app.state.audio_service = AudioService()
     app.state.metrics = global_metrics
     app.state.gpu_monitor = gpu_monitor
     
@@ -61,6 +63,9 @@ async def lifespan(app: FastAPI):
     
     # Cleanup
     logger.info("🛑 Shutting down CSLR Backend")
+    audio_service = getattr(app.state, "audio_service", None)
+    if audio_service is not None:
+        audio_service.close()
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
 

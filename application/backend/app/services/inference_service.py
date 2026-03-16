@@ -5,6 +5,7 @@ Orchestrates the full ML pipeline with all 4 modules connected.
 
 from __future__ import annotations
 
+import json
 import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -49,6 +50,9 @@ class InferenceService:
         self.use_amp = settings.USE_AMP
         self.metrics = global_metrics
 
+        vocab = self._load_vocab(vocab_file)
+        self.vocab_size = len(vocab)
+
         # Module 1: Preprocessing
         logger.info("Initializing Module 1: Preprocessing")
         self.video_loader = VideoLoader()
@@ -84,21 +88,12 @@ class InferenceService:
             input_dim=512,
             hidden_dim=256,
             num_layers=2,
-            vocab_size=2000,
+            vocab_size=self.vocab_size,
             model_type="bilstm",
             dropout=0.3,
         ).to(self.device)
 
-        self.ctc_layer = CTCLayer(blank_idx=0, vocab_size=2000)
-
-        # Load vocab
-        if vocab_file and Path(vocab_file).exists():
-            with open(vocab_file, "r") as f:
-                import json
-
-                vocab = json.load(f)
-        else:
-            vocab = [f"WORD_{i}" for i in range(2000)]
+        self.ctc_layer = CTCLayer(blank_idx=0, vocab_size=self.vocab_size)
 
         self.decoder = Decoder(labels=vocab)
         self.ctc_decoder = CTCDecoder(labels=vocab, beam_width=settings.BEAM_WIDTH)
@@ -119,7 +114,65 @@ class InferenceService:
         self.fusion.eval()
         self.temporal_model.eval()
 
+        self._load_pipeline_checkpoints()
+
         logger.info("All modules initialized successfully")
+
+    def _load_vocab(self, vocab_file: Optional[str]) -> List[str]:
+        candidates = []
+        if vocab_file:
+            candidates.append(Path(vocab_file))
+        candidates.append(Path(settings.ISIGN_VOCAB_FILE))
+
+        for candidate in candidates:
+            if candidate.exists():
+                try:
+                    with open(candidate, "r", encoding="utf-8") as f:
+                        vocab = json.load(f)
+                    if isinstance(vocab, list) and vocab:
+                        logger.info("Loaded vocabulary from %s (%d tokens)", candidate, len(vocab))
+                        return vocab
+                except Exception as exc:
+                    logger.warning("Failed to read vocab from %s: %s", candidate, exc)
+
+        logger.warning(
+            "No vocab file found. Falling back to synthetic vocab of size %d",
+            settings.INFERENCE_DEFAULT_VOCAB_SIZE,
+        )
+        return [f"WORD_{i}" for i in range(settings.INFERENCE_DEFAULT_VOCAB_SIZE)]
+
+    def _load_state_dict(self, module: torch.nn.Module, checkpoint_path: str, module_name: str) -> None:
+        path = Path(checkpoint_path)
+        if not path.exists():
+            logger.info("%s checkpoint not found at %s (skipping)", module_name, path)
+            return
+
+        try:
+            checkpoint = torch.load(str(path), map_location=self.device)
+            state_dict = checkpoint
+            if isinstance(checkpoint, dict):
+                state_dict = (
+                    checkpoint.get("model_state_dict")
+                    or checkpoint.get("state_dict")
+                    or checkpoint.get("model")
+                    or checkpoint
+                )
+            missing, unexpected = module.load_state_dict(state_dict, strict=False)
+            logger.info(
+                "Loaded %s checkpoint from %s (missing=%d, unexpected=%d)",
+                module_name,
+                path,
+                len(missing),
+                len(unexpected),
+            )
+        except Exception as exc:
+            logger.warning("Failed to load %s checkpoint from %s: %s", module_name, path, exc)
+
+    def _load_pipeline_checkpoints(self) -> None:
+        self._load_state_dict(self.rgb_stream, settings.RGB_MODEL_PATH, "RGB stream")
+        self._load_state_dict(self.pose_stream, settings.POSE_MODEL_PATH, "Pose stream")
+        self._load_state_dict(self.fusion, settings.FUSION_MODEL_PATH, "Fusion")
+        self._load_state_dict(self.temporal_model, settings.SEQUENCE_MODEL_PATH, "Temporal model")
 
     async def _build_sentence(self, gloss_tokens: List[str]) -> str:
         if settings.USE_TRANSLATION_SERVICE:

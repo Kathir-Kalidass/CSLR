@@ -60,11 +60,13 @@ async def websocket_inference(websocket: WebSocket):
 
     app = websocket.app
     service = getattr(app.state, "inference_service", None)
+    audio_service = getattr(app.state, "audio_service", None)
 
     streaming_service = getattr(app.state, "streaming_service", None)
     if streaming_service is None:
         streaming_service = StreamingService()
     stream_state = streaming_service.get_stream(client_id)
+    last_spoken_sentence = ""
 
     try:
         while True:
@@ -102,10 +104,20 @@ async def websocket_inference(websocket: WebSocket):
                 )
                 stream_state.pipeline_state = result.get("state", None)
 
+                sentence = result.get("sentence", "")
+                if (
+                    settings.AUTO_TTS_STREAM
+                    and audio_service is not None
+                    and sentence
+                    and sentence != last_spoken_sentence
+                ):
+                    await audio_service.synthesize_streaming(sentence)
+                    last_spoken_sentence = sentence
+
                 await manager.send_personal_message(
                     {
                         "gloss": result.get("gloss", []),
-                        "sentence": result.get("sentence", ""),
+                        "sentence": sentence,
                         "confidence": result.get("confidence", 0.0),
                         "fps": result.get("fps", 0.0),
                         "buffer_fill": len(stream_state.frame_buffer),

@@ -22,7 +22,11 @@ router = APIRouter()
 
 
 @router.post("/video", response_model=InferenceResponse)
-async def infer_video(file: UploadFile = File(...), request: Request | None = None):
+async def infer_video(
+    file: UploadFile = File(...),
+    request: Request | None = None,
+    speak: bool = False,
+):
     """
     Process an uploaded video file and return recognition results.
     """
@@ -44,6 +48,12 @@ async def infer_video(file: UploadFile = File(...), request: Request | None = No
             temp_path = tmp.name
 
         result = await service.process_video(temp_path)
+        audio_service = getattr(request.app.state, "audio_service", None) if request else None
+        should_speak = settings.AUTO_TTS_INFERENCE or speak
+        sentence = result.get("sentence", "")
+        if should_speak and audio_service and sentence:
+            await audio_service.synthesize(sentence)
+
         processing_time = time.time() - start_time
 
         return InferenceResponse(
@@ -69,7 +79,9 @@ async def infer_video(file: UploadFile = File(...), request: Request | None = No
 
 @router.post("/frames", response_model=InferenceResponse)
 async def infer_frames(
-    inference_request: InferenceRequest, request: Request | None = None
+    inference_request: InferenceRequest,
+    request: Request | None = None,
+    speak: bool = False,
 ):
     """
     Process a sequence of base64-encoded frames.
@@ -120,6 +132,12 @@ async def infer_frames(
             raise HTTPException(status_code=400, detail="No valid frames decoded")
 
         result = await service.process_frames(frames)
+        audio_service = getattr(request.app.state, "audio_service", None) if request else None
+        should_speak = settings.AUTO_TTS_INFERENCE or speak
+        sentence = result.get("sentence", "")
+        if should_speak and audio_service and sentence:
+            await audio_service.synthesize(sentence)
+
         processing_time = time.time() - start_time
 
         response = InferenceResponse(
