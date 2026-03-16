@@ -76,6 +76,11 @@ class Settings:
     ADAPTIVE_THRESHOLD_BOOST_MAX: float = float(os.getenv("ADAPTIVE_THRESHOLD_BOOST_MAX", "0.18"))
     ADAPTIVE_MAXTOK_REDUCTION: float = float(os.getenv("ADAPTIVE_MAXTOK_REDUCTION", "0.40"))
     ADAPTIVE_VOTES_BONUS_MAX: int = int(os.getenv("ADAPTIVE_VOTES_BONUS_MAX", "2"))
+    ENABLE_ENSEMBLE_DECODE: bool = os.getenv("ENABLE_ENSEMBLE_DECODE", "true").lower() == "true"
+    ENSEMBLE_MIN_AGREEMENT: float = float(os.getenv("ENSEMBLE_MIN_AGREEMENT", "0.55"))
+    ENABLE_CONFIDENCE_CALIBRATION: bool = os.getenv("ENABLE_CONFIDENCE_CALIBRATION", "true").lower() == "true"
+    CONFIDENCE_TEMPERATURE: float = float(os.getenv("CONFIDENCE_TEMPERATURE", "1.0"))
+    CONFIDENCE_CALIBRATION_FILE: str = os.getenv("CONFIDENCE_CALIBRATION_FILE", "checkpoints/isign_fast_v2/confidence_calibration.json")
     
     # Redis Configuration (Optional)
     REDIS_HOST: str = os.getenv("REDIS_HOST", "localhost")

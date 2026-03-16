@@ -77,6 +77,13 @@ class ISignDataset(Dataset):
         use_poses: bool = True,
         use_frames: bool = True,
         max_samples: int = 0,
+        hard_negative_prob: float = 0.0,
+        temporal_jitter: int = 2,
+        frame_drop_prob: float = 0.05,
+        brightness_jitter: float = 0.15,
+        blur_prob: float = 0.10,
+        noise_std: float = 0.02,
+        pose_jitter_std: float = 0.01,
     ) -> None:
         self.data_dir   = Path(data_dir)
         self.split      = split
@@ -85,6 +92,13 @@ class ISignDataset(Dataset):
         self.augment    = augment and (split == "train")
         self.use_poses  = use_poses
         self.use_frames = use_frames
+        self.hard_negative_prob = float(max(0.0, hard_negative_prob)) if split == "train" else 0.0
+        self.temporal_jitter = int(max(0, temporal_jitter)) if split == "train" else 0
+        self.frame_drop_prob = float(max(0.0, frame_drop_prob)) if split == "train" else 0.0
+        self.brightness_jitter = float(max(0.0, brightness_jitter)) if split == "train" else 0.0
+        self.blur_prob = float(max(0.0, blur_prob)) if split == "train" else 0.0
+        self.noise_std = float(max(0.0, noise_std)) if split == "train" else 0.0
+        self.pose_jitter_std = float(max(0.0, pose_jitter_std)) if split == "train" else 0.0
 
         # Load annotations
         ann_path = self.data_dir / f"{split}.json"
@@ -151,6 +165,9 @@ class ISignDataset(Dataset):
         # Uniform index sampling
         T    = len(jpgs)
         idxs = np.linspace(0, T - 1, self.num_frames, dtype=int)
+        if self.temporal_jitter > 0:
+            jitter = np.random.randint(-self.temporal_jitter, self.temporal_jitter + 1, size=len(idxs))
+            idxs = np.clip(idxs + jitter, 0, T - 1)
         frames = []
         for i in idxs:
             img = cv2.imread(str(jpgs[i]))
@@ -161,6 +178,36 @@ class ISignDataset(Dataset):
             frames.append(img)
 
         arr = np.stack(frames, axis=0).astype(np.float32) / 255.0  # (T, H, W, C)
+
+        # Frame drop augmentation
+        if self.frame_drop_prob > 0:
+            keep = np.random.rand(arr.shape[0]) > self.frame_drop_prob
+            if not np.any(keep):
+                keep[np.random.randint(0, arr.shape[0])] = True
+            kept = arr[keep]
+            resample_idxs = np.linspace(0, len(kept) - 1, self.num_frames, dtype=int)
+            arr = kept[resample_idxs]
+
+        # Photometric and blur/noise augmentations
+        if self.brightness_jitter > 0:
+            scale = 1.0 + np.random.uniform(-self.brightness_jitter, self.brightness_jitter)
+            arr = np.clip(arr * scale, 0.0, 1.0)
+        if self.noise_std > 0:
+            arr = np.clip(arr + np.random.normal(0, self.noise_std, size=arr.shape).astype(np.float32), 0.0, 1.0)
+
+        if self.blur_prob > 0:
+            try:
+                import cv2
+                if np.random.rand() < self.blur_prob:
+                    blurred = []
+                    for fr in arr:
+                        fr_u8 = (fr * 255.0).astype(np.uint8)
+                        fr_u8 = cv2.GaussianBlur(fr_u8, (3, 3), sigmaX=0.8)
+                        blurred.append(fr_u8.astype(np.float32) / 255.0)
+                    arr = np.stack(blurred, axis=0)
+            except Exception:
+                pass
+
         arr = (arr - _MEAN) / _STD
 
         # Random horizontal flip augmentation
@@ -191,7 +238,12 @@ class ISignDataset(Dataset):
 
         T = arr.shape[0]
         idxs = np.linspace(0, T - 1, self.num_frames, dtype=int)
+        if self.temporal_jitter > 0:
+            jitter = np.random.randint(-self.temporal_jitter, self.temporal_jitter + 1, size=len(idxs))
+            idxs = np.clip(idxs + jitter, 0, T - 1)
         arr  = arr[idxs]                     # (num_frames, D)
+        if self.pose_jitter_std > 0:
+            arr = arr + np.random.normal(0, self.pose_jitter_std, size=arr.shape).astype(np.float32)
         return torch.from_numpy(arr)
 
     # ------------------------------------------------------------------
@@ -200,6 +252,19 @@ class ISignDataset(Dataset):
 
     def __getitem__(self, idx: int) -> Dict[str, Any]:
         ann = self.annotations[idx]
+
+        if self.hard_negative_prob > 0 and np.random.rand() < self.hard_negative_prob:
+            rgb = torch.zeros(3, self.num_frames, *self.frame_size, dtype=torch.float32)
+            pose = torch.zeros(self.num_frames, 1, dtype=torch.float32)
+            labels = torch.zeros(0, dtype=torch.long)
+            return {
+                "rgb": rgb,
+                "pose": pose,
+                "labels": labels,
+                "length": self.num_frames,
+                "name": f"neg_{ann['video_id']}",
+                "sentence": "",
+            }
 
         # RGB frames
         if self.use_frames:
@@ -288,6 +353,13 @@ def build_dataloaders(
     use_frames: bool = True,
     max_samples: int = 0,
     pin_memory: bool = True,
+    hard_negative_prob: float = 0.0,
+    temporal_jitter: int = 2,
+    frame_drop_prob: float = 0.05,
+    brightness_jitter: float = 0.15,
+    blur_prob: float = 0.10,
+    noise_std: float = 0.02,
+    pose_jitter_std: float = 0.01,
 ) -> Tuple[DataLoader, DataLoader, DataLoader, List[str]]:
     """
     Build train / val / test DataLoaders plus vocabulary list.
@@ -302,6 +374,13 @@ def build_dataloaders(
         use_poses=use_poses,
         use_frames=use_frames,
         max_samples=max_samples,
+        hard_negative_prob=hard_negative_prob,
+        temporal_jitter=temporal_jitter,
+        frame_drop_prob=frame_drop_prob,
+        brightness_jitter=brightness_jitter,
+        blur_prob=blur_prob,
+        noise_std=noise_std,
+        pose_jitter_std=pose_jitter_std,
     )
 
     train_ds = ISignDataset(split="train", augment=True, **common)

@@ -154,3 +154,84 @@ Recommended use:
 
 - Keep this enabled for real-time camera streams and noisy backgrounds.
 - For clean studio videos, lower strictness by reducing `ADAPTIVE_THRESHOLD_BOOST_MAX`.
+
+## 9. Confidence Calibration (Temperature Scaling)
+
+Calibration now runs at the end of training by default and writes:
+
+- `checkpoints/<run>/confidence_calibration.json`
+
+Use in inference:
+
+- `ENABLE_CONFIDENCE_CALIBRATION=true`
+- `CONFIDENCE_CALIBRATION_FILE=checkpoints/isign_fast_v2/confidence_calibration.json`
+
+Training command example:
+
+```bash
+python scripts/train_isign.py \
+  --data-dir dataset/isign_processed \
+  --device cuda \
+  --require-cuda \
+  --calibrate-confidence
+```
+
+## 10. Better Temporal Modeling (BiLSTM + Transformer Option)
+
+Select temporal encoder:
+
+- BiLSTM: `--temporal-type bilstm`
+- Lightweight Transformer: `--temporal-type transformer --transformer-heads 4`
+
+## 11. Data Quality Auto-Cleaning
+
+Detect corrupted videos, low-motion clips, and pose outliers:
+
+```bash
+python scripts/clean_isign_quality.py \
+  --isign-dir dataset/isign \
+  --out-report dataset/isign/quality_report.json \
+  --out-clean-csv dataset/isign/iSign_v1.1.cleaned.csv
+```
+
+## 12. Hard Negative Training + Advanced Augmentation
+
+Enable explicit no-sign negatives and strong augmentations:
+
+```bash
+python scripts/train_isign.py \
+  --data-dir dataset/isign_processed \
+  --hard-negative-prob 0.10 \
+  --temporal-jitter 2 \
+  --frame-drop-prob 0.05 \
+  --brightness-jitter 0.15 \
+  --blur-prob 0.10 \
+  --noise-std 0.02 \
+  --pose-jitter-std 0.01
+```
+
+## 13. Ensemble Decode Mode
+
+Combine greedy + beam decode with agreement checks:
+
+- `ENABLE_ENSEMBLE_DECODE=true`
+- `ENSEMBLE_MIN_AGREEMENT=0.55`
+
+## 14. Quantized Deployment Path (ONNX + TensorRT)
+
+Export ONNX + dynamic INT8 ONNX:
+
+```bash
+python scripts/export_onnx_int8.py \
+  --model-path checkpoints/isign_fast_v2/best.pt \
+  --onnx-path checkpoints/isign_fast_v2/model.onnx \
+  --int8-path checkpoints/isign_fast_v2/model.int8.onnx
+```
+
+Generate TensorRT build command:
+
+```bash
+python scripts/generate_trt_profile.py \
+  --onnx checkpoints/isign_fast_v2/model.onnx \
+  --engine checkpoints/isign_fast_v2/model_fp16.engine
+```

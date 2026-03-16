@@ -6,6 +6,7 @@ Orchestrates the full ML pipeline with all 4 modules connected.
 from __future__ import annotations
 
 import json
+import math
 import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -133,8 +134,73 @@ class InferenceService:
         self.temporal_model.eval()
 
         self._load_pipeline_checkpoints()
+        self._load_confidence_calibration()
 
         logger.info("All modules initialized successfully")
+
+    def _load_confidence_calibration(self) -> None:
+        self.confidence_temperature = settings.CONFIDENCE_TEMPERATURE
+        if not settings.ENABLE_CONFIDENCE_CALIBRATION:
+            return
+        path = Path(settings.CONFIDENCE_CALIBRATION_FILE)
+        if not path.exists():
+            return
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                obj = json.load(f)
+            t = float(obj.get("temperature", self.confidence_temperature))
+            if t > 0:
+                self.confidence_temperature = t
+                logger.info("Loaded confidence temperature calibration from %s (T=%.3f)", path, t)
+        except Exception as exc:
+            logger.warning("Failed to load confidence calibration from %s: %s", path, exc)
+
+    def _apply_confidence_temperature(self, confidence: float) -> float:
+        c = float(np.clip(confidence, 1e-6, 1 - 1e-6))
+        if not settings.ENABLE_CONFIDENCE_CALIBRATION:
+            return c
+        logit = math.log(c / (1.0 - c))
+        p = 1.0 / (1.0 + math.exp(-(logit / max(self.confidence_temperature, 1e-6))))
+        return float(np.clip(p, 0.0, 1.0))
+
+    def _decode_with_ensemble(self, logits: torch.Tensor) -> Dict[str, Any]:
+        """Decode with beam+greedy agreement checks for improved precision."""
+        beam = self.ctc_decoder.beam_search_decode(logits.squeeze(0).cpu(), beam_width=settings.BEAM_WIDTH)
+        if not settings.ENABLE_ENSEMBLE_DECODE:
+            return {
+                "tokens": beam.gloss_tokens,
+                "confidence": self._apply_confidence_temperature(beam.confidence),
+                "frame_confidences": beam.frame_confidences,
+                "agreement": 1.0,
+            }
+
+        greedy = self.ctc_decoder.ctc_greedy_decode(logits.squeeze(0).cpu())
+        b = beam.gloss_tokens
+        g = greedy.gloss_tokens
+        max_len = max(1, max(len(b), len(g)))
+        overlap = sum(1 for i in range(min(len(b), len(g))) if b[i] == g[i])
+        agreement = overlap / max_len
+
+        if agreement >= settings.ENSEMBLE_MIN_AGREEMENT:
+            tokens = b if beam.confidence >= greedy.confidence else g
+            conf = max(beam.confidence, greedy.confidence)
+        else:
+            # Conservative fallback to common prefix when models disagree.
+            common_prefix: List[str] = []
+            for bi, gi in zip(b, g):
+                if bi == gi:
+                    common_prefix.append(bi)
+                else:
+                    break
+            tokens = common_prefix
+            conf = min(beam.confidence, greedy.confidence) * agreement
+
+        return {
+            "tokens": tokens,
+            "confidence": self._apply_confidence_temperature(conf),
+            "frame_confidences": beam.frame_confidences or greedy.frame_confidences,
+            "agreement": agreement,
+        }
 
     def _init_adaptive_state(self) -> Dict[str, float]:
         return {
@@ -379,17 +445,14 @@ class InferenceService:
                 module3_time = self.metrics.stop_timer("module3")
 
             # CTC Decoding
-            decode_result = self.ctc_decoder.beam_search_decode(
-                logits.squeeze(0).cpu(),
-                beam_width=settings.BEAM_WIDTH,
-            )
+            decoded = self._decode_with_ensemble(logits)
             gloss_tokens = self._filter_gloss_tokens(
-                decode_result.gloss_tokens,
-                decode_result.confidence,
-                frame_confidences=decode_result.frame_confidences,
+                decoded["tokens"],
+                decoded["confidence"],
+                frame_confidences=decoded["frame_confidences"],
                 adaptive_state=adaptive_state,
             )
-            confidence = decode_result.confidence
+            confidence = decoded["confidence"]
 
             # Module 4: Language processing
             if settings.ENABLE_METRICS:
@@ -406,7 +469,7 @@ class InferenceService:
                 module4_time=module4_time,
                 num_frames=len(frames),
                 confidence=confidence,
-                frame_confidences=decode_result.frame_confidences,
+                frame_confidences=decoded["frame_confidences"],
             )
 
             logger.info(
@@ -422,6 +485,7 @@ class InferenceService:
                     "alpha": alpha.cpu().numpy().tolist() if alpha is not None else None,
                     "beta": beta.cpu().numpy().tolist() if beta is not None else None,
                 },
+                "decode_agreement": decoded.get("agreement", 1.0),
             }
         except Exception as e:
             logger.error(f"Inference failed: {e}", exc_info=True)
@@ -475,11 +539,11 @@ class InferenceService:
             if settings.ENABLE_METRICS:
                 module3_time = self.metrics.stop_timer("module3")
 
-            decode_result = self.ctc_decoder.ctc_greedy_decode(logits.squeeze(0).cpu())
+            decoded = self._decode_with_ensemble(logits)
             gloss_tokens = self._filter_gloss_tokens(
-                decode_result.gloss_tokens,
-                decode_result.confidence,
-                frame_confidences=decode_result.frame_confidences,
+                decoded["tokens"],
+                decoded["confidence"],
+                frame_confidences=decoded["frame_confidences"],
                 adaptive_state=adaptive_state,
             )
 
@@ -496,15 +560,16 @@ class InferenceService:
                 module3_time=module3_time,
                 module4_time=module4_time,
                 num_frames=len(frames),
-                confidence=decode_result.confidence,
-                frame_confidences=decode_result.frame_confidences,
+                confidence=decoded["confidence"],
+                frame_confidences=decoded["frame_confidences"],
             )
 
             return {
                 "gloss": gloss_tokens,
                 "sentence": sentence,
-                "confidence": decode_result.confidence,
+                "confidence": decoded["confidence"],
                 "fps": float(settings.FPS_TARGET),
+                "decode_agreement": decoded.get("agreement", 1.0),
             }
         except Exception as e:
             logger.error(f"Frame processing failed: {e}")
@@ -570,12 +635,12 @@ class InferenceService:
                 fused_features, _, _ = self.fusion(rgb_features, pose_features)
                 logits = self.temporal_model(fused_features)
 
-            decode_result = self.ctc_decoder.ctc_greedy_decode(logits.squeeze(0).cpu())
+            decoded = self._decode_with_ensemble(logits)
             gloss_tokens = [
                 tok for tok in self._filter_gloss_tokens(
-                    decode_result.gloss_tokens,
-                    decode_result.confidence,
-                    frame_confidences=decode_result.frame_confidences,
+                    decoded["tokens"],
+                    decoded["confidence"],
+                    frame_confidences=decoded["frame_confidences"],
                     adaptive_state=state.get("adaptive"),
                     caption_filter=state.get("caption_filter"),
                 )
@@ -589,8 +654,9 @@ class InferenceService:
             return {
                 "gloss": gloss_tokens,
                 "sentence": sentence,
-                "confidence": decode_result.confidence,
+                "confidence": decoded["confidence"],
                 "fps": float(settings.FPS_TARGET),
+                "decode_agreement": decoded.get("agreement", 1.0),
                 "partial": state["buffer"].counts() < state["buffer"].window_size,
                 "state": state,
             }

@@ -47,6 +47,7 @@ from typing import Dict, List, Optional, Tuple
 import numpy as np
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import CosineAnnealingLR
 
@@ -163,10 +164,13 @@ class ISignCSLRModel(nn.Module):
         use_rgb: bool      = True,
         use_pose: bool     = True,
         pretrained_cnn: bool = True,
+        temporal_type: str = "bilstm",
+        transformer_heads: int = 4,
     ) -> None:
         super().__init__()
         self.use_rgb  = use_rgb
         self.use_pose = use_pose
+        self.temporal_type = temporal_type.lower()
 
         fusion_in = 0
 
@@ -182,15 +186,29 @@ class ISignCSLRModel(nn.Module):
             raise ValueError("At least one of use_rgb or use_pose must be True")
 
         self.fusion_proj = nn.Linear(fusion_in, hidden_dim)
-        self.lstm = nn.LSTM(
-            input_size=hidden_dim,
-            hidden_size=hidden_dim,
-            num_layers=num_layers,
-            batch_first=True,
-            bidirectional=True,
-            dropout=dropout if num_layers > 1 else 0.0,
-        )
-        self.head     = nn.Linear(hidden_dim * 2, vocab_size)
+        if self.temporal_type == "transformer":
+            enc = nn.TransformerEncoderLayer(
+                d_model=hidden_dim,
+                nhead=transformer_heads,
+                dim_feedforward=hidden_dim * 4,
+                dropout=dropout,
+                batch_first=True,
+                activation="gelu",
+            )
+            self.temporal = nn.TransformerEncoder(enc, num_layers=num_layers)
+            head_in = hidden_dim
+        else:
+            self.temporal = nn.LSTM(
+                input_size=hidden_dim,
+                hidden_size=hidden_dim,
+                num_layers=num_layers,
+                batch_first=True,
+                bidirectional=True,
+                dropout=dropout if num_layers > 1 else 0.0,
+            )
+            head_in = hidden_dim * 2
+
+        self.head     = nn.Linear(head_in, vocab_size)
         self.dropout  = nn.Dropout(dropout)
         self.log_softmax = nn.LogSoftmax(dim=-1)
 
@@ -215,11 +233,76 @@ class ISignCSLRModel(nn.Module):
         x = torch.relu(self.fusion_proj(x))      # (B, T, hidden_dim)
         x = self.dropout(x)
 
-        x, _ = self.lstm(x)                      # (B, T, 2*hidden_dim)
+        if self.temporal_type == "transformer":
+            x = self.temporal(x)                 # (B, T, hidden_dim)
+        else:
+            x, _ = self.temporal(x)              # (B, T, 2*hidden_dim)
         x = self.dropout(x)
         x = self.head(x)                         # (B, T, vocab_size)
         log_p = self.log_softmax(x)              # (B, T, vocab_size)
         return log_p.permute(1, 0, 2)            # (T, B, vocab_size)  for CTC
+
+
+def _confidence_from_log_probs(log_probs: torch.Tensor) -> torch.Tensor:
+    """Get sequence confidence proxy from frame-wise max probs."""
+    probs = log_probs.exp().permute(1, 0, 2)  # (B, T, V)
+    conf = probs.max(dim=-1).values.mean(dim=-1)
+    return conf.clamp(1e-6, 1 - 1e-6)
+
+
+def calibrate_confidence_temperature(
+    model: ISignCSLRModel,
+    loader,
+    device: torch.device,
+    blank_id: int,
+) -> Dict[str, float]:
+    """Fit confidence temperature on validation set using sequence correctness."""
+    model.eval()
+    confs: List[float] = []
+    labels: List[int] = []
+
+    with torch.no_grad():
+        for batch in loader:
+            rgb = batch["rgb"].to(device, non_blocking=True)
+            pose = batch["pose"].to(device, non_blocking=True)
+            gt = batch["labels"].to(device, non_blocking=True)
+            gt_lens = batch["label_lengths"].to(device, non_blocking=True)
+
+            log_probs = model(rgb, pose)
+            conf = _confidence_from_log_probs(log_probs).cpu().numpy().tolist()
+
+            hyps = ctc_greedy_decode(log_probs, blank_id)
+            refs = [gt[i, : gt_lens[i]].tolist() for i in range(gt.shape[0])]
+            for c, h, r in zip(conf, hyps, refs):
+                confs.append(float(c))
+                labels.append(1 if h == r else 0)
+
+    if not confs:
+        return {"temperature": 1.0, "nll_before": 0.0, "nll_after": 0.0}
+
+    conf_t = torch.tensor(confs, dtype=torch.float32)
+    y = torch.tensor(labels, dtype=torch.float32)
+    logit = torch.logit(conf_t)
+
+    def nll(temp: float) -> float:
+        p = torch.sigmoid(logit / max(temp, 1e-3))
+        return float(F.binary_cross_entropy(p, y).item())
+
+    temps = np.linspace(0.4, 3.0, 120)
+    best_t = 1.0
+    best_nll = nll(best_t)
+    for t in temps:
+        curr = nll(float(t))
+        if curr < best_nll:
+            best_nll = curr
+            best_t = float(t)
+
+    return {
+        "temperature": best_t,
+        "nll_before": nll(1.0),
+        "nll_after": best_nll,
+        "samples": len(confs),
+    }
 
 
 # ===========================================================================
@@ -412,6 +495,17 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--hidden-dim",  type=int, default=256,              help="LSTM / encoder hidden dimension")
     p.add_argument("--num-layers",  type=int, default=2,                help="LSTM layers")
     p.add_argument("--dropout",     type=float, default=0.3,            help="Dropout rate")
+    p.add_argument("--temporal-type", choices=["bilstm", "transformer"], default="bilstm", help="Temporal encoder type")
+    p.add_argument("--transformer-heads", type=int, default=4, help="Attention heads for transformer temporal encoder")
+    p.add_argument("--hard-negative-prob", type=float, default=0.10, help="Probability of synthetic no-sign negatives in train split")
+    p.add_argument("--temporal-jitter", type=int, default=2, help="Temporal index jitter for data augmentation")
+    p.add_argument("--frame-drop-prob", type=float, default=0.05, help="Random frame drop probability")
+    p.add_argument("--brightness-jitter", type=float, default=0.15, help="Brightness jitter strength")
+    p.add_argument("--blur-prob", type=float, default=0.10, help="Gaussian blur augmentation probability")
+    p.add_argument("--noise-std", type=float, default=0.02, help="Additive RGB noise std")
+    p.add_argument("--pose-jitter-std", type=float, default=0.01, help="Pose jitter std")
+    p.add_argument("--calibrate-confidence", action="store_true", default=True, help="Fit confidence temperature on validation set")
+    p.add_argument("--no-calibrate-confidence", dest="calibrate_confidence", action="store_false", help="Disable confidence temperature fitting")
     # Training
     p.add_argument("--epochs",      type=int, default=50,               help="Total training epochs")
     p.add_argument("--batch-size",  type=int, default=4,                help="Batch size")
@@ -496,6 +590,13 @@ def main() -> None:
         use_frames     = not args.no_rgb,
         max_samples    = args.max_samples,
         pin_memory     = device.type == "cuda",
+        hard_negative_prob=args.hard_negative_prob,
+        temporal_jitter=args.temporal_jitter,
+        frame_drop_prob=args.frame_drop_prob,
+        brightness_jitter=args.brightness_jitter,
+        blur_prob=args.blur_prob,
+        noise_std=args.noise_std,
+        pose_jitter_std=args.pose_jitter_std,
     )
     vocab_size = len(vocab)
     blank_id   = vocab.index("<blank>") if "<blank>" in vocab else 0
@@ -520,6 +621,8 @@ def main() -> None:
         use_rgb        = not args.no_rgb,
         use_pose       = not args.no_pose,
         pretrained_cnn = not args.no_pretrained,
+        temporal_type  = args.temporal_type,
+        transformer_heads=args.transformer_heads,
     ).to(device)
 
     total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
@@ -642,6 +745,15 @@ def main() -> None:
     test_loss, test_wer = evaluate(model, test_loader, criterion, device, blank_id)
     log.info("Test loss: %.4f  |  Test WER: %.4f", test_loss, test_wer)
 
+    calibration = {"temperature": 1.0, "nll_before": 0.0, "nll_after": 0.0, "samples": 0}
+    if args.calibrate_confidence:
+        log.info("Calibrating confidence temperature on validation set …")
+        calibration = calibrate_confidence_temperature(model, val_loader, device, blank_id)
+        calib_path = ckpt_dir / "confidence_calibration.json"
+        with open(calib_path, "w", encoding="utf-8") as f:
+            json.dump(calibration, f, indent=2)
+        log.info("Confidence calibration saved to %s (T=%.3f)", calib_path, calibration["temperature"])
+
     # Save results summary
     results = {
         "test_loss": test_loss,
@@ -652,6 +764,7 @@ def main() -> None:
         "history_jsonl": str(history_jsonl),
         "history_csv": str(history_csv),
         "train_config": str(train_config_path),
+        "confidence_calibration": calibration,
     }
     results_path = ckpt_dir / "results.json"
     with open(results_path, "w") as f:
