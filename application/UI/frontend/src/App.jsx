@@ -1,260 +1,272 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { motion } from 'framer-motion'
-import ControlBar from './components/ControlBar'
-import StatusBoard from './components/StatusBoard'
-import Module1Debug from './components/Module1Debug'
-import LiveProcessingView from './components/LiveProcessingView'
-import TrainingMonitor from './components/TrainingMonitor'
+import { useEffect, useRef, useState } from 'react'
 
-const DEFAULT_DATA = {
-  status: 'idle',
-  active_stage: 'module1',
-  partial_gloss: '--',
-  final_sentence: 'Press Open Camera then Start',
-  audio_state: 'idle',
+const BACKEND_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+
+const initialResult = {
+  gloss: [],
+  sentence: '',
   confidence: 0,
   fps: 0,
-  latency_ms: 0,
-  metrics: { accuracy: 0, wer: 0, bleu: 0, window_size: 64, stride: 32 },
-  transcript_history: [],
-  control_state: { running: false, tts_enabled: true, camera_active: false },
-  parser_console: [],
-  module1_debug: {},
+  processing_time: 0,
 }
 
-const MODULES = [
-  { id: 'module1', name: 'Module 1: Video Preprocessing' },
-  { id: 'module2', name: 'Module 2: Feature Extraction' },
-  { id: 'module3', name: 'Module 3: Temporal Recognition' },
-  { id: 'module4', name: 'Module 4: Translation & Output' },
-]
-
-const ACK_STATUSES = new Set([
-  'started',
-  'stopped',
-  'camera_opened',
-  'camera_closed',
-  'tts_toggled',
-  'module_selected',
-  'cleared',
-  'error',
-])
-
 export default function App() {
-  const wsRef = useRef(null)
-  const [data, setData] = useState(DEFAULT_DATA)
-  const [selectedModule, setSelectedModule] = useState('module1')
-  const [notice, setNotice] = useState('')
-  const [wsStatus, setWsStatus] = useState('connecting') // 'connecting' | 'connected' | 'disconnected'
-
-  const wsUrl = useMemo(() => {
-    const fromEnv = import.meta.env.VITE_WS_URL
-    if (fromEnv) return fromEnv
-    const proto = window.location.protocol === 'https:' ? 'wss' : 'ws'
-    return `${proto}://localhost:8080/ws/realtime`
-  }, [])
+  const cameraVideoRef = useRef(null)
+  const canvasRef = useRef(null)
+  const [backendStatus, setBackendStatus] = useState('checking')
+  const [message, setMessage] = useState('Ready.')
+  const [uploadFile, setUploadFile] = useState(null)
+  const [uploadPreview, setUploadPreview] = useState('')
+  const [uploadResult, setUploadResult] = useState(initialResult)
+  const [cameraResult, setCameraResult] = useState(initialResult)
+  const [uploadRunning, setUploadRunning] = useState(false)
+  const [cameraRunning, setCameraRunning] = useState(false)
+  const [cameraStream, setCameraStream] = useState(null)
 
   useEffect(() => {
-    let reconnectTimer = null
-
-    const connect = () => {
-      const ws = new WebSocket(wsUrl)
-      wsRef.current = ws
-
-      ws.onmessage = (event) => {
-        const msg = JSON.parse(event.data)
-
-        if (ACK_STATUSES.has(msg.status)) {
-          if (msg.message) {
-            setNotice(msg.message)
-            setTimeout(() => setNotice(''), 2200)
-          }
-
-          if (msg.status === 'camera_opened') {
-            setData((prev) => ({
-              ...prev,
-              control_state: { ...prev.control_state, camera_active: true },
-            }))
-          } else if (msg.status === 'camera_closed') {
-            setData((prev) => ({
-              ...prev,
-              control_state: { ...prev.control_state, camera_active: false, running: false },
-            }))
-          } else if (msg.status === 'started') {
-            setData((prev) => ({
-              ...prev,
-              control_state: { ...prev.control_state, running: true },
-            }))
-          } else if (msg.status === 'stopped') {
-            setData((prev) => ({
-              ...prev,
-              control_state: { ...prev.control_state, running: false },
-            }))
-          } else if (msg.status === 'tts_toggled') {
-            setData((prev) => ({
-              ...prev,
-              control_state: { ...prev.control_state, tts_enabled: !!msg.enabled },
-            }))
-          } else if (msg.status === 'cleared') {
-            setData((prev) => ({ ...prev, transcript_history: [], partial_gloss: '--' }))
-          }
-          return
+    let active = true
+    fetch(`${BACKEND_BASE}/health`)
+      .then((res) => {
+        if (!res.ok) throw new Error('Backend unavailable')
+        if (active) setBackendStatus('connected')
+      })
+      .catch(() => {
+        if (active) {
+          setBackendStatus('unavailable')
+          setMessage('Start the backend on port 8000 to run inference.')
         }
-
-        if (msg && typeof msg === 'object' && 'partial_gloss' in msg && 'control_state' in msg) {
-          setData(msg)
-        }
-      }
-
-      ws.onopen = () => {
-        setWsStatus('connected')
-        setNotice('Connected to backend')
-        setTimeout(() => setNotice(''), 1500)
-      }
-
-      ws.onclose = () => {
-        setWsStatus('disconnected')
-        setNotice('Disconnected. Reconnecting...')
-        reconnectTimer = setTimeout(connect, 900)
-      }
-    }
-
-    connect()
+      })
     return () => {
-      if (reconnectTimer) clearTimeout(reconnectTimer)
-      wsRef.current?.close()
+      active = false
+      if (uploadPreview) URL.revokeObjectURL(uploadPreview)
     }
-  }, [wsUrl])
+  }, [uploadPreview])
 
-  const send = (payload) => {
-    const ws = wsRef.current
-    if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(payload))
+  const speak = (text) => {
+    if (!text || !window.speechSynthesis) return
+    window.speechSynthesis.cancel()
+    const utterance = new SpeechSynthesisUtterance(text)
+    utterance.lang = 'en-US'
+    utterance.rate = 1.02
+    utterance.pitch = 1
+    window.speechSynthesis.speak(utterance)
   }
 
-  const sendControl = (action) => send({ type: action })
+  const metricSource = cameraResult.sentence ? cameraResult : uploadResult
 
-  const sendModuleChange = (module) => {
-    setSelectedModule(module)
-    send({ type: 'module_select', module })
+  const onSelectVideo = (event) => {
+    const file = event.target.files?.[0]
+    setUploadFile(file || null)
+    setUploadResult(initialResult)
+    if (uploadPreview) URL.revokeObjectURL(uploadPreview)
+    if (file) {
+      const nextUrl = URL.createObjectURL(file)
+      setUploadPreview(nextUrl)
+      setMessage(`Selected ${file.name}. Ready to generate caption.`)
+    } else {
+      setUploadPreview('')
+    }
   }
 
-  const moduleIndex = MODULES.findIndex((m) => m.id === (data.active_stage || selectedModule))
+  const runUploadInference = async () => {
+    if (!uploadFile) return
+    setUploadRunning(true)
+    setMessage('Running video inference...')
+    try {
+      const formData = new FormData()
+      formData.append('file', uploadFile)
+      const response = await fetch(`${BACKEND_BASE}/api/v1/inference/video`, {
+        method: 'POST',
+        body: formData,
+      })
+      if (!response.ok) throw new Error(await response.text())
+      const result = await response.json()
+      setUploadResult(result)
+      setMessage('Video caption generated.')
+      if (result.sentence) speak(result.sentence)
+    } catch (error) {
+      setMessage(`Video inference failed: ${error.message}`)
+    } finally {
+      setUploadRunning(false)
+    }
+  }
+
+  const openCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'user' },
+        audio: false,
+      })
+      setCameraStream(stream)
+      if (cameraVideoRef.current) {
+        cameraVideoRef.current.srcObject = stream
+      }
+      setMessage('Camera opened. Use Generate From Camera when ready.')
+    } catch {
+      setMessage('Camera permission was denied or unavailable.')
+    }
+  }
+
+  const closeCamera = () => {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach((track) => track.stop())
+    }
+    setCameraStream(null)
+    if (cameraVideoRef.current) {
+      cameraVideoRef.current.srcObject = null
+    }
+    setMessage('Camera closed.')
+  }
+
+  const captureFrames = async () => {
+    const video = cameraVideoRef.current
+    const canvas = canvasRef.current
+    const width = video?.videoWidth || 640
+    const height = video?.videoHeight || 360
+    canvas.width = width
+    canvas.height = height
+    const ctx = canvas.getContext('2d')
+    const frames = []
+
+    for (let i = 0; i < 24; i += 1) {
+      ctx.drawImage(video, 0, 0, width, height)
+      frames.push(canvas.toDataURL('image/jpeg', 0.8))
+      await new Promise((resolve) => setTimeout(resolve, 80))
+    }
+    return frames
+  }
+
+  const runCameraInference = async () => {
+    if (!cameraStream) return
+    setCameraRunning(true)
+    setMessage('Capturing camera frames and generating caption...')
+    try {
+      const frames = await captureFrames()
+      const response = await fetch(`${BACKEND_BASE}/api/v1/inference/frames`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ frames, fps: 12 }),
+      })
+      if (!response.ok) throw new Error(await response.text())
+      const result = await response.json()
+      setCameraResult(result)
+      setMessage('Camera caption generated.')
+      if (result.sentence) speak(result.sentence)
+    } catch (error) {
+      setMessage(`Camera inference failed: ${error.message}`)
+    } finally {
+      setCameraRunning(false)
+    }
+  }
 
   return (
-    <div className="min-h-screen bg-space pb-32 text-slate-50">
-      <div className="mx-auto max-w-7xl px-4 py-6 md:px-8">
-        <motion.h1
-          initial={{ opacity: 0, y: -12 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center font-display text-4xl font-bold tracking-wide md:text-6xl"
-        >
-          Real-Time ISL Translation System
-        </motion.h1>
-
-        <div className="mx-auto mt-4 flex max-w-4xl flex-wrap items-center justify-center gap-3 text-sm">
-          {/* WebSocket status */}
-          <span className={`flex items-center gap-2 rounded-full border px-3 py-1 ${
-            wsStatus === 'connected'
-              ? 'border-emerald-300/60 bg-emerald-500/20'
-              : wsStatus === 'connecting'
-              ? 'border-yellow-300/60 bg-yellow-500/20'
-              : 'border-rose-300/60 bg-rose-500/20'
-          }`}>
-            <span className={`inline-block h-2 w-2 rounded-full ${
-              wsStatus === 'connected' ? 'bg-emerald-400 animate-pulse' :
-              wsStatus === 'connecting' ? 'bg-yellow-400 animate-pulse' : 'bg-rose-400'
-            }`} />
-            WS: {wsStatus === 'connected' ? 'Connected' : wsStatus === 'connecting' ? 'Connecting…' : 'Disconnected'}
-          </span>
-          <span className={`rounded-full border px-3 py-1 ${data.control_state?.camera_active ? 'border-cyan-300/60 bg-cyan-500/20' : 'border-slate-300/50 bg-slate-700/30'}`}>
-            Camera: {data.control_state?.camera_active ? 'Active' : 'Off'}
-          </span>
-          <span className={`rounded-full border px-3 py-1 ${data.control_state?.running ? 'border-emerald-300/60 bg-emerald-500/20' : 'border-slate-300/50 bg-slate-700/30'}`}>
-            Pipeline: {data.control_state?.running ? 'Running' : 'Idle'}
-          </span>
-          <span className="rounded-full border border-fuchsia-300/60 bg-fuchsia-500/20 px-3 py-1">
-            TTS: {data.control_state?.tts_enabled ? 'On' : 'Off'}
-          </span>
-        </div>
-
-        {notice && (
-          <div className="mx-auto mt-4 max-w-3xl rounded-xl border border-cyan-300/40 bg-cyan-500/15 px-4 py-2 text-center text-sm text-cyan-100">
-            {notice}
+    <div className="app-shell">
+      <main className="page">
+        <header className="hero-card">
+          <p className="eyebrow">Indian Sign Language Demo</p>
+          <h1>Video or camera in, English caption and voice out</h1>
+          <p className="hero-copy">
+            Using <code>application/backend/checkpoints/isign_pose_only_npy/best.pt</code> through the backend inference API.
+          </p>
+          <div className="pill-row">
+            <span className="pill">Model: pose_only_npy/best.pt</span>
+            <span className="pill">Backend: {backendStatus}</span>
+            <span className="pill">Voice: {'speechSynthesis' in window ? 'browser TTS' : 'not supported'}</span>
           </div>
-        )}
+        </header>
 
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="mx-auto mt-6 max-w-2xl"
-        >
-          <div className="rounded-2xl border border-white/20 bg-white/10 p-4">
-            <label className="mb-2 block text-sm font-semibold uppercase tracking-wider text-cyan-200">
-              Focus Module
-            </label>
-            <select
-              value={selectedModule}
-              onChange={(e) => sendModuleChange(e.target.value)}
-              className="w-full rounded-xl border border-cyan-300/50 bg-slate-900/80 px-4 py-3 text-lg font-semibold text-slate-100 focus:border-cyan-300 focus:outline-none focus:ring-2 focus:ring-cyan-300/50"
-            >
-              {MODULES.map((module) => (
-                <option key={module.id} value={module.id}>
-                  {module.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        </motion.div>
-
-        <div className="mx-auto mt-4 max-w-4xl rounded-2xl border border-white/20 bg-white/10 p-3">
-          <div className="h-2 rounded-full bg-black/25">
-            <motion.div
-              animate={{ width: `${((moduleIndex + 1) / MODULES.length) * 100}%` }}
-              transition={{ duration: 0.45 }}
-              className="h-full rounded-full bg-gradient-to-r from-cyan-300 via-purple-300 to-emerald-300"
-            />
-          </div>
-          <div className="mt-2 grid grid-cols-4 gap-2 text-center text-xs font-bold uppercase tracking-wide">
-            {MODULES.map((module, idx) => (
-              <div
-                key={module.id}
-                className={`rounded-md py-1 ${
-                  selectedModule === module.id ? 'bg-cyan-300/35' : idx <= moduleIndex ? 'bg-emerald-300/25' : 'bg-white/10'
-                }`}
-              >
-                {module.name.split(':')[0]}
+        <section className="two-col">
+          <article className="panel">
+            <div className="panel-head">
+              <div>
+                <h2>Upload Video</h2>
+                <p>Upload a video and generate gloss, caption, and English speech.</p>
               </div>
-            ))}
-          </div>
-        </div>
+              <label className="primary-btn">
+                <input type="file" accept="video/*" hidden onChange={onSelectVideo} />
+                Choose Video
+              </label>
+            </div>
 
-        <div className="mt-6 grid gap-6 lg:grid-cols-12">
-          <div className="lg:col-span-8">
-            <LiveProcessingView data={data} selectedModule={selectedModule} />
-          </div>
-          <div className="lg:col-span-4 space-y-6">
-            <Module1Debug data={data} />
-            <TrainingMonitor />
-          </div>
-        </div>
+            <div className="preview-shell">
+              {uploadPreview ? (
+                <video src={uploadPreview} controls playsInline className="preview-video" />
+              ) : (
+                <div className="placeholder">No video selected yet</div>
+              )}
+            </div>
 
-        <div className="mt-6">
-          <StatusBoard data={data} />
-        </div>
+            <div className="button-row">
+              <button className="primary-btn" onClick={runUploadInference} disabled={!uploadFile || uploadRunning}>
+                {uploadRunning ? 'Generating...' : 'Generate Caption'}
+              </button>
+              <button className="secondary-btn" onClick={() => speak(uploadResult.sentence)} disabled={!uploadResult.sentence}>
+                Play Voice
+              </button>
+            </div>
+          </article>
 
-        <ControlBar
-          running={!!data.control_state?.running}
-          ttsEnabled={!!data.control_state?.tts_enabled}
-          cameraActive={!!data.control_state?.camera_active}
-          onOpenCamera={() => sendControl('open_camera')}
-          onCloseCamera={() => sendControl('close_camera')}
-          onStart={() => sendControl('start')}
-          onStop={() => sendControl('stop')}
-          onClear={() => sendControl('clear')}
-          onToggleTts={() => sendControl('toggle_tts')}
-        />
-      </div>
+          <article className="panel">
+            <div className="panel-head">
+              <div>
+                <h2>Use Camera</h2>
+                <p>Allow camera access, capture live frames, then generate caption and voice.</p>
+              </div>
+            </div>
+
+            <div className="preview-shell">
+              <video ref={cameraVideoRef} autoPlay muted playsInline className="preview-video" />
+              <canvas ref={canvasRef} className="hidden" />
+            </div>
+
+            <div className="button-row">
+              <button className="primary-btn" onClick={openCamera} disabled={!!cameraStream}>Open Camera</button>
+              <button className="primary-btn" onClick={runCameraInference} disabled={!cameraStream || cameraRunning}>
+                {cameraRunning ? 'Generating...' : 'Generate From Camera'}
+              </button>
+              <button className="secondary-btn" onClick={closeCamera} disabled={!cameraStream}>Close Camera</button>
+              <button className="secondary-btn" onClick={() => speak(cameraResult.sentence)} disabled={!cameraResult.sentence}>
+                Play Voice
+              </button>
+            </div>
+          </article>
+        </section>
+
+        <section className="two-col results">
+          <article className="result-card">
+            <p className="result-label">Upload Result</p>
+            <div className="result-box">
+              <p className="mini-label">Gloss Tokens</p>
+              <p className="result-text">{uploadResult.gloss?.join(' ') || 'Waiting for uploaded video.'}</p>
+            </div>
+            <div className="result-box">
+              <p className="mini-label">Caption</p>
+              <p className="caption-text">{uploadResult.sentence || 'Generated English text will appear here.'}</p>
+            </div>
+          </article>
+
+          <article className="result-card">
+            <p className="result-label">Camera Result</p>
+            <div className="result-box">
+              <p className="mini-label">Gloss Tokens</p>
+              <p className="result-text">{cameraResult.gloss?.join(' ') || 'Waiting for camera input.'}</p>
+            </div>
+            <div className="result-box">
+              <p className="mini-label">Caption</p>
+              <p className="caption-text">{cameraResult.sentence || 'Generated English text will appear here.'}</p>
+            </div>
+          </article>
+        </section>
+
+        <section className="footer-card">
+          <div className="pill-row">
+            <span className="pill">Latency: {((metricSource.processing_time || 0) * 1000).toFixed(0)} ms</span>
+            <span className="pill">Confidence: {((metricSource.confidence || 0) * 100).toFixed(1)}%</span>
+            <span className="pill">FPS: {(metricSource.fps || 0).toFixed(1)}</span>
+          </div>
+          <p className="footer-copy">{message}</p>
+        </section>
+      </main>
     </div>
   )
 }

@@ -144,9 +144,9 @@ backend/
 ```bash
 cd /home/kathir/CSLR/application/backend
 
-# Create virtual environment
-python3.11 -m venv venv
-source venv/bin/activate
+# Reuse your runtime environment (or create it once)
+python3.11 -m venv "$HOME/.cslr_runtime_venv"
+source "$HOME/.cslr_runtime_venv/bin/activate"
 
 # Install dependencies
 pip install -r requirements.txt

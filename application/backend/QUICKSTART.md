@@ -10,7 +10,7 @@ cd /home/kathir/CSLR/application/backend
 ./setup.sh
 
 # Activate environment
-source venv/bin/activate
+source "$HOME/.cslr_runtime_venv/bin/activate"
 ```
 
 ### 2. Start Server
@@ -262,7 +262,7 @@ python3 -c "import torch; torch.cuda.empty_cache()"
 pip install -r requirements.txt --force-reinstall
 
 # Verify installation
-python3 -c "import torch, cv2, mediapipe; print('OK')"
+python3 -c "import torch, cv2, mediapipe, dotenv; print('OK')"
 ```
 
 ### Slow Inference
@@ -326,7 +326,7 @@ pkill -f python3
 
 ### Reset Environment
 ```bash
-rm -rf venv/
+rm -rf "$HOME/.cslr_runtime_venv"
 ./setup.sh
 ```
 

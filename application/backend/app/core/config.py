@@ -5,7 +5,12 @@ Loads environment variables and provides application settings
 
 import os
 import torch
-from dotenv import load_dotenv
+
+try:
+    from dotenv import load_dotenv
+except ImportError:  # pragma: no cover - optional dependency in training-only envs
+    def load_dotenv(*args, **kwargs):
+        return False
 
 # Load environment variables
 load_dotenv()
@@ -36,7 +41,14 @@ class Settings:
     ISIGN_DATA_DIR: str = os.getenv("ISIGN_DATA_DIR", "dataset/isign")
     ISIGN_PROCESSED_DIR: str = os.getenv("ISIGN_PROCESSED_DIR", "dataset/isign_processed")
     ISIGN_VOCAB_FILE: str = os.getenv("ISIGN_VOCAB_FILE", f"{ISIGN_PROCESSED_DIR}/vocab.json")
-    ISIGN_CHECKPOINT_PATH: str = os.getenv("ISIGN_CHECKPOINT_PATH", "checkpoints/isign/best_model.pt")
+    ISIGN_CHECKPOINT_PATH: str = os.getenv(
+        "ISIGN_CHECKPOINT_PATH",
+        "checkpoints/isign_pose_only_npy/best.pt",
+    )
+    ISIGN_CHECKPOINT_CONFIG: str = os.getenv(
+        "ISIGN_CHECKPOINT_CONFIG",
+        "checkpoints/isign_pose_only_npy/train_config.json",
+    )
     ISIGN_TRAINING_OUTPUT_DIR: str = os.getenv("ISIGN_TRAINING_OUTPUT_DIR", "checkpoints/isign_fast_v2")
     ISIGN_PENDING_EXT: str = os.getenv("ISIGN_PENDING_EXT", ".crdownload")
     ISIGN_STRICT_DATA_CHECK: bool = os.getenv("ISIGN_STRICT_DATA_CHECK", "true").lower() == "true"
@@ -67,6 +79,10 @@ class Settings:
     CTC_MIN_TOKEN_MARGIN: float = float(os.getenv("CTC_MIN_TOKEN_MARGIN", "0.04"))
     CTC_LENGTH_NORM_ALPHA: float = float(os.getenv("CTC_LENGTH_NORM_ALPHA", "0.35"))
     CTC_REPETITION_PENALTY: float = float(os.getenv("CTC_REPETITION_PENALTY", "0.15"))
+    CTC_LM_PATH: str = os.getenv("CTC_LM_PATH", "")
+    CTC_LM_WEIGHT: float = float(os.getenv("CTC_LM_WEIGHT", "0.0"))
+    CTC_LM_TOKEN_BONUS: float = float(os.getenv("CTC_LM_TOKEN_BONUS", "0.0"))
+    CTC_LM_CANDIDATES: int = int(os.getenv("CTC_LM_CANDIDATES", "20"))
     ENABLE_ADAPTIVE_FILTERING: bool = os.getenv("ENABLE_ADAPTIVE_FILTERING", "true").lower() == "true"
     ADAPTIVE_STRICTNESS_STEP_UP: float = float(os.getenv("ADAPTIVE_STRICTNESS_STEP_UP", "0.12"))
     ADAPTIVE_STRICTNESS_STEP_DOWN: float = float(os.getenv("ADAPTIVE_STRICTNESS_STEP_DOWN", "0.08"))

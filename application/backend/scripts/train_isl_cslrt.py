@@ -19,6 +19,7 @@ import hashlib
 import importlib
 import json
 import logging
+import math
 import random
 import re
 import sys
@@ -481,6 +482,7 @@ class ISLCSLRTDataset(Dataset):
         pose_cache_dir: Optional[Path] = None,
         target_fps: int = 8,
         min_video_frames: int = 8,
+        temporal_jitter: float = 0.0,
     ) -> None:
         self.samples = list(samples)
         self.token_to_id = token_to_id
@@ -491,6 +493,7 @@ class ISLCSLRTDataset(Dataset):
         self.augment = augment
         self.use_pose = use_pose
         self.pose_cache_dir = pose_cache_dir
+        self.temporal_jitter = float(temporal_jitter)   # fraction; 0 = off
         if self.pose_cache_dir is not None:
             self.pose_cache_dir.mkdir(parents=True, exist_ok=True)
         self._pose_extractor: Optional[PoseXYExtractor] = None
@@ -569,16 +572,54 @@ class ISLCSLRTDataset(Dataset):
         return frames[:target_frames]
 
     def _augment_rgb(self, frame_rgb: np.ndarray) -> np.ndarray:
-        frame = frame_rgb
-        if random.random() < 0.40:
-            alpha = random.uniform(0.85, 1.15)  # contrast
-            beta = random.uniform(-12.0, 12.0)  # brightness
+        """
+        Strong spatial augmentation applied per-frame when augment=True.
+        All operations are cheap (no deep learning calls).
+        """
+        frame = frame_rgb.copy()
+
+        # 1. Horizontal flip (50 %)
+        if random.random() < 0.50:
+            frame = frame[:, ::-1, :].copy()
+
+        # 2. Brightness / contrast jitter
+        if random.random() < 0.50:
+            alpha = random.uniform(0.80, 1.20)   # contrast
+            beta  = random.uniform(-20.0, 20.0)  # brightness
             frame = np.clip(frame.astype(np.float32) * alpha + beta, 0, 255).astype(np.uint8)
-        if cv2 is None:
-            return frame
-        if random.random() < 0.20:
+
+        # 3. Gaussian blur
+        if cv2 is not None and random.random() < 0.25:
             k = random.choice((3, 5))
             frame = cv2.GaussianBlur(frame, (k, k), 0)
+
+        # 4. Random rotation ±10 degrees
+        if cv2 is not None and random.random() < 0.40:
+            h, w = frame.shape[:2]
+            angle = random.uniform(-10.0, 10.0)
+            M = cv2.getRotationMatrix2D((w / 2, h / 2), angle, 1.0)
+            frame = cv2.warpAffine(frame, M, (w, h), flags=cv2.INTER_LINEAR,
+                                   borderMode=cv2.BORDER_REFLECT)
+
+        # 5. Slight scale / crop jitter (zoom ±10 %)
+        if cv2 is not None and random.random() < 0.30:
+            scale = random.uniform(0.90, 1.10)
+            h, w = frame.shape[:2]
+            new_h, new_w = int(h * scale), int(w * scale)
+            resized = cv2.resize(frame, (new_w, new_h), interpolation=cv2.INTER_LINEAR)
+            if scale > 1.0:
+                # Center-crop back to original size
+                y0 = (new_h - h) // 2
+                x0 = (new_w - w) // 2
+                frame = resized[y0: y0 + h, x0: x0 + w]
+            else:
+                # Pad with border-reflect to original size
+                pad_h = (h - new_h) // 2
+                pad_w = (w - new_w) // 2
+                frame = cv2.copyMakeBorder(resized, pad_h, h - new_h - pad_h,
+                                           pad_w, w - new_w - pad_w,
+                                           cv2.BORDER_REFLECT)
+
         return frame
 
     def _rgb_to_tensor(self, frame_rgb: np.ndarray) -> torch.Tensor:
@@ -706,6 +747,16 @@ class ISLCSLRTDataset(Dataset):
         else:
             frame_paths = [Path(p) for p in sample.frame_paths]
             indices = self._sample_indices(len(frame_paths), self.num_frames)
+
+            # ── Temporal jitter: shift each sampled index by a small random
+            #    offset so consecutive epochs see slightly different alignments.
+            if self.augment and self.temporal_jitter > 0.0 and len(frame_paths) > 1:
+                jitter_max = max(1, int(len(frame_paths) * self.temporal_jitter))
+                indices = [
+                    max(0, min(len(frame_paths) - 1, i + random.randint(-jitter_max, jitter_max)))
+                    for i in indices
+                ]
+
             selected_paths = [frame_paths[i] for i in indices]
             selected_rgb_frames = [self._safe_read_rgb(frame_path) for frame_path in selected_paths]
 
@@ -901,6 +952,99 @@ def compute_batch_metrics(
     return wer_sum / n, exact / n
 
 
+class NGramLM:
+    """
+    N-gram language model built from training gloss sequences.
+
+    Scores a token-id sequence using n-gram log-probabilities with add-k
+    smoothing.  Used as a lightweight re-scoring pass on beam search output.
+
+    Usage
+    -----
+    lm = NGramLM(n=2)
+    lm.train(train_token_sequences, vocab_size=len(token_to_id))
+    scorer = lm.make_scorer()      # callable: List[int] -> float log-prob
+    """
+
+    def __init__(self, n: int = 2, smoothing: float = 0.1) -> None:
+        self.n = max(1, n)
+        self.smoothing = smoothing
+        self._ngram_counts: Dict[tuple, Counter] = defaultdict(Counter)
+        self._context_totals: Counter = Counter()
+        self.vocab_size: int = 0
+
+    def train(self, sequences: Sequence[Sequence[int]], vocab_size: int) -> None:
+        """Accumulate n-gram counts from training sequences."""
+        self.vocab_size = max(1, vocab_size)
+        for seq in sequences:
+            seq = list(seq)
+            for i, token in enumerate(seq):
+                for k in range(1, self.n + 1):
+                    context = tuple(seq[max(0, i - k + 1) : i])
+                    self._ngram_counts[context][token] += 1
+                    self._context_totals[context] += 1
+
+    def score(self, token_ids: List[int]) -> float:
+        """
+        Return the mean per-token log-probability of *token_ids*.
+        Empty sequence → 0.0.
+        """
+        if not token_ids:
+            return 0.0
+        V = max(1, self.vocab_size)
+        total_log_p = 0.0
+        for i, token in enumerate(token_ids):
+            # Back-off from highest order to unigram
+            log_p = None
+            for k in range(min(self.n, i + 1), 0, -1):
+                context = tuple(token_ids[max(0, i - k + 1) : i])
+                ctx_total = self._context_totals.get(context, 0)
+                if ctx_total > 0 or k == 1:
+                    count = self._ngram_counts[context][token]
+                    prob = (count + self.smoothing) / (ctx_total + self.smoothing * V)
+                    log_p = math.log(max(prob, 1e-30))
+                    break
+            if log_p is None:
+                log_p = math.log(self.smoothing / (self.smoothing * V + 1e-30 + 1e-30))
+            total_log_p += log_p
+        return total_log_p / len(token_ids)
+
+    def make_scorer(self):
+        """Return a callable (token_ids: List[int]) -> float for beam search."""
+        return self.score
+
+
+def freeze_rgb_backbone(model: "CSLRCTCModel") -> None:
+    """Freeze all parameters of the RGB backbone (feature extraction layers)."""
+    for param in model.rgb_stream.backbone.parameters():
+        param.requires_grad = False
+    LOGGER.info("RGB backbone FROZEN — only pose/fusion/temporal updated.")
+
+
+def unfreeze_rgb_backbone(
+    model: "CSLRCTCModel",
+    optimizer: torch.optim.Optimizer,
+    base_lr: float,
+) -> None:
+    """
+    Unfreeze RGB backbone and add its parameters to the optimizer with a
+    smaller LR (0.1× base_lr) to avoid destroying pre-trained weights.
+    """
+    newly_unfrozen = []
+    for param in model.rgb_stream.backbone.parameters():
+        param.requires_grad = True
+        newly_unfrozen.append(param)
+    if newly_unfrozen:
+        optimizer.add_param_group(
+            {"params": newly_unfrozen, "lr": base_lr * 0.1}
+        )
+    LOGGER.info(
+        "RGB backbone UNFROZEN — added %d params to optimizer at LR %.2e",
+        len(newly_unfrozen),
+        base_lr * 0.1,
+    )
+
+
 def train_one_epoch(
     model: nn.Module,
     data_loader: DataLoader,
@@ -1000,6 +1144,9 @@ def evaluate(
     ctc_layer: CTCLayer,
     device: torch.device,
     amp_enabled: bool,
+    beam_width: int = 1,
+    lm_scorer=None,
+    lm_weight: float = 0.3,
 ) -> Dict[str, float]:
     model.eval()
     total_loss = 0.0
@@ -1029,10 +1176,23 @@ def evaluate(
             )
 
         total_loss += float(loss.item())
-        pred_lists = ctc_layer.decode_greedy(logits.detach().cpu())
+
+        # ── Decoding: beam search (beam_width > 1) or greedy (beam_width = 1) ──
+        cpu_logits = logits.detach().cpu()
+        if beam_width > 1:
+            pred_lists = ctc_layer.decode_beam_search(
+                cpu_logits,
+                beam_width=beam_width,
+                lm_scorer=lm_scorer,
+                lm_weight=lm_weight if lm_scorer is not None else 0.0,
+            )
+        else:
+            pred_lists = ctc_layer.decode_greedy(cpu_logits)
+
         if pred_lists and ref_lists and random.random() < 0.05:
             LOGGER.info("Pred: %s", pred_lists[0])
             LOGGER.info("True: %s", ref_lists[0])
+
         batch_wer, batch_exact = compute_batch_metrics(pred_lists, ref_lists)
         batch_size = len(ref_lists)
 
@@ -1162,6 +1322,19 @@ def load_checkpoint(
     return start_epoch, best_val_wer, no_improve_epochs
 
 
+def load_checkpoint_model_only(
+    checkpoint_path: Path,
+    model: nn.Module,
+    device: torch.device,
+) -> Tuple[int, float, int]:
+    checkpoint = torch.load(str(checkpoint_path), map_location=device)
+    model.load_state_dict(checkpoint["model_state"])
+    start_epoch = int(checkpoint.get("epoch", 0)) + 1
+    best_val_wer = float(checkpoint.get("best_val_wer", 1.0))
+    no_improve_epochs = int(checkpoint.get("no_improve_epochs", 0))
+    return start_epoch, best_val_wer, no_improve_epochs
+
+
 def export_module_weights(model: CSLRCTCModel, output_dir: Path) -> None:
     torch.save(model.rgb_stream.state_dict(), output_dir / "rgb_stream_best.pt")
     torch.save(model.pose_stream.state_dict(), output_dir / "pose_stream_best.pt")
@@ -1270,6 +1443,23 @@ def run(args: argparse.Namespace) -> None:
 
     effective_num_frames: Optional[int] = None if args.num_frames <= 0 else args.num_frames
 
+    # ── N-gram language model built from training gloss sequences ────────────
+    lm_scorer = None
+    if args.lm_order > 0 and args.lm_weight > 0.0 and args.beam_width > 1:
+        LOGGER.info(
+            "Building %d-gram LM from %d training sequences …",
+            args.lm_order,
+            len(train_samples),
+        )
+        ngram_lm = NGramLM(n=args.lm_order)
+        train_seqs = [
+            [token_to_id[t] for t in s.gloss_tokens if t in token_to_id]
+            for s in train_samples
+        ]
+        ngram_lm.train(train_seqs, vocab_size=len(token_to_id))
+        lm_scorer = ngram_lm.make_scorer()
+        LOGGER.info("LM ready (order=%d, smoothing=%.3f).", args.lm_order, ngram_lm.smoothing)
+
     train_dataset = ISLCSLRTDataset(
         samples=train_samples,
         token_to_id=token_to_id,
@@ -1280,6 +1470,7 @@ def run(args: argparse.Namespace) -> None:
         pose_cache_dir=pose_cache_dir,
         target_fps=args.target_fps,
         min_video_frames=args.min_video_frames,
+        temporal_jitter=args.temporal_jitter,
     )
     val_dataset = ISLCSLRTDataset(
         samples=val_samples,
@@ -1390,33 +1581,94 @@ def run(args: argparse.Namespace) -> None:
     except Exception as exc:
         LOGGER.warning("TensorBoard graph logging skipped: %s", exc)
 
-    trainable_params = [p for p in model.parameters() if p.requires_grad]
-    optimizer = AdamW(
-        trainable_params,
-        lr=args.learning_rate,
-        weight_decay=args.weight_decay,
-        betas=(0.9, 0.998),
-        foreach=False,
-    )
-    scheduler = CosineAnnealingLR(optimizer, T_max=args.epochs, eta_min=args.learning_rate * 0.1)
-    scaler = make_grad_scaler(enabled=amp_enabled)
-    ctc_layer = CTCLayer(blank_idx=0, vocab_size=len(token_to_id))
-
     start_epoch = 1
     best_val_wer = float("inf")
     no_improve_epochs = 0
+
+    # ── Layer 3A: Freeze RGB backbone for first N epochs ────────────────────
+    backbone_frozen = False
+    if args.freeze_backbone_epochs > 0 and start_epoch <= args.freeze_backbone_epochs:
+        freeze_rgb_backbone(model)
+        backbone_frozen = True
+
+    def build_optimizer_scheduler() -> Tuple[AdamW, CosineAnnealingLR]:
+        trainable_params = [p for p in model.parameters() if p.requires_grad]
+        optimizer = AdamW(
+            trainable_params,
+            lr=args.learning_rate,
+            weight_decay=args.weight_decay,
+            betas=(0.9, 0.998),
+            foreach=False,
+        )
+        # ── Layer 3B: Cosine LR with warm restarts; eta_min = 5 % of base LR ────
+        scheduler = CosineAnnealingLR(
+            optimizer,
+            T_max=max(1, args.epochs - args.freeze_backbone_epochs),
+            eta_min=args.learning_rate * 0.05,
+        )
+        return optimizer, scheduler
+
+    optimizer, scheduler = build_optimizer_scheduler()
+    scaler = make_grad_scaler(enabled=amp_enabled)
+    ctc_layer = CTCLayer(blank_idx=0, vocab_size=len(token_to_id))
+
     if args.resume:
         resume_path = Path(args.resume).resolve()
         if not resume_path.exists():
             raise FileNotFoundError(f"Checkpoint to resume from not found: {resume_path}")
-        start_epoch, best_val_wer, no_improve_epochs = load_checkpoint(
-            checkpoint_path=resume_path,
-            model=model,
-            optimizer=optimizer,
-            scheduler=scheduler,
-            scaler=scaler,
-            device=device,
-        )
+        try:
+            start_epoch, best_val_wer, no_improve_epochs = load_checkpoint(
+                checkpoint_path=resume_path,
+                model=model,
+                optimizer=optimizer,
+                scheduler=scheduler,
+                scaler=scaler,
+                device=device,
+            )
+        except ValueError as exc:
+            if "parameter group" not in str(exc).lower():
+                raise
+            LOGGER.warning(
+                "Optimizer state mismatch while resuming (%s).", exc
+            )
+            resume_ok = False
+
+            # Common mismatch: checkpoint optimizer contains backbone params but
+            # current run initialized with frozen backbone.
+            if backbone_frozen:
+                LOGGER.warning(
+                    "Retrying resume with backbone unfrozen to match checkpoint optimizer."
+                )
+                for param in model.rgb_stream.backbone.parameters():
+                    param.requires_grad = True
+                backbone_frozen = False
+                optimizer, scheduler = build_optimizer_scheduler()
+                try:
+                    start_epoch, best_val_wer, no_improve_epochs = load_checkpoint(
+                        checkpoint_path=resume_path,
+                        model=model,
+                        optimizer=optimizer,
+                        scheduler=scheduler,
+                        scaler=scaler,
+                        device=device,
+                    )
+                    resume_ok = True
+                except ValueError as retry_exc:
+                    LOGGER.warning(
+                        "Resume retry with unfrozen backbone failed (%s).",
+                        retry_exc,
+                    )
+
+            if not resume_ok:
+                LOGGER.warning(
+                    "Falling back to model-only resume (optimizer/scheduler/scaler reset)."
+                )
+                start_epoch, best_val_wer, _ = load_checkpoint_model_only(
+                    checkpoint_path=resume_path,
+                    model=model,
+                    device=device,
+                )
+                no_improve_epochs = 0
         LOGGER.info(
             "Resumed from %s | start_epoch=%d best_val_wer=%.4f no_improve_epochs=%d",
             resume_path, start_epoch, best_val_wer, no_improve_epochs,
@@ -1439,6 +1691,11 @@ def run(args: argparse.Namespace) -> None:
     for epoch in range(start_epoch, args.epochs + 1):
         epoch_start_time = time.time()
 
+        # ── Unfreeze RGB backbone once warm-up epochs are done ───────────────
+        if backbone_frozen and epoch > args.freeze_backbone_epochs:
+            unfreeze_rgb_backbone(model, optimizer, args.learning_rate)
+            backbone_frozen = False
+
         LOGGER.info("Epoch %d/%d", epoch, args.epochs)
         train_metrics = train_one_epoch(
             model=model,
@@ -1460,6 +1717,9 @@ def run(args: argparse.Namespace) -> None:
             ctc_layer=ctc_layer,
             device=device,
             amp_enabled=amp_enabled,
+            beam_width=args.beam_width,
+            lm_scorer=lm_scorer,
+            lm_weight=args.lm_weight,
         )
         scheduler.step()
 
@@ -1648,6 +1908,9 @@ def run(args: argparse.Namespace) -> None:
         ctc_layer=ctc_layer,
         device=device,
         amp_enabled=amp_enabled,
+        beam_width=args.beam_width,
+        lm_scorer=lm_scorer,
+        lm_weight=args.lm_weight,
     )
     final_report = {
         "best_val_wer": best_val_wer,
@@ -1737,6 +2000,45 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--no-pretrained-rgb", action="store_true")
     parser.add_argument("--no-pose", action="store_true")
     parser.add_argument("--export-module-weights", action="store_true")
+
+    # \u2500\u2500 Layer 1: Beam search decoding \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+    parser.add_argument(
+        "--beam-width",
+        type=int,
+        default=5,
+        help="CTC beam search width during evaluation (1 = greedy).",
+    )
+
+    # \u2500\u2500 Layer 2: N-gram LM correction \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+    parser.add_argument(
+        "--lm-order",
+        type=int,
+        default=2,
+        help="N-gram order for language model re-scoring (0 = disable LM).",
+    )
+    parser.add_argument(
+        "--lm-weight",
+        type=float,
+        default=0.3,
+        help="Interpolation weight for LM score during beam search (0 = CTC only).",
+    )
+
+    # \u2500\u2500 Layer 3: Training strategy \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+    parser.add_argument(
+        "--freeze-backbone-epochs",
+        type=int,
+        default=10,
+        help="Freeze the RGB backbone for the first N epochs (0 = no freeze).",
+    )
+    parser.add_argument(
+        "--temporal-jitter",
+        type=float,
+        default=0.05,
+        help=(
+            "Temporal jitter fraction (0\u20131): each sampled frame index is randomly "
+            "shifted by \u00b1 jitter * total_frames during training augmentation."
+        ),
+    )
 
     return parser
 

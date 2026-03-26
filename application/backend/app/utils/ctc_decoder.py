@@ -8,7 +8,8 @@ from __future__ import annotations
 import math
 from collections import Counter, deque
 from dataclasses import dataclass
-from typing import Iterable, List, Optional
+from pathlib import Path
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 import numpy as np
 import torch
@@ -21,6 +22,8 @@ class DecodeResult:
     gloss_tokens: List[str]
     confidence: float
     frame_confidences: Optional[List[float]] = None
+    acoustic_score: Optional[float] = None
+    lm_score: Optional[float] = None
 
 
 class CTCDecoder:
@@ -43,6 +46,11 @@ class CTCDecoder:
         min_token_margin: float = 0.04,
         length_norm_alpha: float = 0.35,
         repetition_penalty: float = 0.15,
+        lm_path: Optional[str] = None,
+        lm_weight: float = 0.0,
+        lm_token_bonus: float = 0.0,
+        lm_candidates: int = 20,
+        language_model: Optional[Any] = None,
     ) -> None:
         """
         Args:
@@ -57,6 +65,37 @@ class CTCDecoder:
         self.min_token_margin = max(0.0, float(min_token_margin))
         self.length_norm_alpha = max(0.0, float(length_norm_alpha))
         self.repetition_penalty = max(0.0, float(repetition_penalty))
+        self.lm_weight = max(0.0, float(lm_weight))
+        self.lm_token_bonus = float(lm_token_bonus)
+        self.lm_candidates = max(self.beam_width, int(lm_candidates))
+        self.lm_path = lm_path
+        self._language_model = language_model or self._load_language_model(lm_path)
+
+    @property
+    def has_language_model(self) -> bool:
+        return self._language_model is not None and self.lm_weight > 0.0
+
+    @property
+    def language_model_loaded(self) -> bool:
+        return self._language_model is not None
+
+    def _load_language_model(self, lm_path: Optional[str]) -> Optional[Any]:
+        if not lm_path:
+            return None
+
+        path = Path(lm_path)
+        if not path.exists():
+            return None
+
+        try:
+            import kenlm  # type: ignore
+        except ImportError:
+            return None
+
+        try:
+            return kenlm.Model(str(path))
+        except Exception:
+            return None
 
     def _idx_to_label(self, idx: int) -> str:
         """Map class index to label while respecting blank index."""
@@ -73,6 +112,35 @@ class CTCDecoder:
             return 0
         counts = Counter(tokens)
         return int(sum(max(0, v - 1) for v in counts.values()))
+
+    def _score_language_model(self, tokens: List[str]) -> float:
+        if not self.has_language_model or not tokens:
+            return 0.0
+        try:
+            return float(self._language_model.score(" ".join(tokens), bos=True, eos=True))
+        except Exception:
+            return 0.0
+
+    def _acoustic_rank_score(self, tokens: List[str], score: float) -> float:
+        norm = score / (max(1, len(tokens)) ** self.length_norm_alpha)
+        rep_penalty = self.repetition_penalty * self._sequence_repetition_count(tokens)
+        return float(norm - rep_penalty)
+
+    def _combined_rank_score(self, tokens: List[str], score: float) -> Tuple[float, float, float]:
+        acoustic = self._acoustic_rank_score(tokens, score)
+        lm_score = self._score_language_model(tokens)
+        total = acoustic + (self.lm_weight * lm_score) + (self.lm_token_bonus * len(tokens))
+        return total, acoustic, lm_score
+
+    @staticmethod
+    def _dedupe_candidates(candidates: List[Tuple[List[str], float]]) -> List[Tuple[List[str], float]]:
+        best_by_tokens: Dict[Tuple[str, ...], float] = {}
+        for tokens, score in candidates:
+            key = tuple(tokens)
+            current = best_by_tokens.get(key)
+            if current is None or score > current:
+                best_by_tokens[key] = score
+        return [(list(tokens), score) for tokens, score in best_by_tokens.items()]
 
     def ctc_greedy_decode(
         self, 
@@ -148,7 +216,7 @@ class CTCDecoder:
         return DecodeResult(
             gloss_tokens=decoded_tokens,
             confidence=avg_confidence,
-            frame_confidences=frame_confidences
+            frame_confidences=frame_confidences,
         )
 
     def beam_search_decode(
@@ -177,6 +245,7 @@ class CTCDecoder:
         T, num_classes = log_probs.shape
         
         beam_k = beam_width or self.beam_width
+        candidate_limit = max(beam_k, self.lm_candidates if self.has_language_model else beam_k)
 
         probs = F.softmax(logits, dim=-1)
         frame_confidences = torch.max(probs, dim=-1).values.detach().cpu().numpy().tolist()
@@ -207,18 +276,23 @@ class CTCDecoder:
                             candidates.append((new_prefix, new_score))
             
             # Rank by length-normalized score and repetition penalty.
+            deduped = self._dedupe_candidates(candidates)
             ranked = []
-            for toks, score in candidates:
-                norm = score / (max(1, len(toks)) ** self.length_norm_alpha)
-                rep_penalty = self.repetition_penalty * self._sequence_repetition_count(toks)
-                ranked.append((toks, score, norm - rep_penalty))
+            for toks, score in deduped:
+                ranked.append((toks, score, self._acoustic_rank_score(toks, score)))
 
-            beams = [(toks, score) for toks, score, _ in sorted(ranked, key=lambda x: x[2], reverse=True)[:beam_k]]
-        
+            beams = [(toks, score) for toks, score, _ in sorted(ranked, key=lambda x: x[2], reverse=True)[:candidate_limit]]
+
+        ranked_final = []
+        for toks, score in self._dedupe_candidates(beams):
+            total, acoustic_score, lm_score = self._combined_rank_score(toks, score)
+            ranked_final.append((toks, score, total, acoustic_score, lm_score))
+        ranked_final.sort(key=lambda x: x[2], reverse=True)
+
         # Best beam
-        tokens, best_score = beams[0]
-        second_score = beams[1][1] if len(beams) > 1 else best_score
-        beam_margin = max(0.0, best_score - second_score)
+        tokens, best_score, best_total, best_acoustic, best_lm = ranked_final[0]
+        second_total = ranked_final[1][2] if len(ranked_final) > 1 else best_total
+        beam_margin = max(0.0, best_total - second_total)
         
         # Confidence from score and beam margin
         base_conf = float(np.exp(best_score / max(T, 1)))
@@ -229,6 +303,8 @@ class CTCDecoder:
             gloss_tokens=tokens,
             confidence=confidence,
             frame_confidences=frame_confidences,
+            acoustic_score=best_acoustic,
+            lm_score=best_lm,
         )
 
     def heuristic_fallback(

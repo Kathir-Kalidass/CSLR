@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 import math
+import sys
 import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -39,6 +40,17 @@ from app.utils.sliding_window import SlidingWindowBuffer
 from app.utils.tensor_utils import to_tensor
 from app.utils.video_preprocessing import VideoPreprocessor
 
+BACKEND_ROOT = Path(__file__).resolve().parents[2]
+if str(BACKEND_ROOT) not in sys.path:
+    sys.path.insert(0, str(BACKEND_ROOT))
+
+from scripts.train_isign import (  # noqa: E402
+    ISignCSLRModel,
+    _confidence_from_log_probs,
+    decode_sequences,
+    load_checkpoint,
+)
+
 
 class InferenceService:
     """
@@ -57,7 +69,11 @@ class InferenceService:
         }
 
         vocab = self._load_vocab(vocab_file)
+        self.vocab_labels = vocab
         self.vocab_size = len(vocab)
+        self.isign_model: Optional[ISignCSLRModel] = None
+        self.isign_num_frames = settings.CLIP_LENGTH
+        self.isign_pose_only = True
 
         # Module 1: Preprocessing
         logger.info("Initializing Module 1: Preprocessing")
@@ -109,7 +125,31 @@ class InferenceService:
             min_token_margin=settings.CTC_MIN_TOKEN_MARGIN,
             length_norm_alpha=settings.CTC_LENGTH_NORM_ALPHA,
             repetition_penalty=settings.CTC_REPETITION_PENALTY,
+            lm_path=settings.CTC_LM_PATH or None,
+            lm_weight=settings.CTC_LM_WEIGHT,
+            lm_token_bonus=settings.CTC_LM_TOKEN_BONUS,
+            lm_candidates=settings.CTC_LM_CANDIDATES,
         )
+        if settings.CTC_LM_PATH:
+            if self.ctc_decoder.has_language_model:
+                logger.info(
+                    "CTC language model enabled: %s (weight=%.3f, token_bonus=%.3f, candidates=%d)",
+                    settings.CTC_LM_PATH,
+                    settings.CTC_LM_WEIGHT,
+                    settings.CTC_LM_TOKEN_BONUS,
+                    settings.CTC_LM_CANDIDATES,
+                )
+            elif self.ctc_decoder.language_model_loaded:
+                logger.info(
+                    "CTC language model loaded from %s but LM weight is %.3f, so rescoring is disabled",
+                    settings.CTC_LM_PATH,
+                    settings.CTC_LM_WEIGHT,
+                )
+            else:
+                logger.warning(
+                    "CTC_LM_PATH is set but KenLM could not be loaded from %s; continuing without LM rescoring",
+                    settings.CTC_LM_PATH,
+                )
         self.caption_filter = CaptionPostProcessor(
             max_history=settings.GLOSS_HISTORY_SIZE,
             min_confidence=settings.CONFIDENCE_THRESHOLD,
@@ -133,6 +173,7 @@ class InferenceService:
         self.fusion.eval()
         self.temporal_model.eval()
 
+        self._load_isign_checkpoint()
         self._load_pipeline_checkpoints()
         self._load_confidence_calibration()
 
@@ -339,10 +380,107 @@ class InferenceService:
             logger.warning("Failed to load %s checkpoint from %s: %s", module_name, path, exc)
 
     def _load_pipeline_checkpoints(self) -> None:
+        if self.isign_model is not None:
+            logger.info(
+                "Skipping legacy pipeline checkpoint loading because iSign checkpoint inference is active"
+            )
+            return
         self._load_state_dict(self.rgb_stream, settings.RGB_MODEL_PATH, "RGB stream")
         self._load_state_dict(self.pose_stream, settings.POSE_MODEL_PATH, "Pose stream")
         self._load_state_dict(self.fusion, settings.FUSION_MODEL_PATH, "Fusion")
         self._load_state_dict(self.temporal_model, settings.SEQUENCE_MODEL_PATH, "Temporal model")
+
+    def _load_isign_checkpoint(self) -> None:
+        checkpoint_path = BACKEND_ROOT / settings.ISIGN_CHECKPOINT_PATH
+        config_path = BACKEND_ROOT / settings.ISIGN_CHECKPOINT_CONFIG
+        if not checkpoint_path.exists():
+            logger.warning("iSign checkpoint not found at %s", checkpoint_path)
+            return
+
+        config: Dict[str, Any] = {}
+        if config_path.exists():
+            try:
+                with open(config_path, "r", encoding="utf-8") as f:
+                    config = json.load(f)
+            except Exception as exc:
+                logger.warning("Failed to read iSign checkpoint config from %s: %s", config_path, exc)
+
+        self.isign_num_frames = int(config.get("num_frames", settings.CLIP_LENGTH))
+        self.isign_pose_only = bool(config.get("pose_only", True))
+        hidden_dim = int(config.get("hidden_dim", 256))
+        dropout = float(config.get("dropout", 0.3))
+        attention_heads = int(config.get("attention_heads", 4))
+        pose_fusion_weight = float(config.get("pose_fusion_weight", 0.7))
+        freeze_rgb_stages = int(config.get("freeze_rgb_stages", 4))
+
+        pose_input_dim = 150
+        model = ISignCSLRModel(
+            vocab_size=self.vocab_size,
+            hidden_dim=hidden_dim,
+            pose_input_dim=pose_input_dim,
+            dropout=dropout,
+            pretrained_cnn=not bool(config.get("no_pretrained", False)),
+            pose_fusion_weight=pose_fusion_weight,
+            attention_heads=attention_heads,
+            freeze_rgb_stages=freeze_rgb_stages,
+            use_rgb=not self.isign_pose_only,
+        ).to(self.device)
+
+        checkpoint = load_checkpoint(checkpoint_path, model)
+        model.eval()
+        self.isign_model = model
+        logger.info(
+            "Loaded iSign checkpoint from %s (epoch=%s, best_wer=%s, pose_only=%s, frames=%d)",
+            checkpoint_path,
+            checkpoint.get("epoch"),
+            checkpoint.get("best_wer"),
+            self.isign_pose_only,
+            self.isign_num_frames,
+        )
+
+    def _sample_indices(self, total_frames: int, target_frames: int) -> np.ndarray:
+        if total_frames <= target_frames:
+            return np.arange(total_frames, dtype=int)
+        return np.linspace(0, total_frames - 1, target_frames, dtype=int)
+
+    def _run_isign_inference(
+        self,
+        rgb_frames: List[torch.Tensor],
+        pose_frames: List[torch.Tensor],
+    ) -> Dict[str, Any]:
+        if self.isign_model is None:
+            raise RuntimeError("iSign checkpoint model is not loaded")
+        if len(pose_frames) < settings.MIN_VALID_FRAMES:
+            return {"gloss": [], "sentence": "", "confidence": 0.0, "partial": True}
+
+        frame_count = min(len(rgb_frames), len(pose_frames))
+        indices = self._sample_indices(frame_count, self.isign_num_frames)
+
+        pose_stack = torch.stack([pose_frames[int(i)].reshape(-1) for i in indices], dim=0)
+        pose_tensor = pose_stack.unsqueeze(0).to(self.device)
+
+        rgb_tensor = None
+        if not self.isign_pose_only:
+            rgb_stack = torch.stack([rgb_frames[int(i)] for i in indices], dim=0)
+            rgb_tensor = rgb_stack.permute(1, 0, 2, 3).unsqueeze(0).to(self.device)
+
+        with torch.no_grad():
+            log_probs = self.isign_model(rgb_tensor, pose_tensor)
+
+        confidence = float(_confidence_from_log_probs(log_probs).item())
+        raw_tokens = decode_sequences(log_probs, blank_id=0, vocab=self.vocab_labels)[0]
+        gloss_tokens = self._filter_gloss_tokens(raw_tokens, confidence)
+        sentence = self.grammar_corrector.gloss_to_sentence(gloss_tokens)
+        sentence = self.post_processor.apply(sentence)
+
+        return {
+            "gloss": gloss_tokens,
+            "sentence": sentence,
+            "confidence": confidence,
+            "fps": float(settings.FPS_TARGET),
+            "frame_count": frame_count,
+            "sampled_frames": int(len(indices)),
+        }
 
     async def _build_sentence(self, gloss_tokens: List[str]) -> str:
         if settings.USE_TRANSLATION_SERVICE:
@@ -421,6 +559,11 @@ class InferenceService:
                 }
             if settings.ENABLE_METRICS:
                 module1_time = self.metrics.stop_timer("module1")
+
+            if self.isign_model is not None:
+                result = self._run_isign_inference(rgb_frames, pose_frames)
+                result.setdefault("frame_count", len(frames))
+                return result
 
             # Stack to tensors
             rgb_tensor = to_tensor(torch.stack(rgb_frames), device=self.device).unsqueeze(0)
@@ -519,6 +662,9 @@ class InferenceService:
                 return {"gloss": [], "sentence": "", "confidence": 0.0, "partial": True}
             if settings.ENABLE_METRICS:
                 module1_time = self.metrics.stop_timer("module1")
+
+            if self.isign_model is not None:
+                return self._run_isign_inference(rgb_frames, pose_frames)
 
             rgb_tensor = to_tensor(torch.stack(rgb_frames), device=self.device).unsqueeze(0)
             pose_tensor = to_tensor(torch.stack(pose_frames), device=self.device).unsqueeze(0)

@@ -35,6 +35,10 @@ class ISignPreprocessConfig(BaseModel):
     min_gloss_tokens: int = 1
     max_gloss_tokens: int = 40
     modality_mode: str = "auto"
+    resume: bool = True
+    resume_interval: int = 2000
+    fresh_start: bool = False
+    opencv_threads: int = 1
 
     @model_validator(mode="after")
     def _validate(self):
@@ -83,11 +87,14 @@ class ISignTrainingConfig(BaseModel):
     ckpt_dir: str = Field(default_factory=lambda: settings.ISIGN_TRAINING_OUTPUT_DIR)
     save_every_epoch: bool = True
     workers: int = 2
+    prefetch_factor: int = 4
+    persistent_workers: bool = True
     seed: int = 42
     device: str = "auto"
     require_cuda: bool = False
     allow_tf32: bool = True
     resume: Optional[str] = None
+    auto_resume: bool = True
     preprocess_first: bool = False
     preprocess: ISignPreprocessConfig = Field(default_factory=ISignPreprocessConfig)
 
@@ -174,6 +181,8 @@ def _to_preprocess_command(cfg: ISignPreprocessConfig) -> List[str]:
         str(cfg.test_ratio),
         "--workers",
         str(cfg.workers),
+        "--opencv-threads",
+        str(cfg.opencv_threads),
         "--seed",
         str(cfg.seed),
         "--min-frames",
@@ -189,6 +198,12 @@ def _to_preprocess_command(cfg: ISignPreprocessConfig) -> List[str]:
         cmd.extend(["--max-samples", str(cfg.max_samples)])
     if cfg.skip_frames:
         cmd.append("--skip-frames")
+    if cfg.resume:
+        cmd.extend(["--resume", "--resume-interval", str(cfg.resume_interval)])
+    else:
+        cmd.append("--no-resume")
+    if cfg.fresh_start:
+        cmd.append("--fresh-start")
     return cmd
 
 
@@ -226,6 +241,9 @@ def _to_training_command(cfg: ISignTrainingConfig) -> List[str]:
         "--save-every-epoch" if cfg.save_every_epoch else "--no-save-every-epoch",
         "--workers",
         str(cfg.workers),
+        "--prefetch-factor",
+        str(cfg.prefetch_factor),
+        "--persistent-workers" if cfg.persistent_workers else "--no-persistent-workers",
         "--seed",
         str(cfg.seed),
         "--device",
@@ -249,6 +267,7 @@ def _to_training_command(cfg: ISignTrainingConfig) -> List[str]:
         cmd.append("--no-allow-tf32")
     if cfg.resume:
         cmd.extend(["--resume", cfg.resume])
+    cmd.append("--auto-resume" if cfg.auto_resume else "--no-auto-resume")
     return cmd
 
 

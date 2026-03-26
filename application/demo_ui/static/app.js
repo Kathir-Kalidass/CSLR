@@ -1,299 +1,195 @@
-gsap.registerPlugin(TextPlugin);
+const backendBase =
+  window.BACKEND_BASE_URL ||
+  "http://localhost:8000";
 
-const statusDot = document.getElementById("statusDot");
-const statusText = document.getElementById("statusText");
-const latencyPill = document.getElementById("latencyPill");
-const fpsPill = document.getElementById("fpsPill");
-const accPill = document.getElementById("accPill");
-const werPill = document.getElementById("werPill");
-const bleuPill = document.getElementById("bleuPill");
+const inferenceVideoUrl = `${backendBase}/api/v1/inference/video`;
+const inferenceFramesUrl = `${backendBase}/api/v1/inference/frames`;
+const backendHealthUrl = `${backendBase}/health`;
 
-const glossEl = document.getElementById("gloss");
-const sentenceEl = document.getElementById("sentence");
-const confBar = document.getElementById("confBar");
-const confText = document.getElementById("confText");
-const audioState = document.getElementById("audioState");
-const parserConsole = document.getElementById("parserConsole");
-const historyList = document.getElementById("historyList");
+const videoInput = document.getElementById("videoInput");
+const uploadedVideo = document.getElementById("uploadedVideo");
+const uploadPlaceholder = document.getElementById("uploadPlaceholder");
+const runUploadBtn = document.getElementById("runUploadBtn");
+const speakUploadBtn = document.getElementById("speakUploadBtn");
 
-const flowDot = document.getElementById("flowDot");
-const flowLane = document.getElementById("flowLane");
+const openCameraBtn = document.getElementById("openCameraBtn");
+const captureCameraBtn = document.getElementById("captureCameraBtn");
+const closeCameraBtn = document.getElementById("closeCameraBtn");
+const speakCameraBtn = document.getElementById("speakCameraBtn");
+const cameraVideo = document.getElementById("cameraVideo");
+const captureCanvas = document.getElementById("captureCanvas");
 
-const cameraShell = document.getElementById("cameraShell");
-const cameraBtn = document.getElementById("cameraBtn");
-const cam = document.getElementById("cam");
+const uploadGloss = document.getElementById("uploadGloss");
+const uploadCaption = document.getElementById("uploadCaption");
+const cameraGloss = document.getElementById("cameraGloss");
+const cameraCaption = document.getElementById("cameraCaption");
+const latencyBadge = document.getElementById("latencyBadge");
+const confidenceBadge = document.getElementById("confidenceBadge");
+const fpsBadge = document.getElementById("fpsBadge");
+const backendStatus = document.getElementById("backendStatus");
+const ttsStatus = document.getElementById("ttsStatus");
+const globalMessage = document.getElementById("globalMessage");
 
-const startBtn = document.getElementById("startBtn");
-const stopBtn = document.getElementById("stopBtn");
-const clearBtn = document.getElementById("clearBtn");
-const ttsBtn = document.getElementById("ttsBtn");
+let uploadFile = null;
+let cameraStream = null;
+let uploadSentence = "";
+let cameraSentence = "";
 
-let stream = null;
-let flowTween = null;
-let wsRef = null;
-let frameHintCounter = 0;
-let statsTimer = null;
-
-function sendControl(action) {
-  if (!wsRef || wsRef.readyState !== WebSocket.OPEN) return;
-  wsRef.send(JSON.stringify({ type: "control", action }));
+function setMessage(text) {
+  globalMessage.textContent = text;
 }
 
-startBtn.addEventListener("click", () => sendControl("start"));
-stopBtn.addEventListener("click", () => sendControl("stop"));
-clearBtn.addEventListener("click", () => sendControl("clear"));
-ttsBtn.addEventListener("click", () => sendControl("toggle_tts"));
+function updateMetrics(result) {
+  latencyBadge.textContent = `Latency: ${((result.processing_time || 0) * 1000).toFixed(0)} ms`;
+  confidenceBadge.textContent = `Confidence: ${(((result.confidence || 0) * 100).toFixed(1))}%`;
+  fpsBadge.textContent = `FPS: ${(result.fps || 0).toFixed(1)}`;
+}
 
-async function toggleCamera() {
-  if (stream) {
-    stream.getTracks().forEach((track) => track.stop());
-    stream = null;
-    cam.srcObject = null;
-    cameraBtn.textContent = "Start Camera";
-    cameraShell.classList.remove("pulsing");
-    sendClientStats();
-    if (statsTimer) {
-      clearInterval(statsTimer);
-      statsTimer = null;
-    }
+function speakText(text) {
+  if (!text) return;
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = "en-US";
+  utterance.rate = 1.02;
+  utterance.pitch = 1;
+  window.speechSynthesis.speak(utterance);
+}
+
+async function checkBackend() {
+  try {
+    const response = await fetch(backendHealthUrl);
+    if (!response.ok) throw new Error("Backend unavailable");
+    backendStatus.textContent = "Backend: connected";
+  } catch (error) {
+    backendStatus.textContent = "Backend: unavailable";
+    setMessage("Start the backend on port 8000 to run inference.");
+  }
+}
+
+videoInput.addEventListener("change", () => {
+  const [file] = videoInput.files || [];
+  uploadFile = file || null;
+  if (!uploadFile) {
+    uploadedVideo.classList.add("hidden");
+    uploadPlaceholder.classList.remove("hidden");
+    runUploadBtn.disabled = true;
     return;
   }
+
+  uploadedVideo.src = URL.createObjectURL(uploadFile);
+  uploadedVideo.classList.remove("hidden");
+  uploadPlaceholder.classList.add("hidden");
+  runUploadBtn.disabled = false;
+  setMessage(`Selected ${uploadFile.name}. Ready to generate caption.`);
+});
+
+runUploadBtn.addEventListener("click", async () => {
+  if (!uploadFile) return;
+  setMessage("Running video inference...");
+  runUploadBtn.disabled = true;
 
   try {
-    stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-    cam.srcObject = stream;
-    cameraBtn.textContent = "Stop Camera";
-    cameraShell.classList.add("pulsing");
-    if (!statsTimer) {
-      statsTimer = setInterval(() => {
-        frameHintCounter += 1;
-        sendClientStats();
-      }, 400);
-    }
-    sendClientStats();
-  } catch (_) {
-    cameraBtn.textContent = "Camera Blocked";
-  }
-}
-
-cameraBtn.addEventListener("click", toggleCamera);
-
-function animateCard(moduleKey) {
-  const card = document.querySelector(`[data-module="${moduleKey}"]`);
-  if (!card) return;
-  card.classList.add("is-hot");
-  gsap.fromTo(
-    card,
-    { boxShadow: "0 0 0px rgba(34,211,238,0)", y: 0 },
-    {
-      boxShadow: "0 0 26px rgba(34,211,238,0.24)",
-      y: -2,
-      duration: 0.32,
-      yoyo: true,
-      repeat: 1,
-      ease: "power2.out",
-      onComplete: () => card.classList.remove("is-hot"),
-    }
-  );
-}
-
-function animateTextSwap(el, text, duration = 0.65) {
-  gsap.to(el, {
-    duration,
-    text,
-    ease: "power2.out",
-  });
-}
-
-function renderParseLines(container, lines) {
-  if (!container) return;
-  const safeLines = Array.isArray(lines) ? lines : [];
-  container.innerHTML = safeLines.map((line) => `<div>- ${line}</div>`).join("");
-  gsap.fromTo(container, { opacity: 0.35 }, { opacity: 1, duration: 0.35, ease: "power1.out" });
-}
-
-function updateModule(key, payload) {
-  const card = document.querySelector(`[data-module="${key}"]`);
-  if (!card || !payload) return;
-
-  card.querySelector(".module-title").textContent = payload.title || key;
-  card.querySelector(".in").textContent = payload.input || "--";
-  card.querySelector(".proc").textContent = payload.process || "--";
-  card.querySelector(".out").textContent = payload.output || "--";
-  card.querySelector(".module-note").textContent = payload.note || "";
-
-  renderParseLines(card.querySelector(".parser-lines"), payload.parse);
-  animateCard(key);
-}
-
-function appendConsole(lines) {
-  if (!Array.isArray(lines) || lines.length === 0) return;
-  const html = lines.map((line) => `<div>${line}</div>`).join("");
-  parserConsole.innerHTML = html;
-  parserConsole.scrollTop = parserConsole.scrollHeight;
-}
-
-function setConnected(connected) {
-  if (connected) {
-    statusDot.classList.add("active");
-    statusText.textContent = "Realtime stream active";
-  } else {
-    statusDot.classList.remove("active");
-    statusText.textContent = "Disconnected - retrying";
-  }
-}
-
-function setActiveStage(stageKey) {
-  document.querySelectorAll(".flow-stage").forEach((el) => {
-    el.classList.toggle("active", el.dataset.stage === stageKey);
-  });
-}
-
-function animateFlowDot(stageKey) {
-  const targetStage = document.querySelector(`.flow-stage[data-stage="${stageKey}"]`);
-  if (!targetStage || !flowLane) return;
-
-  const laneRect = flowLane.getBoundingClientRect();
-  const stageRect = targetStage.getBoundingClientRect();
-  const x = Math.max(0, stageRect.left - laneRect.left + stageRect.width / 2 - 8);
-
-  if (flowTween) flowTween.kill();
-  flowTween = gsap.to(flowDot, {
-    x,
-    duration: 0.48,
-    ease: "power3.out",
-  });
-}
-
-function renderHistory(history) {
-  const rows = Array.isArray(history) ? history : [];
-  if (rows.length === 0) {
-    historyList.innerHTML = '<div class="history-item">No transcript yet.</div>';
-    return;
-  }
-  historyList.innerHTML = rows
-    .map((line, idx) => `<div class="history-item"><span class="idx">${idx + 1}</span>${line}</div>`)
-    .join("");
-}
-
-function updateControls(controlState) {
-  if (!controlState) return;
-  const running = !!controlState.running;
-  startBtn.disabled = running;
-  stopBtn.disabled = !running;
-
-  ttsBtn.textContent = controlState.tts_enabled ? "TTS: ON" : "TTS: OFF";
-  ttsBtn.classList.toggle("ctrl-tts-off", !controlState.tts_enabled);
-}
-
-function updateMainPanels(msg) {
-  animateTextSwap(glossEl, msg.partial_gloss || "--", 0.45);
-  animateTextSwap(sentenceEl, msg.final_sentence || "Waiting for model output...", 0.5);
-
-  const confPct = Math.round((msg.confidence || 0) * 100);
-  gsap.to(confBar, {
-    width: `${confPct}%`,
-    duration: 0.6,
-    ease: "power2.out",
-  });
-  confText.textContent = `${confPct}% confidence`;
-
-  audioState.textContent = msg.audio_state || "idle";
-
-  latencyPill.textContent = `Latency: ${msg.latency_ms} ms`;
-  fpsPill.textContent = `FPS: ${msg.fps}`;
-
-  if (msg.metrics) {
-    werPill.textContent = `WER: ${(msg.metrics.wer_proxy * 100).toFixed(1)}%`;
-    bleuPill.textContent = `BLEU: ${(msg.metrics.bleu_proxy * 100).toFixed(1)}`;
-    accPill.textContent = `ACC: ${(msg.metrics.accuracy_proxy * 100).toFixed(1)}%`;
-  }
-
-  setActiveStage(msg.active_stage || "module1");
-  animateFlowDot(msg.active_stage || "module1");
-  appendConsole(msg.parser_console || []);
-  renderHistory(msg.transcript_history || []);
-  updateControls(msg.control_state || {});
-
-  if (cameraShell.classList.contains("pulsing")) {
-    gsap.fromTo(
-      cameraShell,
-      { boxShadow: "0 0 0 rgba(34,211,238,0)" },
-      { boxShadow: "0 0 24px rgba(34,211,238,0.42)", duration: 0.35, yoyo: true, repeat: 1 }
-    );
-  }
-}
-
-function applyIdleAnimation() {
-  gsap.to(".card", {
-    y: "+=2",
-    duration: 3.6,
-    yoyo: true,
-    repeat: -1,
-    stagger: { each: 0.2, from: "random" },
-    ease: "sine.inOut",
-  });
-}
-
-function currentResolution() {
-  if (!stream) return "unknown";
-  const track = stream.getVideoTracks()[0];
-  if (!track) return "unknown";
-  const settings = track.getSettings();
-  const w = settings.width || 0;
-  const h = settings.height || 0;
-  if (!w || !h) return "unknown";
-  return `${w}x${h}`;
-}
-
-function sendClientStats() {
-  if (!wsRef || wsRef.readyState !== WebSocket.OPEN) return;
-  const payload = {
-    type: "client_video_stats",
-    camera_active: !!stream,
-    frame_hint: frameHintCounter,
-    resolution: currentResolution(),
-  };
-  wsRef.send(JSON.stringify(payload));
-}
-
-function connectSocket() {
-  const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-  const ws = new WebSocket(`${protocol}://${window.location.host}/ws/demo`);
-  wsRef = ws;
-
-  ws.onopen = () => {
-    setConnected(true);
-    gsap.from([".module"], {
-      y: 14,
-      opacity: 0,
-      stagger: 0.05,
-      duration: 0.45,
-      ease: "power2.out",
+    const formData = new FormData();
+    formData.append("file", uploadFile);
+    const response = await fetch(inferenceVideoUrl, {
+      method: "POST",
+      body: formData,
     });
-    applyIdleAnimation();
-    sendClientStats();
-  };
+    if (!response.ok) throw new Error(await response.text());
+    const result = await response.json();
+    uploadGloss.textContent = (result.gloss || []).join(" ") || "No gloss detected.";
+    uploadCaption.textContent = result.sentence || "No caption generated.";
+    uploadSentence = result.sentence || "";
+    speakUploadBtn.disabled = !uploadSentence;
+    updateMetrics(result);
+    setMessage("Video caption generated.");
+    if (uploadSentence) speakText(uploadSentence);
+  } catch (error) {
+    setMessage(`Video inference failed: ${error.message}`);
+  } finally {
+    runUploadBtn.disabled = false;
+  }
+});
 
-  ws.onmessage = (event) => {
-    const msg = JSON.parse(event.data);
-    updateMainPanels(msg);
-    updateModule("module1", msg.module1);
-    updateModule("module2", msg.module2);
-    updateModule("module3", msg.module3);
-    updateModule("module4", msg.module4);
-    updateModule("module5", msg.module5);
-    updateModule("module6", msg.module6);
-    updateModule("module7", msg.module7);
-  };
+speakUploadBtn.addEventListener("click", () => speakText(uploadSentence));
+speakCameraBtn.addEventListener("click", () => speakText(cameraSentence));
 
-  ws.onclose = () => {
-    setConnected(false);
-    wsRef = null;
-    setTimeout(connectSocket, 900);
-  };
+openCameraBtn.addEventListener("click", async () => {
+  try {
+    cameraStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: "user" },
+      audio: false,
+    });
+    cameraVideo.srcObject = cameraStream;
+    captureCameraBtn.disabled = false;
+    closeCameraBtn.disabled = false;
+    openCameraBtn.disabled = true;
+    setMessage("Camera opened. Use Generate From Camera when ready.");
+  } catch (error) {
+    setMessage("Camera permission was denied or unavailable.");
+  }
+});
 
-  ws.onerror = () => ws.close();
+closeCameraBtn.addEventListener("click", () => {
+  if (cameraStream) {
+    cameraStream.getTracks().forEach((track) => track.stop());
+  }
+  cameraStream = null;
+  cameraVideo.srcObject = null;
+  captureCameraBtn.disabled = true;
+  closeCameraBtn.disabled = true;
+  openCameraBtn.disabled = false;
+  setMessage("Camera closed.");
+});
+
+async function captureFrames() {
+  const width = cameraVideo.videoWidth || 640;
+  const height = cameraVideo.videoHeight || 360;
+  captureCanvas.width = width;
+  captureCanvas.height = height;
+  const ctx = captureCanvas.getContext("2d");
+  const frames = [];
+
+  for (let i = 0; i < 24; i += 1) {
+    ctx.drawImage(cameraVideo, 0, 0, width, height);
+    frames.push(captureCanvas.toDataURL("image/jpeg", 0.8));
+    await new Promise((resolve) => setTimeout(resolve, 80));
+  }
+  return frames;
 }
 
-connectSocket();
+captureCameraBtn.addEventListener("click", async () => {
+  if (!cameraStream) return;
+  captureCameraBtn.disabled = true;
+  setMessage("Capturing camera frames and generating caption...");
+
+  try {
+    const frames = await captureFrames();
+    const response = await fetch(inferenceFramesUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ frames, fps: 12 }),
+    });
+    if (!response.ok) throw new Error(await response.text());
+    const result = await response.json();
+    cameraGloss.textContent = (result.gloss || []).join(" ") || "No gloss detected.";
+    cameraCaption.textContent = result.sentence || "No caption generated.";
+    cameraSentence = result.sentence || "";
+    speakCameraBtn.disabled = !cameraSentence;
+    updateMetrics(result);
+    setMessage("Camera caption generated.");
+    if (cameraSentence) speakText(cameraSentence);
+  } catch (error) {
+    setMessage(`Camera inference failed: ${error.message}`);
+  } finally {
+    captureCameraBtn.disabled = false;
+  }
+});
+
+if (!("speechSynthesis" in window)) {
+  ttsStatus.textContent = "Voice: not supported";
+} else {
+  ttsStatus.textContent = "Voice: browser TTS";
+}
+
+checkBackend();

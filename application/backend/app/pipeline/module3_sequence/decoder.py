@@ -145,13 +145,29 @@ class CTCDecoder:
         blank_id: int = 0,
         blank_idx: Optional[int] = None,
         beam_width: int = 5,
+        lm_path: Optional[str] = None,
+        lm_weight: float = 0.0,
+        lm_token_bonus: float = 0.0,
+        lm_candidates: int = 20,
     ):
         effective_blank = blank_idx if blank_idx is not None else blank_id
         self._decoder = _AdvancedCTCDecoder(
             labels=labels,
             blank_idx=effective_blank,
             beam_width=beam_width,
+            lm_path=lm_path,
+            lm_weight=lm_weight,
+            lm_token_bonus=lm_token_bonus,
+            lm_candidates=lm_candidates,
         )
+
+    @property
+    def has_language_model(self) -> bool:
+        return self._decoder.has_language_model
+
+    @property
+    def language_model_loaded(self) -> bool:
+        return self._decoder.language_model_loaded
 
     def greedy_decode(self, logits: torch.Tensor) -> List[List[str]]:
         """
