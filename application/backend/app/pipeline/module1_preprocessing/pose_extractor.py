@@ -10,6 +10,15 @@ import mediapipe as mp
 from app.core.logging import logger
 
 
+def _get_mp_solutions() -> Any:
+    """Support both legacy and newer mediapipe package layouts."""
+    if hasattr(mp, "solutions"):
+        return cast(Any, mp).solutions
+    # Some newer wheel builds expose tasks API only and do not include
+    # the legacy holistic solutions package.
+    return None
+
+
 class PoseExtractor:
     """
     Extracts pose keypoints from frames
@@ -17,13 +26,17 @@ class PoseExtractor:
     """
     
     def __init__(self):
-        mp_solutions = cast(Any, mp).solutions
-        self.holistic = mp_solutions.holistic.Holistic(
-            static_image_mode=False,
-            model_complexity=1,
-            min_detection_confidence=0.5,
-            min_tracking_confidence=0.5
-        )
+        mp_solutions = _get_mp_solutions()
+        self.holistic = None
+        if mp_solutions is not None:
+            self.holistic = mp_solutions.holistic.Holistic(
+                static_image_mode=False,
+                model_complexity=1,
+                min_detection_confidence=0.5,
+                min_tracking_confidence=0.5
+            )
+        else:
+            logger.warning("MediaPipe holistic solutions are unavailable; returning zero pose keypoints")
     
     def extract_pose(self, frame: np.ndarray) -> Optional[np.ndarray]:
         """
@@ -35,6 +48,9 @@ class PoseExtractor:
         Returns:
             Flattened keypoint array or None
         """
+        if self.holistic is None:
+            return np.zeros((258,), dtype=np.float32)
+
         results = self.holistic.process(frame)
         
         # Collect all keypoints

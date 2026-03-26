@@ -1,0 +1,75 @@
+{
+  "sentence_classes_in_dataset": 101,
+  "sentence_classes_with_gloss_mapping": 101,
+  "word_classes_in_dataset": 131,
+  "total_sentence_sequences": 1350,
+  "total_sentence_frames": 18863,
+  "avg_frames_per_sequence": 13.972592592592592,
+  "min_frames_per_sequence": 0,
+  "max_frames_per_sequence": 147,
+  "csv_rows": 101,
+  "csv_entries_missing_in_dataset": [],
+  "dataset_entries_missing_in_csv": [],
+  "top_classes_by_frames": [
+    {
+      "sentence": "how are things",
+      "frames": 519,
+      "sequences": 12
+    },
+    {
+      "sentence": "it was nice chatting with you",
+      "frames": 334,
+      "sequences": 14
+    },
+    {
+      "sentence": "he is on the way",
+      "frames": 321,
+      "sequences": 12
+    },
+    {
+      "sentence": "what is your phone number",
+      "frames": 313,
+      "sequences": 14
+    },
+    {
+      "sentence": "hi how are you",
+      "frames": 303,
+      "sequences": 14
+    },
+    {
+      "sentence": "i need water",
+      "frames": 302,
+      "sequences": 14
+    },
+    {
+      "sentence": "could you please talk slower",
+      "frames": 293,
+      "sequences": 14
+    },
+    {
+      "sentence": "i am really grateful",
+      "frames": 290,
+      "sequences": 14
+    },
+    {
+      "sentence": "you need a medicine, take this one",
+      "frames": 276,
+      "sequences": 14
+    },
+    {
+      "sentence": "how can i trust you",
+      "frames": 274,
+      "sequences": 14
+    },
+    {
+      "sentence": "it does not make any difference to me",
+      "frames": 274,
+      "sequences": 14
+    },
+    {
+      "sentence": "i can not help you there",
+      "frames": 272,
+      "sequences": 14
+    }
+  ]
+}

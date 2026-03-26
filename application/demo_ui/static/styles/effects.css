@@ -1,0 +1,10 @@
+/* Global presentation effects used across the demo surface. */
+.grand-mode .card {
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.42), 0 0 28px rgba(34, 211, 238, 0.1);
+  border-color: rgba(34, 211, 238, 0.32);
+}
+
+.grand-mode .flow-stage.active,
+.grand-mode .module.is-hot {
+  box-shadow: 0 0 26px rgba(34, 211, 238, 0.4);
+}

@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Live Recognition — ISL CSLR</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/static/styles/app.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <nav class="top-nav">
+    <div class="nav-inner">
+      <a href="/" class="nav-brand">ISL&nbsp;CSLR</a>
+      <div class="nav-links">
+        <a href="/" class="nav-link active">Live Recognition</a>
+        <a href="/pipeline" class="nav-link">Pipeline Flow</a>
+      </div>
+      <div class="nav-status">
+        <span id="wsChip" class="chip chip-amber">Connecting</span>
+        <span id="modeChip" class="chip chip-slate">--</span>
+      </div>
+    </div>
+  </nav>
+
+  <main id="appRoot" class="app-main">
+    <!-- HERO -->
+    <section class="hero-section">
+      <h1 class="hero-title">Indian Sign Language — Live Recognition</h1>
+      <p class="hero-sub">Show signs to your webcam. The AI model recognizes them in real time.</p>
+    </section>
+
+    <!-- CAMERA + OUTPUT -->
+    <section class="recognition-grid">
+      <!-- LEFT: Camera -->
+      <div class="camera-col">
+        <div class="camera-wrapper" id="cameraWrapper">
+          <video id="liveVideo" autoplay playsinline muted></video>
+          <canvas id="overlayCanvas"></canvas>
+          <div class="camera-hud">
+            <span id="hudFps">FPS: --</span>
+            <span id="hudBuffer">Buffer: 0/64</span>
+            <span id="hudLatency">Latency: -- ms</span>
+          </div>
+          <div class="camera-status-badge" id="cameraBadge">Camera Off</div>
+        </div>
+        <div class="camera-controls">
+          <button id="btnCamera" class="btn btn-cyan">Open Camera</button>
+          <button id="btnStart" class="btn btn-green">Start Recognition</button>
+          <button id="btnStop" class="btn btn-red" disabled>Stop</button>
+          <button id="btnTts" class="btn btn-purple">TTS: ON</button>
+        </div>
+      </div>
+
+      <!-- RIGHT: Recognition Output -->
+      <div class="output-col">
+        <!-- Live gloss token display -->
+        <div class="output-card">
+          <h2 class="output-label">Recognized Gloss Tokens</h2>
+          <div class="gloss-display" id="glossDisplay">
+            <span class="gloss-placeholder">Waiting for signs...</span>
+          </div>
+        </div>
+
+        <!-- Translated sentence with highlight -->
+        <div class="output-card highlight-card">
+          <h2 class="output-label">English Translation</h2>
+          <div class="sentence-display" id="sentenceDisplay">
+            <span class="sentence-placeholder">Start the pipeline to see live translation</span>
+          </div>
+          <div class="confidence-bar-wrap">
+            <div class="confidence-bar" id="confidenceBar" style="width:0%"></div>
+          </div>
+          <span class="confidence-label" id="confidenceLabel">Confidence: 0%</span>
+        </div>
+
+        <!-- Transcript history -->
+        <div class="output-card history-card">
+          <h2 class="output-label">Transcript History</h2>
+          <div class="history-list" id="historyList">
+            <p class="history-empty">No translations yet</p>
+          </div>
+        </div>
+
+        <!-- Attention weights -->
+        <div class="output-card attention-card">
+          <h2 class="output-label">Attention Weights</h2>
+          <div class="attn-row">
+            <span class="attn-label">RGB Stream</span>
+            <div class="attn-bar"><div class="attn-fill attn-rgb" id="attnRgb" style="width:50%"></div></div>
+            <span class="attn-val" id="attnRgbVal">0.50</span>
+          </div>
+          <div class="attn-row">
+            <span class="attn-label">Pose Stream</span>
+            <div class="attn-bar"><div class="attn-fill attn-pose" id="attnPose" style="width:50%"></div></div>
+            <span class="attn-val" id="attnPoseVal">0.50</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="popupBackdrop" class="popup-backdrop hidden"></div>
+  <section id="popupPanel" class="popup-panel hidden"></section>
+
+  <script type="module" src="/static/pages/recognition.js"></script>
+</body>
+</html>

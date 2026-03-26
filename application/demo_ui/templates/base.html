@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{title}} — ISL CSLR Live</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/static/styles/app.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- NAV -->
+  <nav class="top-nav">
+    <div class="nav-inner">
+      <a href="/" class="nav-brand">ISL&nbsp;CSLR</a>
+      <div class="nav-links">
+        <a href="/" class="nav-link {{active_home}}">Live Recognition</a>
+        <a href="/pipeline" class="nav-link {{active_pipeline}}">Pipeline Flow</a>
+      </div>
+      <div class="nav-status">
+        <span id="wsChip" class="chip chip-amber">Connecting</span>
+        <span id="modeChip" class="chip chip-slate">--</span>
+      </div>
+    </div>
+  </nav>
+
+  <main id="appRoot" class="app-main">
+    {{content}}
+  </main>
+
+  <!-- popup overlay -->
+  <div id="popupBackdrop" class="popup-backdrop hidden"></div>
+  <section id="popupPanel" class="popup-panel hidden"></section>
+
+  <script type="module" src="/static/pages/{{page_script}}"></script>
+</body>
+</html>

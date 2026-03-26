@@ -22,7 +22,7 @@ router = APIRouter()
 
 
 @router.post("/video", response_model=InferenceResponse)
-async def infer_video(file: UploadFile = File(...), request: Request | None = None):
+async def infer_video(request: Request, file: UploadFile = File(...)):
     """
     Process an uploaded video file and return recognition results.
     """
@@ -30,7 +30,7 @@ async def infer_video(file: UploadFile = File(...), request: Request | None = No
     temp_path = None
 
     try:
-        service = getattr(request.app.state, "inference_service", None) if request else None
+        service = getattr(request.app.state, "inference_service", None)
         if service is None:
             raise HTTPException(status_code=503, detail="InferenceService not initialized")
 
@@ -69,7 +69,7 @@ async def infer_video(file: UploadFile = File(...), request: Request | None = No
 
 @router.post("/frames", response_model=InferenceResponse)
 async def infer_frames(
-    inference_request: InferenceRequest, request: Request | None = None
+    inference_request: InferenceRequest, request: Request
 ):
     """
     Process a sequence of base64-encoded frames.
@@ -77,11 +77,11 @@ async def infer_frames(
     start_time = time.time()
 
     try:
-        service = getattr(request.app.state, "inference_service", None) if request else None
+        service = getattr(request.app.state, "inference_service", None)
         if service is None:
             raise HTTPException(status_code=503, detail="InferenceService not initialized")
 
-        cache_service = getattr(request.app.state, "cache_service", None) if request else None
+        cache_service = getattr(request.app.state, "cache_service", None)
         cache_key = None
 
         logger.info(f"Processing {len(inference_request.frames)} frames")

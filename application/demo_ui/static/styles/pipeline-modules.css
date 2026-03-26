@@ -1,0 +1,151 @@
+.flow-lane {
+  position: relative;
+  margin-top: 0.42rem;
+  padding-top: 0.35rem;
+}
+
+.flow-track {
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(56, 189, 248, 0.3), rgba(52, 211, 153, 0.3));
+}
+
+.flow-dot {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #dcf5ff, #06b6d4);
+  box-shadow: 0 0 24px rgba(6, 182, 212, 0.85);
+}
+
+.flow-stages {
+  margin-top: 0.65rem;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.36rem;
+}
+
+.flow-stage {
+  border-radius: 0.62rem;
+  border: 1px solid rgba(148, 163, 184, 0.34);
+  background: rgba(15, 23, 42, 0.64);
+  padding: 0.42rem 0.35rem;
+  color: #cfdae8;
+  font-size: 0.76rem;
+  text-align: center;
+}
+
+.flow-stage.active {
+  border-color: rgba(34, 211, 238, 0.95);
+  color: #e5fdff;
+  box-shadow: 0 0 20px rgba(34, 211, 238, 0.3);
+}
+
+.flow-name {
+  display: block;
+  min-height: 1rem;
+  font-weight: 700;
+}
+
+.flow-progress {
+  margin-top: 0.28rem;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(51, 65, 85, 0.64);
+  overflow: hidden;
+}
+
+.flow-progress-fill {
+  width: 8%;
+  height: 100%;
+  background: linear-gradient(90deg, #22d3ee, #34d399);
+  transition: width 220ms ease;
+}
+
+.module-grid {
+  margin-top: 0.65rem;
+  display: grid;
+  gap: 0.65rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.module {
+  border: 1px solid rgba(148, 163, 184, 0.34);
+  background: rgba(9, 17, 31, 0.72);
+  border-radius: 0.82rem;
+  padding: 0.74rem;
+  transition: transform 220ms ease, border-color 220ms ease;
+  cursor: pointer;
+}
+
+.module:hover {
+  transform: translateY(-2px);
+}
+
+.module.is-hot {
+  border-color: rgba(34, 211, 238, 0.88);
+  box-shadow: 0 0 20px rgba(34, 211, 238, 0.23);
+}
+
+.module-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.module-title {
+  margin: 0;
+  color: #a5f3fc;
+  font-size: 0.91rem;
+  font-weight: 800;
+}
+
+.module-tag {
+  border-radius: 999px;
+  padding: 0.17rem 0.45rem;
+  font-size: 0.7rem;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(51, 65, 85, 0.45);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.module-field {
+  margin: 0.2rem 0;
+  font-size: 0.79rem;
+  line-height: 1.32;
+  color: #d9e4f2;
+}
+
+.module-field span:first-child {
+  color: #67e8f9;
+  font-weight: 700;
+}
+
+.mini-progress {
+  margin-top: 0.5rem;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(51, 65, 85, 0.55);
+  overflow: hidden;
+}
+
+.mini-fill {
+  width: 8%;
+  height: 100%;
+  background: linear-gradient(90deg, #38bdf8, #22c55e);
+  transition: width 260ms ease;
+}
+
+.module-note {
+  margin-top: 0.42rem;
+  padding-top: 0.4rem;
+  border-top: 1px dashed rgba(148, 163, 184, 0.35);
+  color: #aabbd0;
+  font-size: 0.74rem;
+}

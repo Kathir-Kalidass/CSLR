@@ -350,6 +350,8 @@ class InferenceService:
                 "buffer": SlidingWindowBuffer(window_size=64, stride=32),
                 "last_gloss": [],
                 "last_sentence": "",
+                "last_pose_landmarks": [],
+                "last_hand_landmarks": [],
             }
 
         try:
@@ -359,6 +361,8 @@ class InferenceService:
                     "gloss": state["last_gloss"],
                     "sentence": state["last_sentence"],
                     "confidence": 0.0,
+                    "pose_landmarks": state.get("last_pose_landmarks", []),
+                    "hand_landmarks": state.get("last_hand_landmarks", []),
                     "partial": True,
                     "state": state,
                 }
@@ -368,9 +372,14 @@ class InferenceService:
                     "gloss": state["last_gloss"],
                     "sentence": state["last_sentence"],
                     "confidence": 0.0,
+                    "pose_landmarks": state.get("last_pose_landmarks", []),
+                    "hand_landmarks": state.get("last_hand_landmarks", []),
                     "partial": True,
                     "state": state,
                 }
+
+            state["last_pose_landmarks"] = result.pose_landmarks
+            state["last_hand_landmarks"] = result.hand_landmarks
 
             window = state["buffer"].add(result.rgb_tensor, result.pose_tensor)
             if window is None:
@@ -378,6 +387,8 @@ class InferenceService:
                     "gloss": state["last_gloss"],
                     "sentence": state["last_sentence"],
                     "confidence": 0.0,
+                    "pose_landmarks": state.get("last_pose_landmarks", []),
+                    "hand_landmarks": state.get("last_hand_landmarks", []),
                     "partial": True,
                     "state": state,
                 }
@@ -404,6 +415,8 @@ class InferenceService:
                 "sentence": sentence,
                 "confidence": decode_result.confidence,
                 "fps": 25.0,
+                "pose_landmarks": state.get("last_pose_landmarks", []),
+                "hand_landmarks": state.get("last_hand_landmarks", []),
                 "partial": state["buffer"].counts() < state["buffer"].window_size,
                 "state": state,
             }
@@ -413,6 +426,8 @@ class InferenceService:
                 "gloss": state.get("last_gloss", []),
                 "sentence": state.get("last_sentence", ""),
                 "confidence": 0.0,
+                "pose_landmarks": state.get("last_pose_landmarks", []),
+                "hand_landmarks": state.get("last_hand_landmarks", []),
                 "partial": True,
                 "state": state,
                 "error": str(e),

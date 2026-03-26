@@ -5,7 +5,7 @@ Optimized webcam preprocessing pipeline for low-memory GPUs
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional
 
 import cv2
@@ -13,6 +13,8 @@ import mediapipe as mp
 import numpy as np
 import torch
 import torchvision.transforms as transforms
+
+from app.core.logging import logger
 
 
 @dataclass
@@ -23,6 +25,8 @@ class ProcessedFrame:
     pose_tensor: Optional[torch.Tensor]
     kept: bool
     motion_score: float
+    pose_landmarks: list[list[float]] = field(default_factory=list)
+    hand_landmarks: list[dict] = field(default_factory=list)
 
 
 class VideoPreprocessor:
@@ -58,15 +62,21 @@ class VideoPreprocessor:
         self._recent_motion: list[float] = []
 
         # MediaPipe Holistic
-        self.mp_holistic = mp.solutions.holistic  # type: ignore
-        self.mp_drawing = mp.solutions.drawing_utils  # type: ignore
-        self.holistic = self.mp_holistic.Holistic(
-            static_image_mode=False,
-            model_complexity=1,
-            smooth_landmarks=True,
-            enable_segmentation=False,
-            refine_face_landmarks=False,
-        )
+        self.mp_holistic = None
+        self.mp_drawing = None
+        self.holistic = None
+        if hasattr(mp, "solutions"):
+            self.mp_holistic = mp.solutions.holistic  # type: ignore[attr-defined]
+            self.mp_drawing = mp.solutions.drawing_utils  # type: ignore[attr-defined]
+            self.holistic = self.mp_holistic.Holistic(
+                static_image_mode=False,
+                model_complexity=1,
+                smooth_landmarks=True,
+                enable_segmentation=False,
+                refine_face_landmarks=False,
+            )
+        else:
+            logger.warning("MediaPipe solutions are unavailable; using frame-only preprocessing fallback")
 
         # ImageNet normalization
         self.transform = transforms.Compose(
@@ -115,6 +125,47 @@ class VideoPreprocessor:
             padded[:n] = points[:n]
             return padded
         return points
+
+    @staticmethod
+    def _extract_hand_landmarks(results) -> list[dict]:
+        hands: list[dict] = []
+        if results is None:
+            return hands
+
+        if getattr(results, "left_hand_landmarks", None):
+            hands.append(
+                {
+                    "label": "Left",
+                    "landmarks": [[lm.x, lm.y] for lm in results.left_hand_landmarks.landmark],
+                }
+            )
+
+        if getattr(results, "right_hand_landmarks", None):
+            hands.append(
+                {
+                    "label": "Right",
+                    "landmarks": [[lm.x, lm.y] for lm in results.right_hand_landmarks.landmark],
+                }
+            )
+
+        return hands
+
+    @staticmethod
+    def _to_coco17_pose(results) -> list[list[float]]:
+        if results is None or getattr(results, "pose_landmarks", None) is None:
+            return []
+
+        # COCO-17 order mapped from MediaPipe pose landmarks.
+        mp_to_coco = [0, 2, 5, 7, 8, 11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28]
+        src = results.pose_landmarks.landmark
+        out: list[list[float]] = []
+        for idx in mp_to_coco:
+            if idx < len(src):
+                lm = src[idx]
+                out.append([float(lm.x), float(lm.y)])
+            else:
+                out.append([0.0, 0.0])
+        return out
 
     @staticmethod
     def _normalize_keypoints(points75: np.ndarray) -> np.ndarray:
@@ -194,15 +245,17 @@ class VideoPreprocessor:
 
         # MediaPipe Holistic
         rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        results = self.holistic.process(rgb_frame)
+        results = self.holistic.process(rgb_frame) if self.holistic is not None else None
 
         # Extract keypoints: 33 pose + 21 left hand + 21 right hand = 75
-        pose_xy = self._extract_xy(results.pose_landmarks, 33)
-        left_hand_xy = self._extract_xy(results.left_hand_landmarks, 21)
-        right_hand_xy = self._extract_xy(results.right_hand_landmarks, 21)
+        pose_xy = self._extract_xy(results.pose_landmarks if results else None, 33)
+        left_hand_xy = self._extract_xy(results.left_hand_landmarks if results else None, 21)
+        right_hand_xy = self._extract_xy(results.right_hand_landmarks if results else None, 21)
 
         points75 = np.vstack([pose_xy, left_hand_xy, right_hand_xy])  # (75, 2)
         points75_normed = self._normalize_keypoints(points75)
+        pose_landmarks = self._to_coco17_pose(results)
+        hand_landmarks = self._extract_hand_landmarks(results)
 
         # ROI extraction
         roi_frame = self._safe_roi(frame, pose_xy)
@@ -218,7 +271,7 @@ class VideoPreprocessor:
         pose_tensor = torch.from_numpy(points75_normed)  # (75, 2)
 
         # Draw landmarks on display frame
-        if self.draw_landmarks and results.pose_landmarks:
+        if self.draw_landmarks and results is not None and results.pose_landmarks and self.mp_drawing and self.mp_holistic:
             self.mp_drawing.draw_landmarks(
                 frame, results.pose_landmarks, self.mp_holistic.POSE_CONNECTIONS
             )
@@ -237,9 +290,11 @@ class VideoPreprocessor:
             pose_tensor=pose_tensor,
             kept=True,
             motion_score=motion_score,
+            pose_landmarks=pose_landmarks,
+            hand_landmarks=hand_landmarks,
         )
 
     def __del__(self):
         """Cleanup MediaPipe resources"""
-        if hasattr(self, "holistic"):
+        if hasattr(self, "holistic") and self.holistic is not None:
             self.holistic.close()

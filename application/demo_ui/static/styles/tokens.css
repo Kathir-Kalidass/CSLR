@@ -1,0 +1,61 @@
+:root {
+  --bg1: #070d1a;
+  --bg2: #101f39;
+  --bg3: #073d46;
+  --card: rgba(8, 18, 36, 0.72);
+  --card-strong: rgba(7, 15, 29, 0.82);
+  --border: rgba(255, 255, 255, 0.16);
+  --text: #e2e8f0;
+  --muted: #a6b4c8;
+  --cyan: #2dd4bf;
+  --blue: #38bdf8;
+  --purple: #a78bfa;
+  --green: #34d399;
+  --amber: #f59e0b;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  color: var(--text);
+  font-family: "Space Grotesk", "Segoe UI", sans-serif;
+  background: radial-gradient(circle at 12% 10%, #1e4f88 0%, transparent 32%),
+    radial-gradient(circle at 88% 22%, #0a7b67 0%, transparent 34%),
+    linear-gradient(135deg, var(--bg1), var(--bg2) 48%, var(--bg3));
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.particle-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.bg-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.28;
+  background: repeating-linear-gradient(120deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.03) 2px, transparent 2px, transparent 16px);
+}
+
+main {
+  position: relative;
+  z-index: 2;
+}
+
+.card {
+  border: 1px solid var(--border);
+  background: var(--card);
+  border-radius: 1rem;
+  backdrop-filter: blur(16px);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.34);
+}

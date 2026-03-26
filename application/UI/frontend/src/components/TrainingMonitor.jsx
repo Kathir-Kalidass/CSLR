@@ -52,7 +52,7 @@ function StatPill({ label, value, color = 'text-cyan-300' }) {
 }
 
 // ── Main component ───────────────────────────────────────────────────────────
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8080'
+const API_BASE = import.meta.env.VITE_API_BASE || `http://${window.location.hostname || 'localhost'}:8090`
 const POLL_MS = 15_000
 
 export default function TrainingMonitor() {

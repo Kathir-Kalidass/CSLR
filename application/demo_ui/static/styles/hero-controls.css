@@ -1,0 +1,205 @@
+.hero {
+  overflow: hidden;
+  position: relative;
+}
+
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: -20%;
+  background: radial-gradient(circle at 20% 30%, rgba(56, 189, 248, 0.12), transparent 35%),
+    radial-gradient(circle at 75% 65%, rgba(167, 139, 250, 0.16), transparent 40%);
+  pointer-events: none;
+}
+
+.hero-top {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.hero-kicker {
+  margin: 0;
+  color: #a5f3fc;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+}
+
+.title-main {
+  margin: 0.2rem 0 0;
+  font-family: "Sora", "Space Grotesk", sans-serif;
+  font-size: clamp(1.4rem, 2.5vw, 2.3rem);
+  line-height: 1.18;
+  letter-spacing: 0.02em;
+}
+
+.hero-sub {
+  margin: 0.4rem 0 0;
+  color: #b8c9dc;
+  max-width: 64ch;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.page-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.38rem 0.68rem;
+  border-radius: 0.62rem;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(15, 23, 42, 0.6);
+  color: #d7e4f3;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.page-link-active {
+  border-color: rgba(34, 211, 238, 0.8);
+  color: #cffafe;
+  box-shadow: 0 0 16px rgba(34, 211, 238, 0.25);
+}
+
+.chip-row {
+  margin-top: 0.95rem;
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.pill {
+  padding: 0.32rem 0.64rem;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  border: 1px solid rgba(148, 163, 184, 0.33);
+  background: rgba(15, 23, 42, 0.68);
+  font-weight: 700;
+}
+
+.pill-cyan {
+  color: #b7f9ff;
+  border-color: rgba(34, 211, 238, 0.48);
+  background: rgba(34, 211, 238, 0.14);
+}
+
+.pill-green {
+  color: #cbffe9;
+  border-color: rgba(52, 211, 153, 0.5);
+  background: rgba(52, 211, 153, 0.14);
+}
+
+.pill-amber {
+  color: #ffe2b5;
+  border-color: rgba(245, 158, 11, 0.5);
+  background: rgba(245, 158, 11, 0.16);
+}
+
+.pill-violet {
+  color: #ede4ff;
+  border-color: rgba(167, 139, 250, 0.52);
+  background: rgba(167, 139, 250, 0.15);
+}
+
+.pill-slate {
+  color: #cbd5e1;
+  border-color: rgba(148, 163, 184, 0.4);
+  background: rgba(51, 65, 85, 0.45);
+}
+
+.controls {
+  background: rgba(8, 16, 30, 0.8);
+}
+
+.control-row {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.ctrl-btn {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.72rem;
+  padding: 0.5rem 0.95rem;
+  font-size: 0.88rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  color: #e7edf6;
+  transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
+}
+
+.ctrl-btn:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.07);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+}
+
+.ctrl-start {
+  background: linear-gradient(120deg, rgba(16, 185, 129, 0.3), rgba(34, 197, 94, 0.22));
+}
+
+.ctrl-stop {
+  background: linear-gradient(120deg, rgba(239, 68, 68, 0.3), rgba(248, 113, 113, 0.2));
+}
+
+.ctrl-clear {
+  background: linear-gradient(120deg, rgba(14, 165, 233, 0.3), rgba(45, 212, 191, 0.2));
+}
+
+.ctrl-tts {
+  background: linear-gradient(120deg, rgba(139, 92, 246, 0.33), rgba(59, 130, 246, 0.2));
+}
+
+.ctrl-tts-off {
+  background: linear-gradient(120deg, rgba(100, 116, 139, 0.35), rgba(71, 85, 105, 0.3));
+}
+
+.ctrl-info {
+  background: rgba(15, 23, 42, 0.62);
+}
+
+.ctrl-cyan {
+  background: linear-gradient(120deg, rgba(34, 211, 238, 0.3), rgba(45, 212, 191, 0.2));
+}
+
+.ctrl-slate {
+  background: rgba(51, 65, 85, 0.42);
+}
+
+.ctrl-grand {
+  background: linear-gradient(120deg, rgba(251, 191, 36, 0.3), rgba(56, 189, 248, 0.2));
+}
+
+.ctrl-presenter {
+  background: linear-gradient(120deg, rgba(34, 197, 94, 0.3), rgba(56, 189, 248, 0.22));
+}
+
+.ctrl-auto {
+  background: linear-gradient(120deg, rgba(167, 139, 250, 0.3), rgba(45, 212, 191, 0.2));
+}
+
+.ctrl-auto-on {
+  box-shadow: 0 0 20px rgba(167, 139, 250, 0.42);
+  border-color: rgba(167, 139, 250, 0.72);
+}
+
+.narration-card {
+  background: var(--card-strong);
+}
+
+.narration-text {
+  margin: 0.55rem 0 0;
+  color: #d6e7fb;
+  line-height: 1.5;
+  font-size: 0.95rem;
+  min-height: 1.4rem;
+}

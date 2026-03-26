@@ -51,7 +51,8 @@ export default function App() {
     const fromEnv = import.meta.env.VITE_WS_URL
     if (fromEnv) return fromEnv
     const proto = window.location.protocol === 'https:' ? 'wss' : 'ws'
-    return `${proto}://localhost:8080/ws/realtime`
+    const host = window.location.hostname || 'localhost'
+    return `${proto}://${host}:8090/ws/realtime`
   }, [])
 
   useEffect(() => {

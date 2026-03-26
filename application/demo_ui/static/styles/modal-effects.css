@@ -1,0 +1,130 @@
+.popup-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.68);
+  backdrop-filter: blur(4px);
+  z-index: 30;
+}
+
+.popup-panel {
+  position: fixed;
+  z-index: 31;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(700px, 92vw);
+  max-height: 82vh;
+  overflow: auto;
+  border-radius: 1rem;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  background: rgba(3, 12, 24, 0.96);
+  color: #e2e8f0;
+  box-shadow: 0 14px 38px rgba(0, 0, 0, 0.5);
+}
+
+.popup-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.9rem 1rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.24);
+}
+
+.popup-header h3 {
+  margin: 0;
+  font-family: "Sora", sans-serif;
+  font-size: 1rem;
+}
+
+.popup-close {
+  border-radius: 0.55rem;
+  padding: 0.34rem 0.62rem;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(15, 23, 42, 0.72);
+  color: #dbe7f5;
+  font-weight: 700;
+}
+
+.popup-body {
+  padding: 0.95rem 1rem;
+}
+
+.popup-body p {
+  margin: 0.42rem 0;
+  color: #ccddf1;
+}
+
+.popup-body ul,
+.popup-body ol {
+  margin: 0.42rem 0;
+  padding-left: 1.1rem;
+  color: #d3e4f7;
+}
+
+.boot-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(2, 6, 23, 0.76);
+  backdrop-filter: blur(3px);
+}
+
+.boot-overlay.show {
+  display: flex;
+}
+
+.boot-card {
+  width: min(560px, 92vw);
+  border-radius: 1rem;
+  border: 1px solid rgba(34, 211, 238, 0.34);
+  background: rgba(5, 12, 25, 0.94);
+  box-shadow: 0 0 32px rgba(34, 211, 238, 0.2);
+  padding: 1rem 1.1rem;
+}
+
+.boot-card h2 {
+  margin: 0 0 0.72rem;
+  font-family: "Sora", sans-serif;
+  font-size: 1.1rem;
+}
+
+.boot-card ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.42rem;
+}
+
+.boot-card li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #8ca3bf;
+  font-size: 0.9rem;
+  transition: color 220ms ease;
+}
+
+.boot-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: #64748b;
+}
+
+.boot-card li.done {
+  color: #dff6ff;
+}
+
+.boot-card li.done .boot-dot {
+  background: #22c55e;
+  box-shadow: 0 0 14px rgba(34, 197, 94, 0.7);
+}
+
+.hidden {
+  display: none !important;
+}

@@ -326,6 +326,13 @@ application/tmp/
 *_pose.json
 *_landmarks.json
 
+# Demo UI — frontend build artifacts & deps
+application/demo_ui/frontend/node_modules/
+application/demo_ui/static/dist/
+
+# Demo UI — MediaPipe model binary (7.8 MB, downloadable)
+application/demo_ui/server/hand_landmarker.task
+
 # Demo outputs
 demo/output/
 demo/recordings/

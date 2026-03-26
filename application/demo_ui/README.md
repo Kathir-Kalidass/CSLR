@@ -1,34 +1,46 @@
-# CSLR Demo UI (Reviewer-Ready Animated Showcase)
+# CSLR Demo UI (React + Vite + FastAPI)
 
-This UI is a FastAPI + WebSocket animated interface for showing your CSLR module updates in live demo format.
+This demo provides a full React frontend with live websocket inference updates from FastAPI.
 
 ## What is included
-- Live camera preview (`getUserMedia`)
-- Animated pipeline bus for `M1..M7`
-- Module cards with live `Input -> Process -> Output`
-- Controls: `Start`, `Stop`, `Clear`, `TTS ON/OFF`
-- Live metrics: `FPS`, `Latency`, `Accuracy`, `WER`, `BLEU`
-- Transcript history panel
-- Backend parser console stream
+- Multi-page UI: `Live`, `Flow`, `Insights`
+- Live webcam capture + frame streaming to backend
+- Real-time text output from model inference (no static preloaded answers)
+- RGB and Pose preview panes in camera view
+- Live flow cards showing `Input -> Process -> Output`
+- Live metrics, transcript history, and parser console
+- Optional TTS playback via backend `/api/tts`
 
 ## Stack
 - Backend: FastAPI + WebSocket
-- Frontend: TailwindCSS + GSAP + Vanilla JS
+- Frontend: React + Vite + Tailwind + Framer Motion + Zustand
 
-## Run
+## Backend Run
 
 ```bash
 cd application/demo_ui
-python -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 uvicorn app:app --host 0.0.0.0 --port 8080 --reload
 ```
 
-Open `http://localhost:8080`.
+## Frontend Dev Run
 
-## Demo flow
-1. Start webcam in UI.
-2. Click `Start` to run module updates.
-3. Use `TTS` toggle and `Clear` transcript during demo.
-4. Use `Stop` to pause pipeline without disconnecting camera.
+```bash
+cd application/demo_ui/frontend
+# use a Linux npm/node inside WSL for best compatibility
+npm install
+npm run dev
+```
+
+Open `http://localhost:3000`.
+
+## Frontend Build for FastAPI Serving
+
+```bash
+cd application/demo_ui/frontend
+npm run build
+```
+
+This writes build assets to `application/demo_ui/static/dist`, and FastAPI routes (`/live`, `/flow`, `/insights`) will serve the built React app.

@@ -3,7 +3,8 @@ FastAPI Main Entry Point
 Registers all routers, initializes models, and configures the application.
 """
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, WebSocket
+from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import torch
@@ -12,6 +13,8 @@ from app.core.config import settings
 from app.core.logging import setup_logging, logger
 from app.core.exceptions import register_exception_handlers
 from app.api.routes import api_router
+from app.api.websocket import websocket_inference
+from app.core.environment import get_system_info
 from app.monitoring.metrics import global_metrics
 from app.monitoring.gpu_monitor import gpu_monitor
 from app.services.cache_service import CacheService
@@ -91,6 +94,30 @@ register_exception_handlers(app)
 
 # Include API routes
 app.include_router(api_router, prefix="/api/v1")
+
+
+class TTSRequest(BaseModel):
+    text: str
+    lang: str = "en"
+    slow: bool = False
+
+
+@app.get("/api/system")
+async def compat_system_info():
+    """Compatibility alias for demo UI."""
+    return get_system_info()
+
+
+@app.post("/api/tts")
+async def compat_tts(_payload: TTSRequest):
+    """Compatibility endpoint; this backend does not return audio blobs."""
+    raise HTTPException(status_code=501, detail="TTS audio endpoint not implemented")
+
+
+@app.websocket("/ws/demo")
+async def compat_ws_demo(websocket: WebSocket):
+    """Compatibility alias for demo UI websocket path."""
+    await websocket_inference(websocket)
 
 
 @app.get("/")
