@@ -5,6 +5,14 @@
 
 set -e  # Exit on error
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
+
+DEFAULT_RUNTIME_VENV="${CSLR_RUNTIME_VENV:-$HOME/.cslr_runtime_venv}"
+ACTIVE_VENV="${VIRTUAL_ENV:-$DEFAULT_RUNTIME_VENV}"
+PYTHON_BIN="$ACTIVE_VENV/bin/python"
+PIP_BIN="$ACTIVE_VENV/bin/pip"
+
 echo "=================================================="
 echo "CSLR Backend Setup"
 echo "=================================================="
@@ -28,34 +36,44 @@ echo -e "${GREEN}✓ Python version OK${NC}"
 
 # Create virtual environment
 echo -e "\n${YELLOW}[2/6] Creating virtual environment...${NC}"
-if [ ! -d "venv" ]; then
-    python3 -m venv venv
-    echo -e "${GREEN}✓ Virtual environment created${NC}"
+if [ -n "${VIRTUAL_ENV:-}" ] && [ -x "$VIRTUAL_ENV/bin/python" ]; then
+    ACTIVE_VENV="$VIRTUAL_ENV"
+    echo -e "${GREEN}✓ Reusing active virtual environment: $ACTIVE_VENV${NC}"
 else
-    echo -e "${GREEN}✓ Virtual environment exists${NC}"
+    ACTIVE_VENV="$DEFAULT_RUNTIME_VENV"
+    PYTHON_BIN="$ACTIVE_VENV/bin/python"
+    PIP_BIN="$ACTIVE_VENV/bin/pip"
+    if [ ! -x "$PYTHON_BIN" ]; then
+        python3 -m venv "$ACTIVE_VENV"
+        echo -e "${GREEN}✓ Virtual environment created at $ACTIVE_VENV${NC}"
+    else
+        echo -e "${GREEN}✓ Virtual environment exists at $ACTIVE_VENV${NC}"
+    fi
 fi
 
 # Activate venv
-source venv/bin/activate
+source "$ACTIVE_VENV/bin/activate"
+PYTHON_BIN="$ACTIVE_VENV/bin/python"
+PIP_BIN="$ACTIVE_VENV/bin/pip"
 
 # Upgrade pip
 echo -e "\n${YELLOW}[3/6] Upgrading pip...${NC}"
-pip install --upgrade pip setuptools wheel
+"$PIP_BIN" install --upgrade pip setuptools wheel
 echo -e "${GREEN}✓ pip upgraded${NC}"
 
 # Install dependencies
 echo -e "\n${YELLOW}[4/6] Installing dependencies...${NC}"
 echo "This may take several minutes..."
-pip install -r requirements.txt
+"$PIP_BIN" install -r requirements.txt
 echo -e "${GREEN}✓ Dependencies installed${NC}"
 
 # Install PyTorch with CUDA (if needed)
 echo -e "\n${YELLOW}[5/6] Checking PyTorch installation...${NC}"
-if python3 -c "import torch; print(torch.cuda.is_available())" 2>/dev/null | grep -q "True"; then
+if "$PYTHON_BIN" -c "import torch; print(torch.cuda.is_available())" 2>/dev/null | grep -q "True"; then
     echo -e "${GREEN}✓ PyTorch with CUDA already installed${NC}"
 else
     echo "Installing PyTorch with CUDA 12.1..."
-    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+    "$PIP_BIN" install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
     echo -e "${GREEN}✓ PyTorch installed${NC}"
 fi
 
@@ -85,7 +103,7 @@ echo -e "${GREEN}Setup Complete! 🎉${NC}"
 echo "=================================================="
 echo ""
 echo "Next steps:"
-echo "  1. Activate venv:     source venv/bin/activate"
+echo "  1. Activate venv:     source $ACTIVE_VENV/bin/activate"
 echo "  2. Edit config:       nano .env"
 echo "  3. Run health check:  ./health_check.sh"
 echo "  4. Start server:      uvicorn app.main:app --reload"

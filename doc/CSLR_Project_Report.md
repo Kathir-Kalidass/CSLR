@@ -2,6 +2,7 @@
 
 ## Executive Summary
 This project designs and implements a real-time, camera-only system for continuous sign language recognition (CSLR) and translation focused on Indian Sign Language (ISL). The pipeline combines multi-feature visual processing (RGB + pose), temporal sequence modeling (BiLSTM/Transformer with CTC), and language-level correction to produce fluent English text and speech. The system is modular, scalable, and optimized for low-latency; it supports experimentation across datasets and model variants while targeting ISL for final evaluation.
+The proposed architecture is implemented with modern deep learning frameworks and tuned for efficient real-time inference, making it suitable for practical deployment in assistive communication systems.
 
 **📘 For detailed implementation workflow, architecture, and step-by-step methodology, see [DETAILED_WORKFLOW.md](DETAILED_WORKFLOW.md).**
 
@@ -19,6 +20,8 @@ We aim to build a robust, real-time system that:
 - Targets ISL, using multimodal visual features.
 - Handles unsegmented sign streams.
 - Produces linguistically valid English output (text and speech).
+
+Despite the broader progress of sign language recognition research, building efficient Indian Sign Language systems remains challenging because annotated ISL datasets are still limited and gesture dynamics are complex across signers and environments. As a result, there is a clear need for architectures that can operate in real time without sacrificing recognition quality. This project addresses that requirement by combining spatial and temporal deep learning models with attention-based fusion to improve performance while keeping computational cost manageable.
 
 ---
 
@@ -153,36 +156,64 @@ Supporting (Non-ISL)
 | MS-ASL (ASL)           | Continuous/Isolated | Large-scale ASL | Pretraining; backbone validation         | Transfer learning only               |
 | RWTH-PHOENIX-Weather   | Continuous  | Weather broadcast    | CTC/beam search strategy validation       | Widely used CSLR benchmark           |
 
+### 5.5 Real-Time Sign Language Recognition Systems
+Recent studies have increasingly focused on real-time sign language recognition systems that operate with standard RGB cameras and do not require specialized hardware. In such settings, a practical solution must balance recognition accuracy with computational efficiency so inference latency stays low enough for live assistive communication.
+
+Several works achieve this by combining lightweight convolutional neural networks with recurrent or sequence-aware models. MobileNet-style and EfficientNet-based architectures are particularly relevant because they provide strong visual feature extraction with efficient parameter scaling. Attention mechanisms are also commonly introduced so the network can emphasize the most relevant spatial and temporal cues across video sequences.
+
+Even with these advances, robust real-time performance is still affected by lighting variation, signer-specific motion styles, and unconstrained backgrounds. These limitations motivate efficient multi-feature architectures that jointly capture appearance and motion information while remaining deployable in practical environments.
+
 ---
 
 ## 6. Methodology Details
-### 6.1 Preprocessing
+### 6.1 System Overview
+The proposed system follows a multi-stage deep learning architecture designed to capture both spatial and temporal characteristics of Indian Sign Language gestures. RGB video sequences acquired from a standard camera are processed through a sequence of stages that transform raw frames into gesture predictions.
+
+The overall architecture combines spatial feature extraction, temporal motion modeling, attention-based fusion, and sequence prediction. Spatial modules learn appearance-oriented cues such as hand shape and orientation, whereas temporal modules model motion continuity across frames. The attention mechanism prioritizes the most informative features before final decoding.
+
+### 6.2 Preprocessing
 - Uniform frame sampling; normalization.
 - Pose estimation (skeleton/hand keypoints) per frame.
 - Optional noise handling and signer-invariance tricks.
 
-### 6.2 Feature Extraction
+### 6.3 Feature Extraction
 - RGB encoder (CNN/I3D/TSM/SlowFast variants).
 - Pose/landmark encoder (GCN/MLP/RNN).
 - Parallel extraction for low latency.
 
-### 6.3 Fusion & Temporal Modeling
+### 6.4 Fusion & Temporal Modeling
 - Attention-based fusion of streams.
 - BiLSTM or Transformer encoders for sequence learning.
 - CTC loss for unsegmented training.
 
-### 6.4 Decoding & Language Correction
+From a systems perspective, the architecture can be viewed as three major processing layers: edge preprocessing, feature extraction and learning, and sequence modeling. The edge layer performs frame extraction, normalization, and dynamic frame sampling to create stable video inputs. The feature learning layer computes spatial and temporal descriptors through deep convolutional and sequence-aware networks. The final sequence modeling layer captures temporal dependencies and generates gesture predictions through decoding mechanisms.
+
+The attention mechanism assigns adaptive weights to spatial and temporal features before fusion. Let $F_s$ denote spatial features extracted from individual frames and let $F_t$ denote temporal features obtained from the CNN-RNN pipeline. The fused representation $F$ can be written as:
+
+$$
+F = \alpha F_s + \beta F_t
+$$
+
+where $\alpha$ and $\beta$ are attention weights learned during training. This adaptive weighting allows the model to emphasize the most discriminative feature stream for each gesture sequence.
+
+### 6.5 Decoding & Language Correction
 - CTC beam search with confidence thresholds.
 - Lightweight LM for grammar correction; optional domain rules.
 - Caption buffering to refine partial outputs.
 
-### 6.5 TTS Integration
+Implementation of the recognition stage can be carried out in deep learning frameworks such as PyTorch. Video preprocessing operations including frame extraction, resizing, and normalization can be handled through OpenCV. An EfficientNet backbone may be initialized with pretrained ImageNet weights and then fine-tuned for sign language gesture recognition.
+
+Training is expected to use GPU acceleration to improve convergence speed and experimental throughput. Batch normalization and dropout layers help improve generalization and reduce overfitting. Final gesture predictions can then be converted into textual output and, when required, synthesized into speech through an attached text-to-speech module.
+
+### 6.6 TTS Integration
 - Stream corrected text into TTS (offline/online).
 - Audio feedback pipeline with minimal delay.
 
 ---
 
 ## 7. Evaluation
+The proposed system is evaluated with standard classification and sequence metrics. Accuracy measures the proportion of correct predictions over the total number of samples. Precision indicates how many predicted gestures are actually correct, recall measures how effectively the model identifies all relevant gestures, and the F-score provides a balanced summary of precision and recall.
+
 - Recognition: WER, CER, Top-1/Top-5 gloss accuracy.
 - Translation: BLEU, ROUGE-L; human fluency ratings optional.
 - Real-time: End-to-end latency, jitter, throughput.
@@ -255,7 +286,14 @@ python references/NLA-SLR/prediction.py --video /path/to/isl_video.mp4 --output 
 
 ---
 
-## 12. References & Resources
+## 12. Conclusion
+This report outlines a modular, real-time framework for Indian Sign Language recognition and translation that combines multi-feature visual learning, temporal sequence modeling, and language-aware output refinement. The overall design is intended to support practical deployment while remaining extensible for future experimentation and system upgrades.
+
+The modular architecture also allows integration with additional language processing components for fuller sign language translation workflows. Future work will focus on improving robustness in complex environmental conditions and extending the system toward continuous sentence-level translation.
+
+---
+
+## 13. References & Resources
 ### Primary Base Paper (MUST CITE)
 📄 **"Deep Learning-Based Sign Language Recognition Using Efficient Multi-Feature Attention Mechanism"**
 - File: `report_pages/conference_journels_std/Deep_Learning-Based_Sign_Language_Recognition_Using_Efficient_Multi-Feature_Attention_Mechanism.pdf`
@@ -290,7 +328,7 @@ Visual documentation available in `report_pages/architecture_diagram/`:
 
 ---
 
-## 13. Appendices
+## 14. Appendices
 - Glossary: CSLR, CTC, BiLSTM, Transformer, LM, TTS.
 - Abbreviations: ISL, ASL, WER, CER, BLEU, ROUGE.
 - Diagrams: See report_pages/architecture_diagram/ for visuals.

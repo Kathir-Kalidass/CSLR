@@ -94,6 +94,41 @@ def test_ctc_decoder_beam_search():
     assert len(decoded) == 1
 
 
+def test_ctc_decoder_lm_rescoring_prefers_language_model_sequence():
+    """LM rescoring should be able to rerank final beam candidates."""
+    from app.utils.ctc_decoder import CTCDecoder
+
+    class FakeLanguageModel:
+        def score(self, text: str, bos: bool = True, eos: bool = True) -> float:
+            return 5.0 if text == "A B" else 0.0
+
+    vocab = ["<blank>", "A", "B"]
+    logits = torch.tensor(
+        [
+            [0.0, 4.5, 2.0],
+            [0.0, 4.2, 3.9],
+        ],
+        dtype=torch.float32,
+    )
+
+    acoustic_only = CTCDecoder(labels=vocab, blank_idx=0, beam_width=3)
+    lm_decoder = CTCDecoder(
+        labels=vocab,
+        blank_idx=0,
+        beam_width=3,
+        lm_weight=1.0,
+        lm_candidates=6,
+        language_model=FakeLanguageModel(),
+    )
+
+    acoustic = acoustic_only.beam_search_decode(logits)
+    rescored = lm_decoder.beam_search_decode(logits)
+
+    assert acoustic.gloss_tokens == ["A"]
+    assert rescored.gloss_tokens == ["A", "B"]
+    assert rescored.lm_score is not None
+
+
 def test_confidence_scoring():
     """Test confidence scoring"""
     from app.pipeline.module3_sequence.confidence import ConfidenceScorer

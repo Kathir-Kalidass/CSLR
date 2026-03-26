@@ -85,10 +85,10 @@ This project implements a comprehensive **continuous sign language recognition a
 
 2. **Create virtual environment**
    ```bash
-   python -m venv .venv
-   source .venv/bin/activate  # Linux/Mac
+   python -m venv "$HOME/.cslr_runtime_venv"
+   source "$HOME/.cslr_runtime_venv/bin/activate"  # Linux/Mac
    # or
-   .venv\Scripts\activate  # Windows
+   .cslr_runtime_venv\Scripts\activate  # Windows
    ```
 
 3. **Install dependencies**

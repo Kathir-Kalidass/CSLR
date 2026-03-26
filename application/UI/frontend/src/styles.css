@@ -1,30 +1,235 @@
-@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&display=swap');
+:root {
+  font-family: "Segoe UI", Arial, sans-serif;
+  color: #0f172a;
+  background: #ffffff;
+}
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-html,
-body,
-#root {
-  height: 100%;
+* {
+  box-sizing: border-box;
 }
 
 body {
   margin: 0;
-}
-
-.bg-space {
+  min-width: 320px;
   background:
-    radial-gradient(circle at 8% 14%, rgba(56, 189, 248, 0.45), transparent 32%),
-    radial-gradient(circle at 90% 20%, rgba(232, 121, 249, 0.38), transparent 36%),
-    radial-gradient(circle at 80% 78%, rgba(251, 146, 60, 0.28), transparent 36%),
-    linear-gradient(140deg, #12153a 0%, #1e1b4b 36%, #22305c 62%, #2a1e62 100%);
+    radial-gradient(circle at top left, #f0fdfa 0, transparent 26%),
+    radial-gradient(circle at top right, #eff6ff 0, transparent 24%),
+    #ffffff;
 }
 
-.glass-panel {
-  border: 1px solid rgba(255, 255, 255, 0.26);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.06));
-  backdrop-filter: blur(14px);
-  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.25);
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+.app-shell {
+  min-height: 100vh;
+}
+
+.page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem 3rem;
+}
+
+.hero-card,
+.panel,
+.result-card,
+.footer-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 1.5rem;
+  background: #ffffff;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+}
+
+.hero-card {
+  padding: 1.5rem;
+}
+
+.eyebrow {
+  margin: 0;
+  color: #0f766e;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.hero-card h1 {
+  margin: 0.5rem 0 0;
+  font-size: clamp(2rem, 4vw, 4rem);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+}
+
+.hero-copy,
+.panel p,
+.footer-copy {
+  color: #475569;
+}
+
+.pill-row,
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.pill-row {
+  margin-top: 1rem;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid #cbd5e1;
+  background: rgba(248, 250, 252, 0.78);
+  color: #334155;
+  font-size: 0.92rem;
+}
+
+.two-col {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.panel,
+.result-card,
+.footer-card {
+  padding: 1.25rem;
+}
+
+.panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.panel h2,
+.result-label {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.preview-shell {
+  margin-top: 1rem;
+  min-height: 280px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 1.25rem;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(241, 245, 249, 0.92));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.preview-video {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 1.1rem;
+  background: #e2e8f0;
+}
+
+.placeholder {
+  color: #64748b;
+}
+
+.button-row {
+  margin-top: 1rem;
+}
+
+.primary-btn,
+.secondary-btn {
+  border-radius: 999px;
+  padding: 0.75rem 1rem;
+  border: 1px solid transparent;
+  font-weight: 700;
+  transition: 160ms ease;
+}
+
+.primary-btn {
+  background: #0f766e;
+  color: #ffffff;
+}
+
+.secondary-btn {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+.primary-btn:hover,
+.secondary-btn:hover {
+  transform: translateY(-1px);
+}
+
+.primary-btn:disabled,
+.secondary-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.results .result-box {
+  margin-top: 1rem;
+}
+
+.result-box {
+  border: 1px solid #e2e8f0;
+  border-radius: 1.25rem;
+  padding: 1rem;
+  background: rgba(248, 250, 252, 0.78);
+  backdrop-filter: blur(4px);
+}
+
+.mini-label {
+  margin: 0 0 0.45rem;
+  color: #64748b;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.result-text,
+.caption-text {
+  margin: 0;
+  min-height: 3.2rem;
+  word-break: break-word;
+  line-height: 1.6;
+}
+
+.caption-text {
+  font-weight: 600;
+}
+
+.footer-card {
+  margin-top: 1.5rem;
+}
+
+.hidden {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .two-col {
+    grid-template-columns: 1fr;
+  }
+
+  .panel-head {
+    flex-direction: column;
+  }
+
+  .preview-shell {
+    min-height: 220px;
+  }
 }

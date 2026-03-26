@@ -1,0 +1,1 @@
+epoch,train_loss,val_loss,val_wer,fusion_alpha,learning_rate,epoch_seconds,is_best

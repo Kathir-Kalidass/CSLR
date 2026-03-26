@@ -1,129 +1,128 @@
-# ===== Core Deep Learning Frameworks =====
-torch>=2.6.0
-torchvision>=0.21.0
-torchaudio>=2.6.0
-timm>=1.0.12
-lightning>=2.6.0
+# ==========================
+# CORE DEEP LEARNING (install torch separately)
+# ==========================
+timm
+lightning
+einops
 
-# ===== Computer Vision & Video Processing =====
-opencv-python>=4.11.0
-mediapipe>=0.10.21
-Pillow>=11.1.0
-imageio>=2.37.0
-imageio-ffmpeg>=0.5.1
-av>=14.0.1
+# ==========================
+# COMPUTER VISION / VIDEO
+# ==========================
+opencv-python
+mediapipe
+Pillow
+imageio
+imageio-ffmpeg
+av
+decord
+pytorchvideo
 
-# ===== Scientific Computing =====
-numpy>=2.2.2
-scipy>=1.15.1
-scikit-learn>=1.6.1
-pandas>=2.2.3
+# ==========================
+# SCIENTIFIC STACK
+# ==========================
+numpy
+scipy
+scikit-learn
+pandas
 
-# ===== Natural Language Processing =====
-transformers>=4.48.0
-tokenizers>=0.21.0
-sentencepiece>=0.2.0
-nltk>=3.9.1
-spacy>=3.8.3
-torch-audiomentations>=0.11.1
+# ==========================
+# NLP
+# ==========================
+transformers
+tokenizers
+sentencepiece
+nltk
+spacy
+kenlm
 
-# ===== Sequence Modeling & CTC =====
-einops>=0.8.0
-rotary-embedding-torch>=0.8.4
+# ==========================
+# AUDIO / TTS
+# ==========================
+gTTS
+pyttsx3
+soundfile
+librosa
 
-# ===== Text-to-Speech =====
-gTTS>=2.5.3
-pyttsx3>=2.98
-soundfile>=0.12.1
-librosa>=0.10.2
+# ==========================
+# AUGMENTATION
+# ==========================
+albumentations
+kornia
 
-# ===== Data Processing & Augmentation =====
-albumentations>=1.4.23
-kornia>=0.7.4
-audiomentations>=0.37.0
+# ==========================
+# VISUALIZATION
+# ==========================
+matplotlib
+seaborn
 
-# ===== Visualization & Plotting =====
-matplotlib>=3.10.0
-seaborn>=0.13.2
-plotly>=5.24.2
-tensorboard>=2.19.0
+# ==========================
+# CONFIG / HYDRA
+# ==========================
+PyYAML
+omegaconf
+hydra-core
+python-dotenv
 
-# ===== Configuration & Logging =====
-PyYAML>=6.0.2
-omegaconf>=2.3.0
-hydra-core>=1.3.2
-python-dotenv>=1.0.1
-loguru>=0.7.2
+# ==========================
+# LOGGING / UTILITIES
+# ==========================
+loguru
+rich
+tqdm
 
-# ===== Experiment Tracking =====
-wandb>=0.19.1
-mlflow>=2.20.2
+# ==========================
+# EXPERIMENT TRACKING
+# ==========================
+wandb>=0.17.0
+tensorboard>=2.15.0
+protobuf>=3.20.0
 
-# ===== Progress & Utilities =====
-tqdm>=4.67.1
-colorama>=0.4.6
-rich>=13.10.1
-typer>=0.15.2
+# ==========================
+# WEB (FIXED FOR MODERN PIP)
+# ==========================
+fastapi>=0.110.0
+uvicorn>=0.30.0
+uvloop
+httptools
+websockets
+python-multipart
 
-# ===== Web Framework =====
-fastapi>=0.116.0
-uvicorn[standard]>=0.34.0
-pydantic>=2.11.0
-python-multipart>=0.0.20
-websockets>=14.2
+# ==========================
+# OPTIMIZATION / EXPORT
+# ==========================
+onnx
+onnxruntime-gpu
+accelerate
 
-# ===== Video & Dataset Loaders =====
-decord>=0.6.0
-pytorchvideo>=0.1.5
+# ==========================
+# DATA
+# ==========================
+h5py
+pyarrow
 
-# ===== Model Optimization & Deployment =====
-onnx>=1.18.0
-onnxruntime>=1.21.0
-optimum>=1.24.0
-accelerate>=1.3.1
+# ==========================
+# API / NETWORK
+# ==========================
+requests
+httpx
+aiohttp
 
-# ===== Testing & Code Quality =====
-pytest>=8.3.5
-pytest-cov>=6.0.0
-pytest-asyncio>=0.25.2
-black>=24.12.0
-ruff>=0.9.3
-mypy>=1.14.1
+# ==========================
+# MONITORING
+# ==========================
+psutil
+gputil
 
-# ===== Development Tools =====
-ipython>=8.32.0
-jupyter>=1.1.1
-jupyterlab>=4.4.2
-notebook>=7.3.3
+# ==========================
+# UTILITIES
+# ==========================
+python-dateutil
+click
+typer
 
-# ===== File I/O & Serialization =====
-h5py>=3.13.0
-zarr>=3.0.3
-pyarrow>=19.0.0
-
-# ===== API & HTTP =====
-requests>=2.32.3
-httpx>=0.28.1
-aiohttp>=3.12.1
-
-# ===== Cloud Integration (Optional) =====
-# boto3>=1.35.81  # AWS SDK for Python
-# google-cloud-storage>=2.18.2  # Google Cloud Storage
-# azure-storage-blob>=12.24.0  # Azure Blob Storage
-# azure-ai-ml>=1.22.2  # Azure Machine Learning SDK
-
-# ===== Performance Monitoring =====
-psutil>=6.2.0
-py-cpuinfo>=9.0.0
-gputil>=1.4.0
-nvitop>=1.4.0
-
-# ===== Additional Utilities =====
-python-dateutil>=2.9.0
-jsonschema>=4.23.0
-click>=8.1.7
-fire>=0.7.1
-
-# ===== Data Validation =====
-pydantic-settings>=2.7.1
-validators>=0.34.0
+# ==========================
+# DEV (LIGHTWEIGHT)
+# ==========================
+pytest
+black
+ipython

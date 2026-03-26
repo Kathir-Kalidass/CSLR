@@ -6,6 +6,7 @@ import pytest
 import numpy as np
 import tempfile
 import os
+from pathlib import Path
 
 
 def test_video_loader_load_video(mock_video_path):
@@ -126,3 +127,35 @@ def test_normalization_batch():
     
     assert normalized.shape[0] == 5  # Batch size
     assert normalized.shape[1] == 3  # Channels
+
+
+def test_find_pose_file_recurses_nested_pose_dirs(tmp_path):
+    """Pose lookup should find nested .pose files even without an index."""
+    from scripts.preprocess_isign import find_pose_file
+
+    poses_root = tmp_path / "poses"
+    nested = poses_root / "iSign-poses_v1.1"
+    nested.mkdir(parents=True)
+    pose_path = nested / "sample-1.pose"
+    pose_path.write_bytes(b"pose-bytes")
+
+    found = find_pose_file(poses_root, "sample-1", pose_index={})
+
+    assert found == str(pose_path)
+
+
+def test_build_pose_index_ignores_empty_cache(tmp_path):
+    """An empty stale cache should not suppress rebuilding the pose index."""
+    from scripts.preprocess_isign import build_pose_index
+
+    poses_root = tmp_path / "poses"
+    poses_root.mkdir()
+    pose_path = poses_root / "sample-2.pose"
+    pose_path.write_bytes(b"pose-bytes")
+
+    cache_path = tmp_path / ".pose_index_cache.json"
+    cache_path.write_text("{}", encoding="utf-8")
+
+    index = build_pose_index(poses_root, cache_path=cache_path, max_entries=10)
+
+    assert index["sample-2"] == str(pose_path)

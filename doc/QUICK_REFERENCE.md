@@ -29,7 +29,7 @@
 **Recommended command (low storage):**
 ```bash
 PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True,max_split_size_mb:32 \
-/home/kathir/CSLR/.venv/bin/python application/backend/scripts/train_isl_cslrt.py \
+$HOME/.cslr_runtime_venv/bin/python application/backend/scripts/train_isl_cslrt.py \
    --epochs 60 --batch-size 1 --workers 0 --device cuda \
    --num-frames 24 --image-size 112 --feature-dim 128 \
    --pose-hidden-dims 128,64 --temporal-hidden-dim 64 --temporal-layers 1 \

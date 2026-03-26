@@ -1,0 +1,1008 @@
+{
+  "generated_at": "/mnt/d/KATHIR_KALIDASS/CSLR/application/backend",
+  "checkpoint": "checkpoints/isign_pose_only_npy/best.pt",
+  "best_wer": 1.0,
+  "epoch": 1,
+  "total_gifs": 0,
+  "unique_glosses": 114,
+  "samples": {
+    "THE": [
+      {
+        "gloss": "THE",
+        "sentence": "The Supreme court has now made Aadhar mandatory for filing Income Tax returns & PAN card. It is very important.",
+        "frames": 48
+      },
+      {
+        "gloss": "THE",
+        "sentence": "The need for something.",
+        "frames": 48
+      },
+      {
+        "gloss": "THE",
+        "sentence": "The company has many outlets where they showcase different bullet variants.",
+        "frames": 48
+      }
+    ],
+    "TO": [
+      {
+        "gloss": "TO",
+        "sentence": "to greatly admire a singer or other famous person, to an extent that is unusual",
+        "frames": 48
+      },
+      {
+        "gloss": "TO",
+        "sentence": "to be matched with. individual",
+        "frames": 48
+      },
+      {
+        "gloss": "TO",
+        "sentence": "to buy a net.",
+        "frames": 48
+      }
+    ],
+    "ANNOUNCED": [
+      {
+        "gloss": "ANNOUNCED",
+        "sentence": "announced today that elections for 13",
+        "frames": 48
+      }
+    ],
+    "GENTLY": [
+      {
+        "gloss": "GENTLY",
+        "sentence": "Gently lift it and place it on a piece of blotting or filter paper.",
+        "frames": 48
+      }
+    ],
+    "AND": [
+      {
+        "gloss": "AND",
+        "sentence": "and went back at the end of the day.",
+        "frames": 48
+      },
+      {
+        "gloss": "AND",
+        "sentence": "and they started circulating pictures and videos of it on social media.",
+        "frames": 48
+      },
+      {
+        "gloss": "AND",
+        "sentence": "and private companies all collect & analyse the data.",
+        "frames": 48
+      }
+    ],
+    "NOW": [
+      {
+        "gloss": "NOW",
+        "sentence": "Now finally the IPL 2020 started on 19th September in UAE.",
+        "frames": 48
+      },
+      {
+        "gloss": "NOW",
+        "sentence": "Now they have finally gotten married.",
+        "frames": 48
+      },
+      {
+        "gloss": "NOW",
+        "sentence": "Now shut off the gas and add your homemade coconut milk, salt",
+        "frames": 48
+      }
+    ],
+    "SOMEWHERE": [
+      {
+        "gloss": "SOMEWHERE",
+        "sentence": "somewhere where it's very cold.",
+        "frames": 48
+      }
+    ],
+    "ALSO": [
+      {
+        "gloss": "ALSO",
+        "sentence": "Also Besant Memorial Animal Dispensary",
+        "frames": 48
+      },
+      {
+        "gloss": "ALSO",
+        "sentence": "Also Kangana had recently objected to a video of a young girl imitating Alia's Gangubai character.",
+        "frames": 48
+      }
+    ],
+    "COCKY": [
+      {
+        "gloss": "COCKY",
+        "sentence": "Cocky Locky. Henny penny",
+        "frames": 48
+      }
+    ],
+    "THIS": [
+      {
+        "gloss": "THIS",
+        "sentence": "This is why strict guidelines have been imposed.",
+        "frames": 48
+      },
+      {
+        "gloss": "THIS",
+        "sentence": "This is because MI is the player's parent team. Hence, he can't play against them.",
+        "frames": 48
+      },
+      {
+        "gloss": "THIS",
+        "sentence": "This is the responsibility of the theatres.",
+        "frames": 48
+      }
+    ],
+    "IT": [
+      {
+        "gloss": "IT",
+        "sentence": "It is the Boeing 777.",
+        "frames": 48
+      },
+      {
+        "gloss": "IT",
+        "sentence": "It is banned in the United States as the toy poses choking risk to children.",
+        "frames": 48
+      }
+    ],
+    "LOOK": [
+      {
+        "gloss": "LOOK",
+        "sentence": "Look at these sentences. 1.",
+        "frames": 48
+      }
+    ],
+    "AFTER": [
+      {
+        "gloss": "AFTER",
+        "sentence": "After Jio streamed the Asia Cup & IPL for free,",
+        "frames": 48
+      },
+      {
+        "gloss": "AFTER",
+        "sentence": "After an intense investigation the police revealed the theft at the Ahuja's home.",
+        "frames": 48
+      }
+    ],
+    "KARNATAKA": [
+      {
+        "gloss": "KARNATAKA",
+        "sentence": "Karnataka and Madhya Pradesh worked very hard to save the tigers and increase the population of tigers.",
+        "frames": 48
+      }
+    ],
+    "CONNERY": [
+      {
+        "gloss": "CONNERY",
+        "sentence": "Connery then went on to act in 7 James Bond movies.",
+        "frames": 48
+      }
+    ],
+    "WHEN": [
+      {
+        "gloss": "WHEN",
+        "sentence": "When people call Harjinderand if it is unavailable, they do not have to wait.",
+        "frames": 48
+      }
+    ],
+    "B": [
+      {
+        "gloss": "B",
+        "sentence": "B.",
+        "frames": 48
+      }
+    ],
+    "WHAT": [
+      {
+        "gloss": "WHAT",
+        "sentence": "What if I get beat up?",
+        "frames": 48
+      },
+      {
+        "gloss": "WHAT",
+        "sentence": "What were the preparations in the palace for?",
+        "frames": 48
+      },
+      {
+        "gloss": "WHAT",
+        "sentence": "what is happening as far as india's",
+        "frames": 48
+      }
+    ],
+    "THEY": [
+      {
+        "gloss": "THEY",
+        "sentence": "They will serve spicy food so that they remain awake.",
+        "frames": 48
+      },
+      {
+        "gloss": "THEY",
+        "sentence": "They then attacked Anita.",
+        "frames": 48
+      },
+      {
+        "gloss": "THEY",
+        "sentence": "they found that two of their employees were responsible for filling the samosas.",
+        "frames": 48
+      }
+    ],
+    "SUNIL": [
+      {
+        "gloss": "SUNIL",
+        "sentence": "Sunil Bhamre, is a GRP officer who prepares the schedule for 210 policemen.",
+        "frames": 48
+      }
+    ],
+    "RAMACHANDRA": [
+      {
+        "gloss": "RAMACHANDRA",
+        "sentence": "Ramachandra had a neighbour named Ranjit Parida who asked them to stop the music.",
+        "frames": 48
+      }
+    ],
+    "HE": [
+      {
+        "gloss": "HE",
+        "sentence": "He is also the best friend of Mr. Ratan Tata",
+        "frames": 48
+      },
+      {
+        "gloss": "HE",
+        "sentence": "He told them that he has been travelling alone for a long time.",
+        "frames": 48
+      },
+      {
+        "gloss": "HE",
+        "sentence": "He chose the most mundane of daily activities.",
+        "frames": 48
+      }
+    ],
+    "6": [
+      {
+        "gloss": "6",
+        "sentence": "6. Fold the two back flaps under the last page and crease it.",
+        "frames": 48
+      }
+    ],
+    "MODI": [
+      {
+        "gloss": "MODI",
+        "sentence": "Modi gave the idea of a Coronavirus emergency fund, to which India will contribute Rs. 74 crore.",
+        "frames": 48
+      }
+    ],
+    "PROUDLY": [
+      {
+        "gloss": "PROUDLY",
+        "sentence": "proudly the shepherds said. This my dear master is my only treasure.",
+        "frames": 48
+      }
+    ],
+    "CHINA": [
+      {
+        "gloss": "CHINA",
+        "sentence": "China always owns sovereignty over the Galwan Valley region\".",
+        "frames": 48
+      }
+    ],
+    "EVERY": [
+      {
+        "gloss": "EVERY",
+        "sentence": "Every year the BCCI conducts mega auctions in which franchises purchase various players.",
+        "frames": 48
+      }
+    ],
+    "WITHOUT": [
+      {
+        "gloss": "WITHOUT",
+        "sentence": "Without it, it not have been possible help the Deaf reached safely.",
+        "frames": 48
+      }
+    ],
+    "WE": [
+      {
+        "gloss": "WE",
+        "sentence": "We hope Wg.Cdr.Varthaman returns safely back to India.",
+        "frames": 48
+      },
+      {
+        "gloss": "WE",
+        "sentence": "We have seen.",
+        "frames": 48
+      }
+    ],
+    "SINGH": [
+      {
+        "gloss": "SINGH",
+        "sentence": "Singh wrote a letter to the Chief Minister Thackeray alleging that,",
+        "frames": 48
+      },
+      {
+        "gloss": "SINGH",
+        "sentence": "Singh Arjun areas mother to do the same",
+        "frames": 48
+      }
+    ],
+    "WHOSE": [
+      {
+        "gloss": "WHOSE",
+        "sentence": "Whose which? That. 5.",
+        "frames": 48
+      }
+    ],
+    "FORMER": [
+      {
+        "gloss": "FORMER",
+        "sentence": "Former PM Manmohan Singh looked extremely old and weak as he was wheeled in and helped to cast his vote.",
+        "frames": 48
+      }
+    ],
+    "ON": [
+      {
+        "gloss": "ON",
+        "sentence": "On 26th and 27th July 2019, the Central Railway (CR) has launched a probe into",
+        "frames": 48
+      },
+      {
+        "gloss": "ON",
+        "sentence": "On 20th July a car came for her from the Social Justice Department",
+        "frames": 48
+      },
+      {
+        "gloss": "ON",
+        "sentence": "On 8th october the government announced that unvaccinated people can travel in trains from 20 october.",
+        "frames": 48
+      }
+    ],
+    "PRIME": [
+      {
+        "gloss": "PRIME",
+        "sentence": "Prime Minister Narendra Modi reached out to Turkey and promised to help as they are our allies.",
+        "frames": 48
+      }
+    ],
+    "SOME": [
+      {
+        "gloss": "SOME",
+        "sentence": "Some believe it is bad luck to cut nails at night,",
+        "frames": 48
+      }
+    ],
+    "DASH": [
+      {
+        "gloss": "DASH",
+        "sentence": "Dash.",
+        "frames": 48
+      },
+      {
+        "gloss": "DASH",
+        "sentence": "dash divided by 10.",
+        "frames": 48
+      }
+    ],
+    "YOU": [
+      {
+        "gloss": "YOU",
+        "sentence": "You can stick the wires to the bulb with the tape used by electricians.",
+        "frames": 48
+      },
+      {
+        "gloss": "YOU",
+        "sentence": "You all know about the problems between the USA and Iran.",
+        "frames": 48
+      }
+    ],
+    "REMEMBER": [
+      {
+        "gloss": "REMEMBER",
+        "sentence": "Remember this is not for the Deaf.",
+        "frames": 48
+      }
+    ],
+    "HOWEVER": [
+      {
+        "gloss": "HOWEVER",
+        "sentence": "However, the only constants in this shuffle are PM Modi, Amit Shah,",
+        "frames": 48
+      }
+    ],
+    "THREE": [
+      {
+        "gloss": "THREE",
+        "sentence": "Three",
+        "frames": 48
+      }
+    ],
+    "STAR": [
+      {
+        "gloss": "STAR",
+        "sentence": "Star India has bought the rights to broadcast ICC events on TV channels.",
+        "frames": 48
+      }
+    ],
+    "SO": [
+      {
+        "gloss": "SO",
+        "sentence": "So he huffed and he puffed and he blew the house down.",
+        "frames": 48
+      },
+      {
+        "gloss": "SO",
+        "sentence": "So far, the Biden administration has not responded to the article.",
+        "frames": 48
+      }
+    ],
+    "IN": [
+      {
+        "gloss": "IN",
+        "sentence": "In 2010 too many died in two suicide blasts in an attack at the same place",
+        "frames": 48
+      },
+      {
+        "gloss": "IN",
+        "sentence": "In the last 5-6 years he worked hard and worked in multiple movies such as",
+        "frames": 48
+      },
+      {
+        "gloss": "IN",
+        "sentence": "In reality a girl with multiple surgeries and spending 53 lakh Rupees has got her dream barbie figure.",
+        "frames": 48
+      }
+    ],
+    "C": [
+      {
+        "gloss": "C",
+        "sentence": "C",
+        "frames": 48
+      }
+    ],
+    "MIGRANT": [
+      {
+        "gloss": "MIGRANT",
+        "sentence": "Migrant workers in different states of India, wanted to go back to their home towns in Uttar Pradesh.",
+        "frames": 48
+      }
+    ],
+    "BUT": [
+      {
+        "gloss": "BUT",
+        "sentence": "But now in an update, Kerala Health Minister Veena George on 14th July 2022 said that",
+        "frames": 48
+      },
+      {
+        "gloss": "BUT",
+        "sentence": "But do you know what is dry shampoo?",
+        "frames": 48
+      },
+      {
+        "gloss": "BUT",
+        "sentence": "but he still wanted to give helmets to ensure people were save.",
+        "frames": 48
+      }
+    ],
+    "CHRIS": [
+      {
+        "gloss": "CHRIS",
+        "sentence": "Chris Hipkins has been named as the next prime minister of New Zealand and will be sworn in soon.",
+        "frames": 48
+      }
+    ],
+    "GENERALLY": [
+      {
+        "gloss": "GENERALLY",
+        "sentence": "Generally there are bikes or cars parked outside these places.",
+        "frames": 48
+      }
+    ],
+    "IF": [
+      {
+        "gloss": "IF",
+        "sentence": "If I were an octopus, I would be thankful for my eight arms.",
+        "frames": 48
+      },
+      {
+        "gloss": "IF",
+        "sentence": "If you are clear about your goal, work towards it. The goal may change, make another one.",
+        "frames": 48
+      },
+      {
+        "gloss": "IF",
+        "sentence": "If you laugh over such incidences, you will always remain happy.",
+        "frames": 48
+      }
+    ],
+    "CHILDREN": [
+      {
+        "gloss": "CHILDREN",
+        "sentence": "Children should be encouraged to think of what part of a day they spend in different activities.",
+        "frames": 48
+      }
+    ],
+    "WILL": [
+      {
+        "gloss": "WILL",
+        "sentence": "will be valued at $ 3 lakh crore.",
+        "frames": 48
+      }
+    ],
+    "BANDED": [
+      {
+        "gloss": "BANDED",
+        "sentence": "Banded mongus are very amusing animals to watch.",
+        "frames": 48
+      }
+    ],
+    "NEERAJ": [
+      {
+        "gloss": "NEERAJ",
+        "sentence": "Neeraj has been flooded with media interviews.",
+        "frames": 48
+      }
+    ],
+    "ACCORDING": [
+      {
+        "gloss": "ACCORDING",
+        "sentence": "According to projections, OTT platforms make earn upto Rs 4,000 crore upto 2025.",
+        "frames": 48
+      }
+    ],
+    "I": [
+      {
+        "gloss": "I",
+        "sentence": "I went to an employment agency last week.",
+        "frames": 48
+      },
+      {
+        "gloss": "I",
+        "sentence": "I understand when Deaf babies are born, parents become very anxious",
+        "frames": 48
+      },
+      {
+        "gloss": "I",
+        "sentence": "I turned back to join the crew.",
+        "frames": 48
+      }
+    ],
+    "D": [
+      {
+        "gloss": "D",
+        "sentence": "D",
+        "frames": 48
+      }
+    ],
+    "PLACE": [
+      {
+        "gloss": "PLACE",
+        "sentence": "Place these in Group 2.",
+        "frames": 48
+      }
+    ],
+    "AJANTA": [
+      {
+        "gloss": "AJANTA",
+        "sentence": "ajanta",
+        "frames": 48
+      }
+    ],
+    "SAD": [
+      {
+        "gloss": "SAD",
+        "sentence": "Sad!",
+        "frames": 48
+      }
+    ],
+    "FOR": [
+      {
+        "gloss": "FOR",
+        "sentence": "For any doubts or questions you can contact this number.",
+        "frames": 48
+      }
+    ],
+    "PEOPLE": [
+      {
+        "gloss": "PEOPLE",
+        "sentence": "People can not function without smoking.",
+        "frames": 48
+      }
+    ],
+    "GRASSLANDS": [
+      {
+        "gloss": "GRASSLANDS",
+        "sentence": "grasslands deserts",
+        "frames": 48
+      }
+    ],
+    "MANY": [
+      {
+        "gloss": "MANY",
+        "sentence": "Many choose to work in developing countries out of altruism.",
+        "frames": 48
+      }
+    ],
+    "BANK": [
+      {
+        "gloss": "BANK",
+        "sentence": "Bank of Baroda has promised that all the employee and customer problems,",
+        "frames": 48
+      }
+    ],
+    "LAKHS": [
+      {
+        "gloss": "LAKHS",
+        "sentence": "Lakhs of people all over the world as well as in India reported problems on WhatsApp.",
+        "frames": 48
+      }
+    ],
+    "LET": [
+      {
+        "gloss": "LET",
+        "sentence": "Let me tell you what happened.",
+        "frames": 48
+      },
+      {
+        "gloss": "LET",
+        "sentence": "Let me tell you what the article said.",
+        "frames": 48
+      },
+      {
+        "gloss": "LET",
+        "sentence": "Let us know in the comments.",
+        "frames": 48
+      }
+    ],
+    "THINK": [
+      {
+        "gloss": "THINK",
+        "sentence": "Think of other occasions.",
+        "frames": 48
+      }
+    ],
+    "MS": [
+      {
+        "gloss": "MS",
+        "sentence": "Ms. Urmila Matondkar was an actress, she has appeared in a number of Hindi films,",
+        "frames": 48
+      },
+      {
+        "gloss": "MS",
+        "sentence": "MS Dhoni then said that he was not out and as his bat was within the crease.",
+        "frames": 48
+      }
+    ],
+    "THESE": [
+      {
+        "gloss": "THESE",
+        "sentence": "These specialized poop bags contain special chemicals and powders that solidify human waste and make it largely odorless.",
+        "frames": 48
+      }
+    ],
+    "SHAMSUDDIN": [
+      {
+        "gloss": "SHAMSUDDIN",
+        "sentence": "Shamsuddin was very happy and cried a lot embracing his family.",
+        "frames": 48
+      }
+    ],
+    "POWER": [
+      {
+        "gloss": "POWER",
+        "sentence": "power in the state to remove",
+        "frames": 48
+      }
+    ],
+    "4": [
+      {
+        "gloss": "4",
+        "sentence": "4. What is sewing? Where is it used?",
+        "frames": 48
+      }
+    ],
+    "CAN": [
+      {
+        "gloss": "CAN",
+        "sentence": "Can such things be called living? We ask ourselves.",
+        "frames": 48
+      },
+      {
+        "gloss": "CAN",
+        "sentence": "can see an uptick in cases and states",
+        "frames": 48
+      }
+    ],
+    "WASHING": [
+      {
+        "gloss": "WASHING",
+        "sentence": "washing clothes 3",
+        "frames": 48
+      }
+    ],
+    "THERE": [
+      {
+        "gloss": "THERE",
+        "sentence": "There is a mobile application which conducts lotteries.",
+        "frames": 48
+      }
+    ],
+    "INDIA": [
+      {
+        "gloss": "INDIA",
+        "sentence": "India completely dominated the opponents and finished the match with a scoreline of 3-1. They won a truly-deserving gold medal.",
+        "frames": 48
+      }
+    ],
+    "SING": [
+      {
+        "gloss": "SING",
+        "sentence": "Sing a song of people!",
+        "frames": 48
+      }
+    ],
+    "VIRENDRA": [
+      {
+        "gloss": "VIRENDRA",
+        "sentence": "Virendra\u2019s brother Rambir Singh had said that in 2017,",
+        "frames": 48
+      }
+    ],
+    "BHIM": [
+      {
+        "gloss": "BHIM",
+        "sentence": "Bhim Army chief Chandrashekhar Azad - sign name -",
+        "frames": 48
+      }
+    ],
+    "WERE": [
+      {
+        "gloss": "WERE",
+        "sentence": "were tensed that once their visas expired the students would be sent back to Afghanistan.",
+        "frames": 48
+      }
+    ],
+    "DESPITE": [
+      {
+        "gloss": "DESPITE",
+        "sentence": "Despite this such advertisement are still made.",
+        "frames": 48
+      }
+    ],
+    "ALL": [
+      {
+        "gloss": "ALL",
+        "sentence": "All over the world the corona virus was spreading.",
+        "frames": 48
+      }
+    ],
+    "MAYBE": [
+      {
+        "gloss": "MAYBE",
+        "sentence": "Maybe Rs 1 lakh? The man placed orders worth Rs 28 lakh in one year! Wow!",
+        "frames": 48
+      }
+    ],
+    "SHE": [
+      {
+        "gloss": "SHE",
+        "sentence": "She spelt a lot of words for Helen on her hand.",
+        "frames": 48
+      },
+      {
+        "gloss": "SHE",
+        "sentence": "She believed them and sent her documents as all the paperwork looked legitimate.",
+        "frames": 48
+      },
+      {
+        "gloss": "SHE",
+        "sentence": "She added, I cannot wrap my head around the fact that I have achieved a world record twice.",
+        "frames": 48
+      }
+    ],
+    "PATIL": [
+      {
+        "gloss": "PATIL",
+        "sentence": "Patil is a close confidant of Pawar and has served as his personal assistant.",
+        "frames": 48
+      }
+    ],
+    "INSPITE": [
+      {
+        "gloss": "INSPITE",
+        "sentence": "Inspite of the girl asking him to stop as she had already been caught, he kept on messaging her. Shocking!",
+        "frames": 48
+      }
+    ],
+    "WRITE": [
+      {
+        "gloss": "WRITE",
+        "sentence": "Write down the recipe, present",
+        "frames": 48
+      }
+    ],
+    "OBVIOUSLY": [
+      {
+        "gloss": "OBVIOUSLY",
+        "sentence": "Obviously the blue is not doing justice to it.",
+        "frames": 48
+      }
+    ],
+    "VARIOUS": [
+      {
+        "gloss": "VARIOUS",
+        "sentence": "Various substances like water, minerals and the food synthesized by them.",
+        "frames": 48
+      }
+    ],
+    "A": [
+      {
+        "gloss": "A",
+        "sentence": "A trustee of Jain Derasar said, \"We have been following all government COVID protocols",
+        "frames": 48
+      }
+    ],
+    "SLOWLY": [
+      {
+        "gloss": "SLOWLY",
+        "sentence": "Slowly you both can communicate!",
+        "frames": 48
+      }
+    ],
+    "SRINAGAR": [
+      {
+        "gloss": "SRINAGAR",
+        "sentence": "srinagar on the 11th of march now this",
+        "frames": 48
+      }
+    ],
+    "INSTEAD": [
+      {
+        "gloss": "INSTEAD",
+        "sentence": "Instead of pretending like this, it was better to divorce and lead a happy life.",
+        "frames": 48
+      }
+    ],
+    "CAW": [
+      {
+        "gloss": "CAW",
+        "sentence": "Caw caw. Go away. This is my tree.",
+        "frames": 48
+      }
+    ],
+    "SAIF": [
+      {
+        "gloss": "SAIF",
+        "sentence": "Saif Ali Khan will be seen playing Ravana. The movie will be in 3D.",
+        "frames": 48
+      }
+    ],
+    "URMILA": [
+      {
+        "gloss": "URMILA",
+        "sentence": "Urmila Matondkar told the media, \u201cShiv Sena's women's wing is very strong.",
+        "frames": 48
+      }
+    ],
+    "TOOLKIT": [
+      {
+        "gloss": "TOOLKIT",
+        "sentence": "Toolkit is a document that explains in detail about an issue or a protest.",
+        "frames": 48
+      }
+    ],
+    "THEN": [
+      {
+        "gloss": "THEN",
+        "sentence": "Then how come they are giving citizenship to Hindus but not to Muslims? They are protesting because they are not happy.",
+        "frames": 48
+      }
+    ],
+    "CONDEMNED": [
+      {
+        "gloss": "CONDEMNED",
+        "sentence": "condemned the incident and said that strict action will be initiated against the culprits.",
+        "frames": 48
+      }
+    ],
+    "EARLIER": [
+      {
+        "gloss": "EARLIER",
+        "sentence": "Earlier BMC had given the firm",
+        "frames": 48
+      }
+    ],
+    "OUR": [
+      {
+        "gloss": "OUR",
+        "sentence": "our focus also remains on russia's",
+        "frames": 48
+      }
+    ],
+    "INHABITED": [
+      {
+        "gloss": "INHABITED",
+        "sentence": "inhabited",
+        "frames": 48
+      }
+    ],
+    "LIKE": [
+      {
+        "gloss": "LIKE",
+        "sentence": "like the 7 year old boy who after his father's accident started working as food delivery agent",
+        "frames": 48
+      }
+    ],
+    "BAJRANG": [
+      {
+        "gloss": "BAJRANG",
+        "sentence": "Bajrang proved himself in 2019 by winning the gold medal again.",
+        "frames": 48
+      }
+    ],
+    "OYO": [
+      {
+        "gloss": "OYO",
+        "sentence": "Oyo hotels said in a statement they want to achieve the goal of",
+        "frames": 48
+      }
+    ],
+    "MORE": [
+      {
+        "gloss": "MORE",
+        "sentence": "More than 100 people have been arrested. However, Singh escaped.",
+        "frames": 48
+      }
+    ],
+    "ALMOST": [
+      {
+        "gloss": "ALMOST",
+        "sentence": "almost everyone will be either infected",
+        "frames": 48
+      }
+    ],
+    "SECURITY": [
+      {
+        "gloss": "SECURITY",
+        "sentence": "Security workers are keeping a watching and risking their lives.",
+        "frames": 48
+      }
+    ],
+    "HOW": [
+      {
+        "gloss": "HOW",
+        "sentence": "How could Rahul Gandhi make a statement such as 'Rape in India'",
+        "frames": 48
+      }
+    ],
+    "MISER": [
+      {
+        "gloss": "MISER",
+        "sentence": "miser",
+        "frames": 48
+      }
+    ],
+    "LAID": [
+      {
+        "gloss": "LAID",
+        "sentence": "laid down by the Brahmins.",
+        "frames": 48
+      }
+    ],
+    "USE": [
+      {
+        "gloss": "USE",
+        "sentence": "Use prepositions like across",
+        "frames": 48
+      }
+    ],
+    "DURING": [
+      {
+        "gloss": "DURING",
+        "sentence": "During the lockdown, the entire Ambani clan lived in Antilia.",
+        "frames": 48
+      }
+    ],
+    "WITH": [
+      {
+        "gloss": "WITH",
+        "sentence": "with the help of the Fire Brigade and NDRF who helped to rescue people.",
+        "frames": 48
+      }
+    ]
+  }
+}
