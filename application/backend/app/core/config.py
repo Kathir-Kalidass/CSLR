@@ -4,6 +4,7 @@ Loads environment variables and provides application settings
 """
 
 import os
+from pathlib import Path
 import torch
 
 try:
@@ -12,12 +13,17 @@ except ImportError:  # pragma: no cover - optional dependency in training-only e
     def load_dotenv(*args, **kwargs):
         return False
 
-# Load environment variables
+BACKEND_ROOT = Path(__file__).resolve().parents[2]
+
+# Load environment variables from backend root first, then fallback to process cwd.
+load_dotenv(BACKEND_ROOT / ".env")
 load_dotenv()
 
 
 class Settings:
     """Application settings loaded from environment variables"""
+
+    BACKEND_ROOT: str = str(BACKEND_ROOT)
     
     # Server Configuration
     APP_NAME: str = os.getenv("APP_NAME", "CSLR_Backend")
@@ -63,7 +69,7 @@ class Settings:
     TRANSLATION_MODEL_PATH: str = os.getenv("TRANSLATION_MODEL_PATH", "app/models/checkpoints/t5_model")
     
     # Inference Settings
-    CLIP_LENGTH: int = int(os.getenv("CLIP_LENGTH", "32"))
+    CLIP_LENGTH: int = int(os.getenv("CLIP_LENGTH", "48"))
     FPS_TARGET: int = int(os.getenv("FPS_TARGET", "30"))
     BEAM_WIDTH: int = int(os.getenv("BEAM_WIDTH", "5"))
     CONFIDENCE_THRESHOLD: float = float(os.getenv("CONFIDENCE_THRESHOLD", "0.7"))

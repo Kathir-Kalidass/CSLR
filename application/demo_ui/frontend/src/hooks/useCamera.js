@@ -325,7 +325,10 @@ export default function useCamera() {
 
   const running = useStore((s) => s.running)
   const cameraActive = useStore((s) => s.cameraActive)
+  const connected = useStore((s) => s.connected)
   const setCameraActive = useStore((s) => s.setCameraActive)
+  const setRunning = useStore((s) => s.setRunning)
+  const sendControl = useStore((s) => s.sendControl)
   const sendFrame = useStore((s) => s.sendFrame)
   const sendVideoStats = useStore((s) => s.sendVideoStats)
   const payload = useStore((s) => s.payload)
@@ -339,7 +342,7 @@ export default function useCamera() {
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: { ideal: 960 }, height: { ideal: 540 }, facingMode: 'user' },
+        video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' },
         audio: false,
       })
       const video = videoRef.current
@@ -356,6 +359,10 @@ export default function useCamera() {
         frame_hint: frameSeq.current,
         resolution: `${settings.width || 0}x${settings.height || 0}`,
       })
+      if (connected) {
+        sendControl('start')
+        setRunning(true)
+      }
     } catch (err) {
       const msg = err?.name === 'NotAllowedError'
         ? 'Camera permission denied. Allow webcam and retry.'
@@ -363,7 +370,21 @@ export default function useCamera() {
       setCameraError(msg)
       setCameraActive(false)
     }
-  }, [setCameraActive, sendVideoStats])
+  }, [connected, sendControl, sendVideoStats, setCameraActive, setRunning])
+
+  useEffect(() => {
+    if (!cameraActive || !connected) return
+
+    const video = videoRef.current
+    const stream = video?.srcObject
+    const settings = stream?.getVideoTracks?.()?.[0]?.getSettings?.() || {}
+
+    sendVideoStats({
+      camera_active: true,
+      frame_hint: frameSeq.current,
+      resolution: `${settings.width || 320}x${settings.height || 240}`,
+    })
+  }, [cameraActive, connected, sendVideoStats])
 
   const stopCamera = useCallback(() => {
     const video = videoRef.current
@@ -371,6 +392,8 @@ export default function useCamera() {
       video.srcObject.getTracks().forEach((t) => t.stop())
       video.srcObject = null
     }
+    if (connected) sendControl('stop')
+    setRunning(false)
     setCameraActive(false)
     sendVideoStats({ camera_active: false, frame_hint: frameSeq.current, resolution: 'none' })
 
@@ -382,7 +405,7 @@ export default function useCamera() {
       cancelAnimationFrame(drawRafRef.current)
       drawRafRef.current = 0
     }
-  }, [setCameraActive, sendVideoStats])
+  }, [connected, sendControl, sendVideoStats, setCameraActive, setRunning])
 
   useEffect(() => {
     if (!(running && cameraActive)) {
@@ -398,8 +421,8 @@ export default function useCamera() {
       const canvas = canvasRef.current
       if (!video || !canvas || video.readyState < 2) return
 
-      const w = 320
-      const h = 240
+      const w = 640
+      const h = 480
       canvas.width = w
       canvas.height = h
       const ctx = canvas.getContext('2d')
@@ -410,7 +433,6 @@ export default function useCamera() {
 
       frameSeq.current += 1
       sendFrame(b64, frameSeq.current)
-      sendVideoStats({ camera_active: true, frame_hint: frameSeq.current, resolution: `${w}x${h}` })
     }, 220)
 
     return () => {

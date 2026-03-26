@@ -49,7 +49,7 @@ export default function ControlBar() {
         }`}
       >
         {running ? <Square size={16} /> : <Play size={16} />}
-        {running ? 'Stop' : cameraActive ? 'Start Recognition' : 'Open Camera First'}
+        {running ? 'Stop Recognition' : cameraActive ? 'Start Recognition' : 'Open Camera First'}
       </motion.button>
 
       {/* Clear */}

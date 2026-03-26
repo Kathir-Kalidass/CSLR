@@ -3,17 +3,22 @@ FastAPI Main Entry Point
 Registers all routers, initializes models, and configures the application.
 """
 
+from io import BytesIO
+from pathlib import Path
+
 from fastapi import FastAPI, HTTPException, WebSocket
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
 from contextlib import asynccontextmanager
 import torch
+import time
 
 from app.core.config import settings
 from app.core.logging import setup_logging, logger
 from app.core.exceptions import register_exception_handlers
 from app.api.routes import api_router
-from app.api.websocket import websocket_inference
+from app.api.websocket import websocket_demo_compat, websocket_inference
 from app.core.environment import get_system_info
 from app.monitoring.metrics import global_metrics
 from app.monitoring.gpu_monitor import gpu_monitor
@@ -102,22 +107,76 @@ class TTSRequest(BaseModel):
     slow: bool = False
 
 
+def _checkpoint_info() -> dict:
+    path = Path(settings.ISIGN_CHECKPOINT_PATH)
+    if not path.is_absolute():
+        path = Path(settings.BACKEND_ROOT) / path
+    info = {
+        "active_model": str(path),
+        "state": "loaded" if path.exists() else "missing",
+    }
+    if path.exists():
+        stat = path.stat()
+        info["size_mb"] = round(stat.st_size / (1024 * 1024), 2)
+        info["modified_epoch"] = stat.st_mtime
+    return info
+
+
 @app.get("/api/system")
 async def compat_system_info():
     """Compatibility alias for demo UI."""
-    return get_system_info()
+    payload = get_system_info()
+    payload.update(
+        {
+            "model_info": _checkpoint_info(),
+            "tts_engine": settings.TTS_ENGINE,
+            "inference_mode": "real",
+        }
+    )
+    return payload
 
 
 @app.post("/api/tts")
 async def compat_tts(_payload: TTSRequest):
-    """Compatibility endpoint; this backend does not return audio blobs."""
-    raise HTTPException(status_code=501, detail="TTS audio endpoint not implemented")
+    """Compatibility endpoint returning audio blobs for demo UI."""
+    text = _payload.text.strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="Text is required")
+
+    try:
+        from gtts import gTTS
+
+        out = BytesIO()
+        gTTS(text=text, lang=_payload.lang, slow=_payload.slow).write_to_fp(out)
+        return Response(content=out.getvalue(), media_type="audio/mpeg")
+    except Exception:
+        pass
+
+    try:
+        import pyttsx3
+
+        temp_dir = Path(settings.BACKEND_ROOT) / "tmp"
+        temp_dir.mkdir(parents=True, exist_ok=True)
+        temp_path = temp_dir / f"tts_{int(time.time() * 1000)}.wav"
+        engine = pyttsx3.init()
+        engine.setProperty("rate", settings.TTS_RATE)
+        engine.setProperty("volume", settings.TTS_VOLUME)
+        engine.save_to_file(text, str(temp_path))
+        engine.runAndWait()
+        if temp_path.exists():
+            data = temp_path.read_bytes()
+            temp_path.unlink(missing_ok=True)
+            return Response(content=data, media_type="audio/wav")
+    except Exception:
+        pass
+
+    raise HTTPException(status_code=503, detail="No TTS engine available")
 
 
 @app.websocket("/ws/demo")
 async def compat_ws_demo(websocket: WebSocket):
-    """Compatibility alias for demo UI websocket path."""
-    await websocket_inference(websocket)
+    """Compatibility websocket for demo UI."""
+    await websocket_demo_compat(websocket)
 
 
 @app.get("/")

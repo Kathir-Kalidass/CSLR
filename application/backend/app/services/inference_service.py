@@ -36,6 +36,7 @@ from app.utils.math_utils import moving_average
 from app.utils.sliding_window import SlidingWindowBuffer
 from app.utils.tensor_utils import to_tensor
 from app.utils.video_preprocessing import VideoPreprocessor
+from app.services.checkpoint_runtime import CheckpointRuntime
 
 
 class InferenceService:
@@ -48,6 +49,7 @@ class InferenceService:
         self.device = settings.DEVICE
         self.use_amp = settings.USE_AMP
         self.metrics = global_metrics
+        self.checkpoint_runtime = CheckpointRuntime()
 
         # Module 1: Preprocessing
         logger.info("Initializing Module 1: Preprocessing")
@@ -163,6 +165,21 @@ class InferenceService:
         """
         Process full video file through complete pipeline.
         """
+        if self.checkpoint_runtime.available:
+            frames, _ = self.video_loader.load_video(video_path)
+            result = self.checkpoint_runtime.process_frames(
+                [cv2.cvtColor(frame_rgb, cv2.COLOR_RGB2BGR) for frame_rgb in frames]
+            )
+            return {
+                "gloss": result.get("gloss", []),
+                "sentence": result.get("sentence", ""),
+                "confidence": result.get("confidence", 0.0),
+                "frame_count": len(frames),
+                "fps": 25.0,
+                "pose_landmarks": result.get("pose_landmarks", []),
+                "runtime_status": self.checkpoint_runtime.reason,
+            }
+
         logger.info(f"Processing video: {video_path}")
 
         total_start = time.time()
@@ -267,6 +284,17 @@ class InferenceService:
         """
         Process sequence of frames through pipeline.
         """
+        if self.checkpoint_runtime.available:
+            result = self.checkpoint_runtime.process_frames(frames)
+            return {
+                "gloss": result.get("gloss", []),
+                "sentence": result.get("sentence", ""),
+                "confidence": result.get("confidence", 0.0),
+                "fps": 25.0,
+                "pose_landmarks": result.get("pose_landmarks", []),
+                "runtime_status": self.checkpoint_runtime.reason,
+            }
+
         logger.info(f"Processing {len(frames)} frames")
 
         total_start = time.time()
@@ -345,6 +373,21 @@ class InferenceService:
         """
         Process single frame in streaming mode with sliding window.
         """
+        if self.checkpoint_runtime.available:
+            result = self.checkpoint_runtime.process_stream_frame(frame, state)
+            return {
+                "gloss": result.get("gloss", []),
+                "sentence": result.get("sentence", ""),
+                "confidence": result.get("confidence", 0.0),
+                "fps": 25.0,
+                "pose_landmarks": result.get("pose_landmarks", []),
+                "hand_landmarks": [],
+                "partial": result.get("partial", True),
+                "buffer_fill": result.get("buffer_fill", 0),
+                "state": result.get("state"),
+                "runtime_status": self.checkpoint_runtime.reason,
+            }
+
         if state is None:
             state = {
                 "buffer": SlidingWindowBuffer(window_size=64, stride=32),

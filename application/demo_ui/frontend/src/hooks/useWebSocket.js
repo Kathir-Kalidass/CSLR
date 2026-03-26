@@ -18,7 +18,8 @@ export default function useWebSocket() {
     function connect() {
       if (!alive) return
       const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
-      const ws = new WebSocket(`${protocol}://${window.location.host}/ws/demo`)
+      const explicitWsUrl = import.meta.env.VITE_WS_URL
+      const ws = new WebSocket(explicitWsUrl || `${protocol}://${window.location.host}/ws/demo`)
       wsRef.current = ws
 
       ws.onopen = () => {
