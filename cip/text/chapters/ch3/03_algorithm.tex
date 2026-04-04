@@ -1,0 +1,27 @@
+\section{Algorithm}
+\subsubsection{Step 1: Capture Input Video Stream}
+Capture a real-time RGB video stream from camera input representing sign gestures.
+
+\subsubsection{Step 2: Frame Extraction and Preprocessing}
+Extract frames using uniform sampling, resize and normalize each frame, and standardize sequence length with padding or truncation.
+
+\subsubsection{Step 3: Spatial Feature Extraction using CNN}
+Pass each frame through EfficientNet-based CNN layers to extract spatial features.
+
+\subsubsection{Step 4: Temporal Feature Extraction using RNN}
+Feed frame-level features to an RNN model (GRU/LSTM) to capture temporal dependencies.
+
+\subsubsection{Step 5: Apply Attention Mechanism}
+Apply attention to emphasize informative spatial-temporal features and suppress noisy data.
+
+\subsubsection{Step 6: Feature Fusion}
+Combine weighted spatial and temporal features to form a unified spatiotemporal representation.
+
+\subsubsection{Step 7: Sequence Modeling}
+Use a Transformer sequence model to learn long-range contextual relationships across frames.
+
+\subsubsection{Step 8: Gesture Prediction}
+Classify processed features into gesture classes using a fully connected layer with softmax activation.
+
+\subsubsection{Step 9: Output Generation (Text and Speech)}
+Convert predicted gestures into readable text and optionally generate speech using text-to-speech.

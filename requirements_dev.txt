@@ -1,0 +1,55 @@
+# =============================================
+# CLSR Dev Requirements — Frontend Focus
+# CPU-only PyTorch to save ~1.5 GB disk space
+# Install with: pip install -r requirements_dev.txt
+# =============================================
+
+# --- Web / API Server ---
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+python-multipart>=0.0.6
+websockets>=12.0
+aiofiles>=23.2.1
+python-dotenv>=1.0.0
+pydantic>=2.5.3
+pydantic-settings>=2.1.0
+
+# --- HTTP Clients ---
+requests>=2.31.0
+httpx>=0.26.0
+aiohttp>=3.9.0
+
+# --- Computer Vision & Pose Estimation ---
+opencv-python>=4.8.0
+mediapipe>=0.10.9
+Pillow>=10.0.0
+
+# --- Scientific Computing (lightweight) ---
+numpy>=1.26.4
+scipy>=1.11.0
+scikit-learn>=1.3.0
+
+# --- NLP / Text ---
+transformers>=4.37.2
+sentencepiece>=0.1.99
+tokenizers>=0.15.0
+huggingface-hub>=0.20.0
+
+# --- Text-to-Speech ---
+pyttsx3>=2.90
+gTTS>=2.5.0
+soundfile>=0.12.1
+
+# --- Utilities & Logging ---
+loguru>=0.7.2
+pyyaml>=6.0.1
+tqdm>=4.66.0
+rich>=13.7.0
+colorama>=0.4.6
+python-dateutil>=2.9.0
+psutil>=5.9.6
+
+# NOTE:
+# PyTorch (CPU-only) is NOT listed here to avoid pip ignoring the index-url.
+# Install it separately with:
+#   pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu

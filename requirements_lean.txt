@@ -1,0 +1,43 @@
+# ============================================================
+# LEAN REQUIREMENTS — Frontend-focused + basic backend
+# CPU-only torch (saves ~1.5 GB vs CUDA), no heavy training tools
+# ============================================================
+
+# --- Web Framework ---
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+python-dotenv>=1.0.0
+pydantic>=2.5.3
+pydantic-settings>=2.1.0
+python-multipart>=0.0.9
+
+# --- Async / WebSocket ---
+websockets>=12.0
+aiofiles>=23.2.1
+httpx>=0.26.0
+requests>=2.31.0
+aiohttp>=3.9.0
+
+# --- Computer Vision (headless = smaller) ---
+opencv-python-headless>=4.8.0
+mediapipe>=0.10.0
+
+# --- Deep Learning (CPU only — install separately with --index-url) ---
+# torch, torchvision installed via pip install --index-url https://download.pytorch.org/whl/cpu
+
+# --- Scientific Computing ---
+numpy>=1.24.0,<2.0.0
+scipy>=1.11.0
+Pillow>=10.0.0
+
+# --- Logging / Monitoring ---
+loguru>=0.7.2
+psutil>=5.9.6
+
+# --- Config / Utilities ---
+PyYAML>=6.0.1
+einops>=0.7.0
+
+# --- Security ---
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4

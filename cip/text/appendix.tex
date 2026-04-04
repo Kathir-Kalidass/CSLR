@@ -1,0 +1,31 @@
+\appendix
+\chapter{Additional Material}
+
+\section{Reproducibility Checklist}
+The following checklist summarizes reproducibility controls used in this project:
+\begin{itemize}[leftmargin=1.5em]
+\item fixed data preprocessing sequence (decode, sample, resize, normalize),
+\item explicit module boundaries between extraction, fusion, decoding, and output,
+\item consistent metric definitions for recognition, sequence, and translation quality,
+\item project-level scripts for environment setup and service startup,
+\item integrated figure and table assets stored directly inside the thesis repository.
+\end{itemize}
+
+\section{Configuration Snapshot}
+\begin{table}[H]
+\centering
+\caption{Representative configuration snapshot}
+\label{tab:appendix-config}
+\begin{tabular}{|p{4.0cm}|p{7.7cm}|}
+\hline
+\textbf{Configuration group} & \textbf{Representative setting} \\ \hline
+Input pipeline & RGB video stream with frame downsampling profile from report artifacts \\ \hline
+Feature extraction & Dual-stream processing: appearance cues + pose/motion cues \\ \hline
+Temporal modeling & Sequence encoder with CTC-aligned decoding \\ \hline
+Output stage & Token buffering, caption refinement, optional TTS synthesis \\ \hline
+Evaluation output & Accuracy/F1, WER/CER, BLEU/ROUGE, deployment indicators \\ \hline
+\end{tabular}
+\end{table}
+
+\section{Additional Notes on Deployment}
+Report evidence indicates that deployment quality depends strongly on three practical controls: capture quality, vocabulary coverage, and signer diversity in training. For production-scale deployment, periodic data refresh and calibration checks are recommended.

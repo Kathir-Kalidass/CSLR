@@ -1,0 +1,65 @@
+\documentclass[a4paper]{authesis}
+
+% Title of thesis
+\title{Thesis Title sdfsf sfasdfa asfsfas asdfasdfas adsfasdfads sadfasdf asfasfas fasgas gas gasg wetw  aefw efw efwefwe gw gw garwgawrgawg}
+
+% Author information
+\author{
+  \student{John sdfsfd}{2022103002}
+  \student{Jane }{2022103002}
+  \student{Alexandria dhgg fhygh fhh}{2022103002}
+  \student{Alexandria fhghh}{2022103002}
+}
+\department{Computer Science and Engineering}
+\college{Anna University}
+\place{Chennai 600025}
+\dateofsubmission{April 2026}
+
+
+% Supervisor information
+\supervisor{Supervisor Name}
+\supervisortitle{Designation of Supervisor}
+\supervisordepartment{Department of Computer Science and Engineering}
+\supervisorcollege{Anna University}
+\supervisorplace{Chennai 600025}
+
+\bibliographystyle{authesis}
+%\bibliographystyle{plain}
+
+%%%%%%%%%%%%%%%%%%%%%%
+% Extra packages used
+%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{graphicx}
+\usepackage[figuresright]{rotating}		% sideways table and figures
+\usepackage{url}										% URL in bibliography
+%\usepackage{caption}
+
+%%%%%%%%%%%%%%%%%%%%%%
+% Requirements
+%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{document}
+
+	\authesisfrontmatter % roman style page numbering
+
+	\aumaketitle
+	\aumakecertificate
+	\aumakeacknowledgement
+	\include{text/abstract}
+	\autableofcontents
+	\aulistoftables
+	\aulistoffigures
+	\include{text/listofsymbols}
+
+	\authesischapters % arabic style page numbering
+	
+	\include{text/C1}
+	\include{text/C2}
+	\include{text/C3}
+	\include{text/C4}
+	\include{text/C5}
+
+	\include{text/appendix}
+	\references{sample.bib}
+
+\end{document}
