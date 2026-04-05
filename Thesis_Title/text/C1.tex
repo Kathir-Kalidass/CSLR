@@ -1,42 +1,97 @@
 \chapter{Introduction}
 
-	\section{Section 1}
+\section{Background and Motivation}
 
-		This is section 2.
+Communication through sign language is essential for Deaf and hard-of-hearing communities. In many practical settings, however, communication still depends on the availability of a human interpreter. This dependency creates delays, increases cost, and reduces privacy in education, healthcare, public services, and day-to-day interactions.
 
-	\section{Section 2}
+Continuous Sign Language Recognition (CSLR) attempts to bridge this gap by converting a sequence of sign gestures from video into a sequence of textual units. Unlike isolated sign recognition, CSLR must handle transitions between signs, signer-specific motion patterns, variable signing speed, occlusion, and co-articulation effects where neighboring signs influence each other.
 
-		This is section 2.
+Recent progress in deep learning, pose estimation, and efficient sequence models has made CSLR increasingly feasible for real-world deployment. At the same time, practical systems for Indian Sign Language still face challenges related to limited labeled data, signer diversity, and the need for robust inference under unconstrained backgrounds. These factors motivate a focused study on a scalable and reliable CSLR pipeline.
 
-	\section{Section 3}
-	
-		This is section 3.
+From a societal viewpoint, improving CSLR has direct value for inclusive communication access. A dependable recognition layer can support educational tools, public-service interfaces, and assistive workflows where response time and consistency matter. For this reason, the thesis approaches CSLR not only as a model-accuracy problem but also as a reliability and usability problem.
 
-		\subsection{Subsection 1}
+From a technical viewpoint, CSLR is a sequence transduction task with high intra-class variation and subtle inter-class distinctions. Two sign instances corresponding to the same gloss can look different across signers, while different glosses may share similar early motion trajectories. This ambiguity requires architectures that preserve long-range temporal context and retain fine-grained motion cues rather than relying on static frame-level features.
 
-			This is sub section 1.
+\section{Problem Statement}
 
-			\subsubsection{Subsubsection 1}
-				This is subsub section 1.
-			\subsubsection{Subsubsection 1}
-				This is subsub section 2.
-				\paragraph{Subsubsubsection 1}
-					This is subsubsub section 1.
-				\paragraph{Subsubsubsection 2}
-					This is subsubsub section 2.
-				\paragraph{Subsubsubsection 3}
-					This is subsubsub section 3.
-					\subparagraph{Subsubsubsubsection 1}
-						This is subsubsubsub section 1.
-					\subparagraph{Subsubsubsubsection 2}
-						This is subsubsubsub section 2.
-					\subparagraph{Subsubsubsubsection 3}
-						This is subsubsubsub section 3.
-			\subsubsection{Subsubsection 1}
-				This is subsub section 3.
+The core problem addressed in this work is the design of a robust CSLR system that can recognize continuous Indian Sign Language from video streams with acceptable accuracy and latency. A useful system must preserve temporal context, handle noisy visual conditions, and produce stable predictions across different signers.
 
-		\subsection{Subsection 2}
+Existing approaches often perform well only in constrained settings, such as fixed camera placement or limited signer variability. When deployed in practical environments, their performance may degrade due to motion blur, background clutter, partial body visibility, and inconsistent frame quality. Therefore, this thesis focuses on end-to-end design choices that improve both recognition quality and deployment readiness.
 
-		\subsection{Subsection 3}
+The problem can also be viewed as aligning variable-length visual sequences with variable-length label sequences while minimizing temporal confusion at sign boundaries. In practical terms, this means the system must remain stable when gestures overlap, when hand trajectories are partially occluded, and when signer pace changes abruptly. A robust design must therefore combine strong visual representation learning with sequence modeling that is tolerant to alignment uncertainty.
 
-	
+\section{Objectives}
+
+The major objectives of this thesis are listed below.
+
+\begin{itemize}
+\item Build a modular CSLR workflow that supports data preparation, training, evaluation, and inference as separate but connected stages.
+\item Integrate complementary visual cues, including RGB appearance and pose-related motion information, to improve temporal understanding.
+\item Evaluate the system using clear, reproducible metrics so that model quality and failure cases can be compared consistently.
+\item Improve practical usability by targeting stable predictions and manageable computational cost.
+\end{itemize}
+
+In addition to model-level goals, the implementation objective is to keep the system configurable. This includes parameterized scripts, reusable preprocessing steps, and structured experiment settings that can be adapted for later improvements.
+
+\subsection{Research Questions}
+
+To operationalize the objectives, this thesis addresses the following research questions.
+
+\begin{enumerate}
+\item How effectively can a modular CSLR pipeline maintain recognition quality across continuous sign sequences with realistic temporal variation?
+\item To what extent does combining RGB appearance and pose-derived motion information improve sequence-level prediction stability?
+\item Which error patterns remain dominant after multimodal integration, and how can they guide future improvements?
+\end{enumerate}
+
+These questions connect model design, implementation choices, and evaluation strategy. They also provide a clear structure for interpreting results in later chapters.
+
+\section{Scope and Contributions}
+
+\subsection{Scope of the Work}
+
+This work concentrates on recognition of continuous sign sequences in Indian Sign Language using video-based inputs. The thesis addresses dataset handling, preprocessing, feature representation, sequence modeling, and performance analysis. The translation of recognized signs into grammatically refined natural language is treated as a downstream extension and is not the primary focus.
+
+The study also prioritizes engineering reproducibility. The pipeline is designed so that experiments can be repeated with different hyperparameters, feature combinations, and model checkpoints without changing the full code structure.
+
+The practical scope includes offline experimentation and deployment-focused inference workflows. Although this thesis does not claim full multilingual production support, it presents design choices that can extend to broader sign vocabularies and larger datasets in future work.
+
+\subsection{Major Contributions}
+
+The key contributions of this thesis are summarized below.
+
+\begin{enumerate}
+\item A complete CSLR pipeline with clear stage separation for data preparation, training, and inference.
+\item A multi-cue recognition strategy that combines visual and motion-related information to improve sequence understanding.
+\item A comparative evaluation setup with interpretable metrics to analyze recognition effectiveness.
+\item A deployment-oriented implementation structure that supports incremental extension and practical testing.
+\item A structured analysis of failure modes, with emphasis on transition errors in continuous signing.
+\item Documentation-driven workflow support to improve reproducibility for future researchers and developers.
+\end{enumerate}
+
+Together, these contributions position the work as both a methodological study and an engineering artifact. The thesis therefore emphasizes not only what performance is achieved, but also how consistently the system can be reproduced and extended.
+
+\section{Significance of the Study}
+
+The significance of this work lies in its attempt to close the gap between experimental CSLR models and practically usable systems. In many academic studies, improvements are reported at benchmark level but are difficult to transfer into robust real-world pipelines. By structuring the workflow into reusable modules and evaluating behavior under varied conditions, this thesis contributes toward more dependable CSLR development practices.
+
+The study is also significant for Indian Sign Language research, where publicly documented, end-to-end continuous recognition implementations remain comparatively limited. A reproducible framework with explicit design rationale can support follow-up research, comparative studies, and integration into assistive applications.
+
+\section{Thesis Organization}
+
+The remainder of this thesis is organized as follows. Chapter 2 reviews related work, compares methodological trends, and highlights research gaps that motivate the proposed approach. Chapter 3 presents the system design, including data flow, multimodal representation strategy, and training methodology. Chapter 4 discusses implementation details, experimental setup, quantitative results, and qualitative error interpretation. Chapter 5 concludes the thesis and outlines future directions for scalability, robustness, and deployment.
+
+Overall, this chapter establishes the motivation, defines the problem, and introduces the objectives and contributions that guide the rest of the document.
+
+To support readability and reproducibility, each chapter is written to align design choices with measurable outcomes. Conceptual decisions are accompanied by implementation-level interpretation so that the connection between method and result remains explicit.
+
+The organization also enables incremental extension. A reader may independently focus on system design, experiments, or deployment implications while still tracing how each stage contributes to the full CSLR workflow.
+
+This chapter-level structure also supports verification of claims. Design assumptions introduced early in the thesis are revisited in the experimental chapter so that performance conclusions remain grounded in measurable outcomes rather than isolated observations.
+
+\subsection{Expected Outcomes of the Study}
+
+From a technical perspective, the expected outcomes include stable continuous recognition performance, clearer error behavior under realistic variation, and evidence that multimodal cues improve temporal interpretation. From an engineering perspective, the expected outcomes include modular scripts and a consistent experiment structure.
+
+These outcomes define the success criteria used in later chapters and guide the final evaluation of the proposed system.
+
+In summary, Chapter 1 establishes why continuous recognition in Indian Sign Language remains an important and open challenge, what this thesis aims to solve, and how the remaining chapters collectively validate the proposed approach.

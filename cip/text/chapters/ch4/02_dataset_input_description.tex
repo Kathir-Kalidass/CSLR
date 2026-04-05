@@ -1,18 +1,60 @@
 \section{Dataset / Input Description}
-The system uses a video-based dataset consisting of Indian Sign Language gestures. Each sample in the dataset represents a gesture performed by a signer.
+The implemented training and evaluation pipeline is built on the iSign dataset workflow, where each sample is a sign-language video clip paired with sentence-level and gloss-level annotation. Unlike single-image classification, this task is sequence-based: model input is a temporally ordered clip and model output is a variable-length gloss-token sequence.
 
+\subsection{Dataset Source and Organization}
+The data preparation flow uses the iSign v1.1 dataset pipeline with downloadable metadata, pose archives, and video archives. After preprocessing, the working dataset is organized into training-ready splits and structured files:
 \begin{itemize}[leftmargin=1.5em]
-\item Input data consists of RGB video sequences,
-\item Videos are converted into frames for processing,
-\item Each sequence represents a single gesture class (isolated gestures),
-\item Preprocessing ensures uniform frame size and sequence length.
+\item \textbf{Split files:} \texttt{train.json}, \texttt{val.json}, \texttt{test.json}
+\item \textbf{Vocabulary:} \texttt{vocab.json}
+\item \textbf{Frame data:} \texttt{frames/<video\_id>/frame\_xxxx.jpg}
+\item \textbf{Pose data:} \texttt{poses/<video\_id>.npy}
 \end{itemize}
 
-The dataset and input representation are shown in Fig.~\ref{fig:dataset-input}.
+Each JSON sample includes identifiers and aligned labels such as sentence text, gloss tokens, gloss IDs, frame directory, pose file path, and frame count. This structure supports both supervised training and reproducible evaluation.
+
+\subsection{Model Input Representation}
+For each video sample, the model consumes synchronized multimodal inputs:
+\begin{itemize}[leftmargin=1.5em]
+\item \textbf{RGB clip:} uniformly sampled frame tensor resized to model resolution (default training loader: $224\times224$).
+\item \textbf{Pose clip:} time-aligned landmark feature sequence loaded from \texttt{.npy} files.
+\item \textbf{Target labels:} gloss-ID sequence for CTC-based sequence learning.
+\end{itemize}
+
+Using the notation from Chapter 3, the input clip is represented as
+\begin{equation}
+\mathbf{X}=\{X_t\}_{t=1}^{T}, \qquad \mathbf{P}=\{P_t\}_{t=1}^{T},
+\end{equation}
+where $X_t$ is the RGB frame at time step $t$ and $P_t$ is the aligned pose feature vector. The target gloss sequence is
+\begin{equation}
+Y = \{y_1, y_2, \dots, y_L\}, \qquad L \leq T.
+\end{equation}
+
+\subsection{Preprocessing and Standardization}
+Before training/inference, raw input videos are standardized through the following operations:
+\begin{enumerate}[leftmargin=1.5em]
+\item frame extraction and temporal sampling,
+\item spatial resizing and image normalization,
+\item pose validation and alignment with frame indices,
+\item temporal standardization to configured clip length (batch mode) or sliding windows (live mode).
+\end{enumerate}
+
+This preprocessing removes capture variability and ensures that multimodal tensors remain shape-consistent for the dual-stream model.
+
+\subsection{Inference Input Modes}
+The deployed backend accepts three practical input formats:
+\begin{itemize}[leftmargin=1.5em]
+\item complete video files (offline/batch inference),
+\item finite frame sequences (API batch mode),
+\item real-time frame streams over WebSocket (online mode).
+\end{itemize}
+
+In all three modes, the same canonical representation is enforced before decoding, so reported performance remains comparable across deployment scenarios.
+
+The dataset and input representation are illustrated in Fig.~\ref{fig:dataset-input}.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.9\textwidth]{text/figures/docx_image6.jpeg}
+\includegraphics[width=0.9\textwidth]{text/figures/image_ISL_sentence_example.png}
 \caption{Dataset and input representation snapshot.}
 \label{fig:dataset-input}
 \end{figure}

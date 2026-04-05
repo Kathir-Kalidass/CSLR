@@ -1,4 +1,11 @@
+% !TeX program = xelatex
 \documentclass[a4paper]{authesis}
+\usepackage{fontspec}
+\IfFontExistsTF{Noto Sans Tamil UI}{
+	\newfontfamily\tamilfont[Script=Tamil]{Noto Sans Tamil UI}
+}{
+	\newfontfamily\tamilfont[Script=Tamil]{Noto Serif Tamil}
+}
 
 % Title of thesis
 \title{Real-Time Indian Sign Language Recognition Using Efficient Multi-Feature Attention Mechanism}
@@ -38,6 +45,7 @@
 \usepackage[figuresright]{rotating}		% sideways table and figures
 \usepackage{url}										% URL in bibliography
 \usepackage{amsmath}
+\usepackage{amssymb}
 \usepackage{booktabs}
 \usepackage{multirow}
 \usepackage{array}
@@ -45,9 +53,13 @@
 \usepackage{longtable}
 \usepackage{threeparttable}
 \usepackage{float}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
 \usepackage{enumitem}
 \usepackage{siunitx}
 \sisetup{detect-all}
+\floatstyle{ruled}
+\restylefloat{algorithm}
 \graphicspath{{text/figures/}}
 
 %%%%%%%%%%%%%%%%%%%%%%
@@ -61,16 +73,17 @@
 
 	\aumakecover
 	\aumakecertificate
-	\include{text/abstract}
 	\aumakeacknowledgement
+	\include{text/abstract}
 	\autableofcontents
 	\aulistoftables
 	\aulistoffigures
+	\include{text/listofabbreviations}
 	\include{text/listofsymbols}
 
 	\authesischapters % arabic style page numbering
 	\hypersetup{pageanchor=true}
-	\nocite{yenisari2025deep,joshi2024isign,pandey2025realtime,geetha2025toward,lecun2015deep,kumar2024survey,li2024multimodal,zhou2024transformer,camgoz2018neural,joze2019msasl}
+	\nocite{yenisari2025deep,joshi2024isign,pandey2025realtime,geetha2025toward,lecun2015deep,kumar2024survey,li2024multimodal,zhou2024transformer,camgoz2018neural,kezar2023semlex,alqurishi2021deep,alabdullah2024advancements,joze2019msasl}
 	
 	\include{text/C1}
 	\include{text/C2}

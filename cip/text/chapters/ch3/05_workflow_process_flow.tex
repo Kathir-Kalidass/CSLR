@@ -1,5 +1,71 @@
 \section{Workflow / Process Flow}
-The system workflow is:
+This section explains how the implemented system executes from input capture to final output under both batch and live settings. The workflow is not a single linear script; it is an orchestrated pipeline with runtime routing, module-wise processing, confidence-aware decoding, and language-level rendering.
+
+\subsection{Operational Modes and Runtime Routing}
+The backend supports three operational modes:
+\begin{itemize}[leftmargin=1.5em]
+\item \textbf{Batch video inference:} a full uploaded video is processed end-to-end.
+\item \textbf{Frame-sequence inference:} a finite list of decoded frames is processed as one sequence.
+\item \textbf{Live streaming inference:} frames arrive continuously through WebSocket and are processed with a sliding window.
+\end{itemize}
+
+At runtime, the service first checks whether an optimized checkpoint runtime is available. If available, decoding uses the loaded iSign checkpoint path directly (including streaming early-exit behavior). If not available, the service executes the modular 4-stage pipeline described below.
+
+\subsection{Batch Inference Process Flow  }
+For batch execution, the implemented process is:
+\begin{enumerate}[leftmargin=1.5em]
+\item \textbf{Input acquisition and decoding:}
+video files are loaded into ordered frames, or base64 frame payloads are decoded into image arrays.
+
+\item \textbf{Module 1 -- preprocessing and synchronization:}
+frames are sampled to the target temporal rate (25 FPS in the default backend path), converted to model-ready tensors, and aligned with extracted pose/landmark tensors. Invalid frames are filtered; if no valid frame survives, the service returns an empty prediction with low confidence.
+
+\item \textbf{Module 2 -- feature extraction and fusion:}
+RGB and pose streams generate $F_t^{\mathrm{rgb}}$ and $F_t^{\mathrm{pose}}$, then gated fusion produces $F_t^{\mathrm{fuse}}$ (as formalized in Section 3.4). In the modular path, this stage can also provide interpretable fusion weights.
+
+\item \textbf{Module 3 -- temporal modeling and decoding:}
+the temporal encoder produces sequence logits, then CTC decoding converts logits to gloss tokens. The service uses beam-search decoding for full-video processing (higher accuracy) and greedy decoding for low-latency sequence paths.
+
+\item \textbf{Module 4 -- language rendering:}
+decoded gloss tokens are converted to sentence text through grammar correction/translation logic, then passed through post-processing (capitalization, punctuation, cleanup).
+
+\item \textbf{Output packaging and monitoring:}
+the final response includes gloss tokens, sentence text, confidence, and timing-derived runtime values. Module-level timers are recorded for performance tracking and FPS estimation.
+\end{enumerate}
+
+The end-to-end batch flow can be summarized as:
 \begin{center}
-Video Input $\rightarrow$ Preprocessing $\rightarrow$ Feature Extraction $\rightarrow$ Attention $\rightarrow$ Feature Fusion $\rightarrow$ Sequence Modeling $\rightarrow$ Prediction $\rightarrow$ Output
+Input $\rightarrow$ Runtime Check $\rightarrow$ Preprocessing $\rightarrow$ RGB/Pose Features $\rightarrow$ Gated Fusion $\rightarrow$ Temporal Encoder + CTC Decode $\rightarrow$ Grammar/Post-Process $\rightarrow$ Output
 \end{center}
+
+\subsection{Live Streaming Process Flow (Sliding Window)}
+In streaming mode, the workflow is stateful and window-driven:
+\begin{enumerate}[leftmargin=1.5em]
+\item each received frame is decoded and preprocessed immediately;
+\item frame tensors are appended to a sliding buffer (default window size $64$, stride $32$);
+\item until the window is ready, the system returns a \emph{partial} response using the last stable gloss/sentence state;
+\item once a complete window is emitted, the feature, temporal, and language modules run on that window;
+\item predictions are written back to stream state and returned to the client with buffer-progress metadata.
+\end{enumerate}
+
+This design keeps latency stable while preserving temporal context: recognition is updated incrementally instead of waiting for full-session completion.
+
+\subsection{Training-to-Deployment Process Flow}
+The deployed runtime is produced through an offline training pipeline:
+\begin{enumerate}[leftmargin=1.5em]
+\item \textbf{Data preparation:} dataset download, archive merge, preprocessing, and split creation (train/validation/test + vocabulary).
+\item \textbf{Model training:} dual-stream or pose-only CSLR training with CTC objective, mixed precision support, and epoch-wise optimization scheduling.
+\item \textbf{Validation and checkpointing:} validation decoding (greedy or beam), metric tracking (including WER/CER), and checkpoint persistence (best/latest/epoch).
+\item \textbf{Runtime loading:} selected checkpoint and configuration are loaded by the runtime service; inference then follows either checkpoint-direct execution or modular fallback.
+\end{enumerate}
+
+\subsection{Process Integrity and Failure Handling}
+To maintain robust operation, the workflow includes explicit control points:
+\begin{itemize}[leftmargin=1.5em]
+\item service-availability checks before inference execution;
+\item safe handling for invalid/empty frame sets;
+\item graceful partial outputs during buffer warm-up in streaming;
+\item deterministic return schema (gloss, sentence, confidence, runtime fields) for API/UI integration.
+\end{itemize}
+
+Therefore, Section 3.5 represents the practical execution logic of the complete system: data enters through batch or live interfaces, passes through synchronized multimodal modeling, is decoded via CTC, refined at language level, and returned as confidence-aware assistive output.

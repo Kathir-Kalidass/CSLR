@@ -1,7 +1,24 @@
-\begin{abstract}
+\begin{abstractenglish}
 Communication barriers between hearing-impaired individuals and the general population remain a significant social challenge. Indian Sign Language (ISL) is the primary communication medium for many deaf and hard-of-hearing individuals in India, but the lack of accessible translation tools often restricts interaction with non-signers. To address this problem, this work proposes a real-time Indian Sign Language recognition system based on an Efficient Multi-Feature Attention Mechanism.
 
 The proposed system processes live video streams captured from a camera and converts sign gestures into meaningful text. Video frames are extracted and preprocessed to maintain uniform spatial and temporal representation. Spatial visual cues, such as hand shape, orientation, and appearance, are learned using an EfficientNet model pretrained on ImageNet through transfer learning. In parallel, temporal motion patterns are captured using a CNN--RNN architecture.
 
 To improve recognition performance, an attention mechanism dynamically assigns importance to spatial and temporal features, emphasizing relevant gesture components while suppressing less informative information. The weighted features are fused and passed to a GRU-based sequence modeling network, and a fully connected softmax classifier predicts the corresponding ISL gesture class. Designed for real-time deployment, the framework maintains low computational overhead while delivering reliable recognition accuracy and provides a strong foundation for future work on continuous sign language translation.
-\end{abstract}
+\end{abstractenglish}
+
+\begin{abstracttamil}
+{\tamilfont
+\setlength{\parskip}{1em}
+\setlength{\parindent}{0pt}
+\raggedright
+
+கேள்வித்திறன் குறைபாடு உடைய நபர்கள் மற்றும் பொதுமக்கள் இடையேயான தொடர்பு இடைவெளி இன்னும் ஒரு முக்கியமான சமூகச் சவாலாக உள்ளது. இந்தியச் சைகை மொழி, இந்தியாவில் செவிடு மற்றும் கேள்வித்திறன் குறைபாடு உடையோரின் முக்கிய தொடர்பு மொழியாக விளங்கினாலும், அதை உடனடியாக உரை வடிவமாக மாற்றும் எளிய மற்றும் அணுகத்தக்க கருவிகள் குறைவாக இருப்பதால், சைகை மொழியை அறியாதவர்களுடன் தொடர்பு கொள்ளுவதில் சிரமம் ஏற்படுகிறது. இந்தப் பிரச்சினைக்கு தீர்வாக, இவ்வாய்வு பல அம்சங்களை கருத்தில் கொண்டு செயல்படும் கவன ஒதுக்கீட்டு முறையை அடிப்படையாகக் கொண்ட நேரடி இந்தியச் சைகை மொழி அடையாள அமைப்பை முன்வைக்கிறது.
+
+முன்மொழியப்பட்ட அமைப்பு, ஒளிப்பதிவு கருவி மூலம் பெறப்படும் தொடர்ச்சியான காணொளிக் காட்சிகளை செயலாக்கி, சைகை இயக்கங்களை பொருள் கொண்ட உரையாக மாற்றுகிறது. காணொளிப் படங்கள் எடுக்கப்பட்டு, அவை ஒரே மாதிரியான இடவியல் மற்றும் காலவியல் அமைப்பைப் பேணும் வகையில் முன்செயலாக்கம் செய்யப்படுகின்றன. கை வடிவம், திசை, தோற்றம் போன்ற இடவியல் காட்சி அம்சங்கள் முன்பயிற்சி செய்யப்பட்ட திறமையான மாதிரியின் மூலம் கற்றுக்கொள்ளப்படுகின்றன. அதே சமயம், இயக்கங்களின் காலவரிசை வடிவங்கள் இணைந்த நரம்புக் கட்டமைப்பின் மூலம் பதிவுசெய்யப்படுகின்றன.
+
+அடையாளத் துல்லியத்தை மேம்படுத்த, கவன ஒதுக்கீட்டு முறை இடவியல் மற்றும் காலவியல் அம்சங்களுக்கு தன்னிச்சையாக முக்கியத்துவம் வழங்கி, முக்கியமான சைகை கூறுகளை முன்னிறுத்தி, தொடர்பற்ற கூறுகளைத் தணிக்கிறது. இவ்வாறு எடையிடப்பட்ட அம்சங்கள் ஒன்றிணைக்கப்பட்டு, தொடர் சார்ந்த கற்றல் அமைப்பிற்கு அனுப்பப்படுகின்றன. பின்னர், முழுமையாக இணைக்கப்பட்ட வகைப்பாட்டு அமைப்பின் மூலம் பொருத்தமான இந்தியச் சைகை மொழி வகை கணிக்கப்படுகிறது.
+
+{\XeTeXlinebreaklocale "ta"\XeTeXlinebreakskip = 0pt plus 1pt
+நடைமுறை பயன்பாட்டை கருத்தில் கொண்டு வடிவமைக்கப்பட்ட இந்த அமைப்பு, குறைந்த கணக்கீட்டு சுமையுடன் செயல்பட்டு நம்பகமான அடையாளத் துல்லியத்தை வழங்குகிறது. மேலும், தொடர்ச்சியான சைகை மொழி வாக்கியங்களை இயல்பான மொழியாக மாற்றும் எதிர்கால ஆய்வுகளுக்கு இது வலுவான அடித்தளமாக அமைகிறது.\par}
+}
+\end{abstracttamil}

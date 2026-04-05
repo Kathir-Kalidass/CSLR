@@ -1,9 +1,15 @@
 \section{Future Work}
-The proposed system can be further enhanced in the following ways:
+The current project provides a solid implementation baseline and can be extended through the following future directions:
+
 \begin{itemize}[leftmargin=1.5em]
-\item Extension to continuous sign language recognition and full sentence translation,
-\item Integration of multimodal inputs such as pose landmarks and depth data,
-\item Development of a mobile or embedded application for real-world deployment,
-\item Improvement of dataset size and diversity for better generalization,
-\item Incorporation of advanced Transformer-based architectures for higher accuracy.
+\item \textbf{Larger and more diverse ISL data curation:} expand signer diversity, recording conditions, and vocabulary coverage to improve generalization.
+\item \textbf{Stronger sequence-language coupling:} integrate richer language-model-assisted decoding and context-aware sentence generation to improve semantic fluency.
+\item \textbf{Advanced multimodal modeling:} incorporate additional cues (for example depth or richer facial dynamics where available) and improve cross-modal alignment under noise.
+\item \textbf{Low-latency optimization for edge deployment:} apply quantization, graph optimization, and efficient runtime export to support mobile/embedded inference.
+\item \textbf{Adaptive personalization:} introduce signer-adaptive fine-tuning and confidence calibration updates for personalized performance stabilization.
+\item \textbf{Robustness-aware live inference:} improve buffering, recovery logic, and uncertainty handling for longer real-world streaming sessions.
+\item \textbf{Expanded evaluation protocol:} include larger-scale user studies, assistive usability assessment, and longitudinal testing in practical communication environments.
+\item \textbf{Multilingual assistive extension:} extend output modules beyond single-language post-processing to support broader accessibility needs.
 \end{itemize}
+
+In summary, future work should combine model improvement, data expansion, and deployment engineering so that the system evolves from a validated technical prototype into a dependable real-world communication assistant.

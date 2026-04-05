@@ -1,6 +1,76 @@
 \appendix
 \chapter{Additional Material}
 
+\renewcommand{\thealgorithm}{A\thechapter.\arabic{algorithm}}
+
+\section{Key Algorithms}
+This section presents the main project algorithms mapped to Section~3.3.
+
+\begin{algorithm}[H]
+\caption{Input Capture and Preprocessing}
+\label{alg:acq-pre}
+\begin{flushleft}\small
+\textbf{INPUT:} Live RGB stream $V$, target FPS, target resolution.\\
+\textbf{OUTPUT:} Normalized frame sequence $\{X_t\}_{t=1}^{T}$.
+\end{flushleft}
+\begin{algorithmic}[1]\footnotesize
+\State Initialize camera session and frame buffer.
+\State Capture RGB frames and attach timestamp metadata.
+\State Apply uniform sampling to remove redundant frames.
+\State Resize and normalize each selected frame.
+\State Pad or truncate sequence to fixed length $T$.
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[H]
+\caption{Dual-Stream Feature Extraction}
+\label{alg:dual-stream}
+\begin{flushleft}\small
+\textbf{INPUT:} Frame sequence $\{X_t\}_{t=1}^{T}$.\\
+\textbf{OUTPUT:} Feature sequences $\{F_t^{\mathrm{rgb}}, F_t^{\mathrm{temp}}\}_{t=1}^{T}$.
+\end{flushleft}
+\begin{algorithmic}[1]\footnotesize
+\For{$t = 1$ to $T$}
+	\State Extract spatial embedding $F_t^{\mathrm{rgb}}$ using EfficientNet-CNN.
+\EndFor
+\State Process frame sequence with CNN--RNN to obtain $F_t^{\mathrm{temp}}$.
+\State Align spatial and temporal embeddings by index $t$.
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[H]
+\caption{Attention Weighting and Fusion}
+\label{alg:attn-fuse}
+\begin{flushleft}\small
+\textbf{INPUT:} Spatial features $F_t^{\mathrm{rgb}}$, temporal features $F_t^{\mathrm{temp}}$.\\
+\textbf{OUTPUT:} Fused representation $F_t^{\mathrm{fuse}}$.
+\end{flushleft}
+\begin{algorithmic}[1]\footnotesize
+\For{$t = 1$ to $T$}
+	\State Compute attention weights for both streams.
+	\State Recalibrate stream responses with learned scores.
+	\State Suppress low-information activations.
+	\State Fuse weighted features to produce $F_t^{\mathrm{fuse}}$.
+\EndFor
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[H]
+\caption{Sequence Decoding and Output Generation}
+\label{alg:seq-output}
+\begin{flushleft}\small
+\textbf{INPUT:} Fused sequence $\{F_t^{\mathrm{fuse}}\}_{t=1}^{T}$.\\
+\textbf{OUTPUT:} Final text output and optional speech output.
+\end{flushleft}
+\begin{algorithmic}[1]\footnotesize
+\State Model sequence context using Transformer/BiLSTM.
+\State Predict gesture tokens with CTC-aligned decoding.
+\State Validate confidence and apply re-decode if required.
+\State Convert tokens to text and perform grammar refinement.
+\State Generate TTS output when audio mode is enabled.
+\end{algorithmic}
+\end{algorithm}
+
 \section{Reproducibility Checklist}
 The following checklist summarizes reproducibility controls used in this project:
 \begin{itemize}[leftmargin=1.5em]
@@ -12,7 +82,7 @@ The following checklist summarizes reproducibility controls used in this project
 \end{itemize}
 
 \section{Configuration Snapshot}
-\begin{table}[H]
+\begin{table}[h]
 \centering
 \caption{Representative configuration snapshot}
 \label{tab:appendix-config}

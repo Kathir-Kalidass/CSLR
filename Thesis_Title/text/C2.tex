@@ -1,16 +1,114 @@
 \chapter{Literature Review}
 
-	\section{Section 1}
+\section{Overview of Existing Work}
 
-		This is section 1.
-		\cite{agarwal1988cache} proposed something very important, that too
-		a long time back.
+Research in sign language recognition has evolved from hand-crafted features to deep neural architectures that learn temporal and spatial representations directly from data. Early systems often relied on segmented gestures, static backgrounds, and carefully constrained recording environments. While these systems demonstrated feasibility, they were difficult to generalize to continuous signing scenarios.
 
-	\section{Section 2}
+As the field matured, sequence-aware architectures became central to CSLR. The transition from isolated sign classification to continuous sentence-level recognition introduced new challenges such as temporal alignment, transitional motion modeling, and uncertainty handling across adjacent signs.
 
-		This is section 2.
-		Something important was proposed \citep{agarwal1988cache} a long
-		time back.
+Another key shift in the literature is the movement from controlled laboratory assumptions toward deployment-aware design. Earlier studies commonly relied on fixed camera setups and uniform lighting, whereas more recent work attempts to tolerate realistic variation in signer distance, background motion, and frame quality. This transition is important because continuous recognition quality depends on how well the model handles non-ideal visual conditions.
+
+
+\section{Methodological Foundations}
+
+Methodological discipline from prior evaluation studies remains relevant to CSLR \citep{agarwal1988cache}. Fair comparison needs consistent preprocessing, data splits, and metric reporting. Small choices like sampling rate or keypoint filtering can shift results, so experiments must be transparent and reproducible.
+
+\section{ISL CSLR Progress}
+
+\subsection{Multimodal Gains}
+
+Recent work has shown that multimodal cues can improve recognition quality for continuous Indian Sign Language. In particular, combining RGB appearance with pose information helps models capture both contextual visual details and fine-grained motion trajectories \citep{geetha2025toward}. This trend is important because CSLR performance depends heavily on temporal consistency and gesture transition understanding.
+
+\subsection{Deployment Constraints}
+
+The same body of work also highlights practical concerns such as latency, robustness to signer variation, and input quality sensitivity. These aspects are critical when systems are expected to move from laboratory demonstrations to real-world use.
+
+\subsection{Sequence Complexity}
+
+An additional insight from recent studies is that performance improvements are often uneven across sequence complexity levels. Models may perform strongly on short or visually distinct sequences but degrade when signs exhibit rapid transitions or overlapping motion trajectories. This behavior reinforces the need for detailed error analysis rather than reliance on a single aggregate score.
+
+\subsection{RGB Methods}
+
+RGB-only models exploit texture, hand shape, and contextual cues from full video frames. Their strength is rich visual information, especially when hand regions are clearly visible. However, such methods may be sensitive to illumination changes, background clutter, and camera viewpoint shifts.
+
+Despite these limitations, RGB-based pipelines remain important because they encode semantic context beyond skeletal motion, including object interactions and scene-level cues that can disambiguate similar gestures. In practice, many high-performing systems retain a strong RGB branch even when additional modalities are introduced.
+
+\subsection{Pose Methods}
+
+Pose-guided methods focus on structured keypoint trajectories, which can improve robustness under background noise. They are often lighter in representation and can emphasize motion geometry, but pose extraction errors may propagate to downstream recognition. Hybrid pipelines attempt to balance these trade-offs by fusing RGB and pose streams.
+
+Pose-informed approaches are particularly useful when hand and arm dynamics dominate gloss discrimination. However, their effectiveness depends on keypoint stability under fast motion and occlusion. Literature comparisons suggest that the best results are often obtained when pose streams are treated as complementary rather than standalone predictors.
+
+\section{Evolution of CSLR Architectures}
+
+The architectural trajectory of CSLR can be interpreted in three broad phases: handcrafted or shallow temporal descriptors, recurrent sequence models with learned visual features, and recent transformer or hybrid attention-based frameworks. Each phase improved temporal modeling capacity, but also introduced new trade-offs in data demand and computational cost.
+
+\subsection{CNN-RNN-CTC Pipelines}
+
+A widely adopted baseline family combines convolutional feature extraction with recurrent temporal modeling and CTC-style decoding. This design supports variable-length alignment between input frames and output gloss sequences without requiring frame-level annotations. It established a practical foundation for continuous recognition and remains a reliable reference architecture.
+
+However, recurrent decoders may struggle with long dependencies when sequence length grows and visual transitions become subtle. Consequently, later work focused on mechanisms that can capture wider temporal context with improved training stability.
+
+\subsection{Temporal Convolution and Transformer-Based Models}
+
+Temporal convolutional and attention-based models attempt to model long-range dependencies more directly. Convolutional temporal stacks can provide efficient local-to-global context aggregation, while transformer variants offer flexible context interaction across distant frames. These models have shown strong potential in sequence tasks but often require careful regularization and sufficiently diverse training data.
+
+For CSLR specifically, architecture choice is constrained by both recognition quality and practical inference budget. Literature therefore increasingly reports not only accuracy-oriented metrics but also speed and memory considerations for deployment scenarios.
+
+\section{Data and Annotation Considerations}
+
+Data design remains one of the strongest determinants of CSLR progress. Continuous sign datasets must capture signer diversity, realistic recording conditions, and representative sentence-level variability. When dataset coverage is narrow, models can overfit signer-specific motion habits and fail to generalize.
+
+Annotation granularity also influences achievable performance. Gloss-level sequence labels support end-to-end training, but inconsistent annotation policies can introduce alignment noise that sequence models struggle to resolve. Several studies therefore emphasize clear annotation guidelines, quality checks, and split strategies that prevent signer leakage.
+
+Preprocessing choices, such as frame normalization, clipping policy, and keypoint smoothing, further affect downstream learning behavior. The literature indicates that robust preprocessing pipelines often reduce variance across runs and improve fairness in model comparison.
+
+\section{Fusion Strategies in Multimodal CSLR}
+
+Multimodal CSLR aims to combine complementary cues so that weaknesses in one stream are compensated by strengths in another. Common strategies include early fusion at feature level, late fusion at score level, and intermediate fusion using attention or gating modules. Each strategy imposes different assumptions about modality reliability and temporal synchronization.
+
+Early fusion can promote joint representation learning but may be sensitive to noisy modalities. Late fusion is easier to implement and tune, yet may miss deeper cross-modal interactions. Intermediate fusion methods provide a compromise by allowing selective cross-modal conditioning across temporal states.
+
+The reviewed literature suggests that no single fusion strategy dominates universally; effectiveness depends on dataset quality, modality noise profile, and training stability. This observation motivates adaptable pipeline design rather than rigid modality coupling.
+
+\section{Evaluation Practices and Limitations}
+
+Evaluation quality in CSLR depends on transparent metric selection and reporting granularity. Aggregate sequence accuracy alone can hide important behaviors such as boundary confusion, substitution concentration, or failure on longer sequences. More informative evaluation includes sequence-level correctness, token-level error patterns, and qualitative inspection of difficult examples.
+
+Another recurring limitation in prior work is inconsistent reporting of train, validation, and test protocols. Even minor differences in split construction or signer overlap can significantly affect outcomes. Strong comparative analysis therefore requires clearly documented data partitions, preprocessing rules, and decoding settings.
+
+Practical deployment claims should also be supported by runtime-oriented observations, including latency trends and resource usage under expected operating conditions. Without these details, it is difficult to assess whether reported models are suitable beyond offline experimentation.
+
+\section{Research Gaps Identified}
+
+From the reviewed studies, several gaps remain open for practical CSLR deployment.
+
+\begin{itemize}
+\item Limited diversity in datasets can reduce model generalization across signers and recording conditions.
+\item Evaluation pipelines are not always standardized, making direct model comparison difficult.
+\item Some methods prioritize accuracy without sufficient attention to inference efficiency.
+\item Error analysis is often brief, providing limited insight into transition failures.
+\item Fusion strategies are sometimes proposed without detailed ablation on modality reliability.
+\item Reproducibility artifacts are occasionally incomplete, limiting faithful reimplementation.
+\end{itemize}
+
+These observations motivate the need for a modular, reproducible, and deployment-aware CSLR framework that balances recognition quality with computational practicality.
+
+\section{Implications for the Proposed Methodology}
+
+The review indicates that a strong CSLR system should not depend on a single visual cue. Instead, it should integrate complementary information streams and preserve temporal continuity across sign boundaries. This motivates the use of a methodology that explicitly combines appearance and motion representations while maintaining sequence-level context.
+
+The review also suggests that evaluation must go beyond aggregate accuracy. Practical reporting should include behavior under varied sequence complexity, sensitivity to noisy inputs, and qualitative interpretation of failure regions. These expectations directly influence the experimental design in later chapters.
+
+Finally, implementation structure matters. A method that cannot be reproduced or adapted has limited long-term value, even if short-term benchmark results are strong. Therefore, the proposed framework is intentionally modular and configuration-driven.
+
+Taken together, these implications justify a methodology that is multimodal, sequence-aware, and engineering-conscious. The proposed design in the next chapter adopts this perspective by treating model architecture, preprocessing policy, and evaluation protocol as tightly coupled components of one system.
+
+\section{Chapter Summary}
+
+This chapter reviewed the progression of CSLR methods, discussed key advances relevant to Indian Sign Language, and identified practical research gaps. The review indicates that multimodal temporal modeling and reproducible evaluation are essential for reliable progress. Based on these insights, the next chapter presents the proposed system design and methodological choices.
+
+By structuring the review around architectural evolution, data and annotation quality, fusion design, and evaluation rigor, this chapter provides the analytical foundation for the proposed framework. The subsequent chapter translates these literature-driven insights into concrete system components and implementation decisions.
 
 
 

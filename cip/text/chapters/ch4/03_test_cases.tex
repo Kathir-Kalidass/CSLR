@@ -1,5 +1,50 @@
 \section{Test Cases}
-The system is evaluated using multiple test cases to verify its performance under different input conditions. Test cases ensure that the system performs reliably across different scenarios. The test setup and evaluation example are shown in Fig.~\ref{fig:test-cases}.
+This section defines a practical test-case framework for validating the implemented backend at functional, interface, and robustness levels. The goal is to verify that the system produces correct outputs for valid requests, returns stable error codes for invalid inputs, and maintains usable performance for real-time operation.
+
+\subsection{Test Scope and Strategy}
+Testing is organized into three levels so that failures can be localized quickly:
+\begin{itemize}[leftmargin=1.5em]
+\item \textbf{Service health tests:} verify backend availability and runtime readiness.
+\item \textbf{Inference API tests:} validate request/response behavior for video and frame endpoints.
+\item \textbf{Pipeline behavior tests:} verify decoding schema, confidence range, and streaming response continuity.
+\end{itemize}
+
+In this project, the primary externally testable interfaces are:
+\begin{itemize}[leftmargin=1.5em]
+\item \texttt{GET /api/v1/health}
+\item \texttt{GET /api/v1/health/system}
+\item \texttt{GET /api/v1/health/models}
+\item \texttt{POST /api/v1/inference/video}
+\item \texttt{POST /api/v1/inference/frames}
+\item \texttt{WS /api/v1/ws/inference}
+\end{itemize}
+
+\subsection{Real-Time Word-Level Test Cases}
+Table~\ref{tab:realtime-word-test-cases} lists the four selected real-time recognition test cases with the corresponding frame snapshot used for each query word. To keep runtime realistic, the latency target is set to a low but stable range (one-step reduced from the base reference setting), rather than an aggressive ultra-low target.
+
+\begin{table}[H]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{|>{\centering\arraybackslash}m{0.9cm}|>{\centering\arraybackslash}m{2.0cm}|>{\centering\arraybackslash}m{2.1cm}|>{\centering\arraybackslash}m{2.7cm}|>{\centering\arraybackslash}m{2.1cm}|>{\centering\arraybackslash}m{2.0cm}|}
+\hline
+\textbf{ID} & \textbf{Query Word} & \textbf{Matching Frame} & \textbf{Expected Recognition} & \textbf{Latency Target} & \textbf{Status} \\
+\hline
+TC-01 & premises & \includegraphics[width=1.7cm]{text/figures/videoframe_1917.png} & Word output should map to \textit{premises}. & 250--280 ms/window & Pass criterion \\
+\hline
+TC-02 & immediate & \includegraphics[width=1.7cm]{text/figures/videoframe_1037.png} & Word output should map to \textit{immediate}. & 240--270 ms/window & Pass criterion \\
+\hline
+TC-03 & company & \includegraphics[width=1.7cm]{text/figures/videoframe_3648.png} & Word output should map to \textit{company}. & 240--270 ms/window & Pass criterion \\
+\hline
+TC-04 & something else & \includegraphics[width=1.7cm]{text/figures/videoframe_4115.png} & Phrase output should map to \textit{something else}. & 250--280 ms/window & Pass criterion \\
+\hline
+\end{tabular}
+\caption{Real-time test cases with matched frames}
+\label{tab:realtime-word-test-cases}
+\end{table}
+
+The test setup and evaluation workflow example are shown in Fig.~\ref{fig:test-cases}.
 
 \begin{figure}[H]
 \centering

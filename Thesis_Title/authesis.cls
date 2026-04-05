@@ -180,8 +180,19 @@
 %%%%%%%%%%%%%%%%%
 % Font selection
 %%%%%%%%%%%%%%%%%
-\RequirePackage{fontspec}
-\setmainfont[Ligatures=TeX]{Times New Roman}
+\RequirePackage{iftex}
+\ifPDFTeX
+	\RequirePackage[T1]{fontenc}
+	\RequirePackage[utf8]{inputenc}
+	\RequirePackage{newtxtext,newtxmath}
+\else
+	\RequirePackage{fontspec}
+	\IfFontExistsTF{Times New Roman}{
+		\setmainfont[Ligatures=TeX]{Times New Roman}
+	}{
+		\setmainfont[Ligatures=TeX]{TeX Gyre Termes}
+	}
+\fi
 % note that default baselineskip is 1.15 x fontsize
 \def\normalsize{\fontsize{13pt}{14.95pt}\selectfont}
 % 1.5 line spacing
@@ -192,12 +203,12 @@
 %%%%%%%%%%%%%%%%%%%%%
 \RequirePackage{indentfirst}
 \parindent 20mm
-\parskip 2em
+\parskip 1em
 
 %%%%%%%%%%%%%%%%%
 % Citation style
 %%%%%%%%%%%%%%%%%
-\RequirePackage{natbib}
+\RequirePackage[numbers,sort&compress]{natbib}
 
 
 %%%%%%%%%%%%%
@@ -566,27 +577,27 @@ We express our thanks to all other teaching and non-teaching staff who helped us
 \titleformat{\section}
 	{\bf}
 	{\thesection}{3.15em}{\MakeUppercase}{}	
-\titlespacing{\section}{0pt}{0pt}{0pt}
+\titlespacing{\section}{0pt}{1.1em}{0.6em}
 
 \titleformat{\subsection}
 	{\bf}
 	{\thesubsection}{2.4em}{}{}	
-\titlespacing{\subsection}{0pt}{0pt}{0pt}
+\titlespacing{\subsection}{0pt}{0.9em}{0.5em}
 
 \titleformat{\subsubsection}
 	{\bf}
 	{\thesubsubsection}{1.65em}{}{}	
-\titlespacing{\subsubsection}{0pt}{0pt}{0pt}
+\titlespacing{\subsubsection}{0pt}{0.8em}{0.4em}
 
 \titleformat{\paragraph}
 	{\bf}
 	{\theparagraph}{.9em}{}{}
-\titlespacing{\paragraph}{0pt}{0pt}{0pt}
+\titlespacing{\paragraph}{0pt}{0.6em}{0.3em}
 
 \titleformat{\subparagraph}
 	{\bf}
 	{\thesubparagraph}{0.15em}{}{}
-\titlespacing{\subparagraph}{0pt}{0pt}{0pt}
+\titlespacing{\subparagraph}{0pt}{0.5em}{0.2em}
 
 %%%%%%%%%%%%%%%
 % Environments for Algorithm, Figure, Table, Itemize and Enumerate
@@ -602,14 +613,23 @@ We express our thanks to all other teaching and non-teaching staff who helped us
 \captionsetup{
     width=0.9\textwidth,
     justification=centering,
-    singlelinecheck=false
+	singlelinecheck=false,
+	skip=0.75em,
+	position=bottom
 }
+\setlength{\textfloatsep}{1.2em}
+\setlength{\floatsep}{1em}
+\setlength{\intextsep}{1em}
+
+% Caption position helpers: use \tablecaptiontop or \tablecaptionbottom where needed.
+\newcommand{\tablecaptiontop}{\captionsetup[table]{position=top}}
+\newcommand{\tablecaptionbottom}{\captionsetup[table]{position=bottom}}
 
 % List (itemize and enumerate) indentation
 \RequirePackage[shortlabels]{enumitem}
 %\RequirePackage[nameinlink]{cleveref}	% display only number if \ref is used and display word and number if \cref is used
-\setlist{leftmargin=5.8em,labelsep=1em}
-\renewcommand{\labelitemi}{{$\vcenter{\hbox{\LARGE$\textbullet$}}$}}
+\setlist{leftmargin=5.8em,labelsep=1em,topsep=0.6em,itemsep=0.4em,parsep=0pt,partopsep=0pt}
+\renewcommand{\labelitemi}{\textbullet}
 
 
 
@@ -618,6 +638,8 @@ We express our thanks to all other teaching and non-teaching staff who helped us
 %%%%%%%%%%%%%%%%%%%%%%
 \renewcommand{\bibname}{REFERENCES}
 \newcommand{\references}[1]{
+	\clearpage
+	\phantomsection
 	\addcontentsline{toc}{chapter}{\hskip \cftchapnumwidth REFERENCES}	
 	\bibliography{#1}
 }
@@ -658,8 +680,15 @@ We express our thanks to all other teaching and non-teaching staff who helped us
 
 	% Reset chapter numbering
 	\setcounter{chapter}{0}
+	\setcounter{section}{0}
+
+	% Ensure appendix anchors are distinct from main chapters.
+	\renewcommand{\theHchapter}{appendix.\arabic{chapter}}
+	\renewcommand{\theHsection}{appendix.\arabic{chapter}.\arabic{section}}
 
 	% ToC entry
+	\clearpage
+	\phantomsection
 	\addcontentsline{toc}{chapter}{\hskip \cftchapnumwidth APPENDIX}	
 	
 	% Chapter title - Replace the word "Chapter" with "Appendix"
@@ -680,5 +709,7 @@ We express our thanks to all other teaching and non-teaching staff who helped us
 % prevent hyphenated lines at page endings
 \brokenpenalty10000\relax
 
-% prevent last line of a section to appear in page beginning
-\widowpenalty10000
+% keep widows/orphans discouraged, but allow TeX to avoid large page-bottom gaps
+\clubpenalty3000
+\widowpenalty3000
+\displaywidowpenalty3000

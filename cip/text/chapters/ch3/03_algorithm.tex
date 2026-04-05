@@ -1,27 +1,29 @@
 \section{Algorithm}
-\subsubsection{Step 1: Capture Input Video Stream}
-Capture a real-time RGB video stream from camera input representing sign gestures.
+The proposed workflow is executed as an end-to-end operational algorithm that starts from raw camera input and terminates at validated text and speech output. In this report, the main chapter provides broad explanatory discussion for implementation, design rationale, and deployment behavior, while the appendix presents compact procedural representations for implementation reference.
 
-\subsubsection{Step 2: Frame Extraction and Preprocessing}
-Extract frames using uniform sampling, resize and normalize each frame, and standardize sequence length with padding or truncation.
+\subsection{Video Stream Capture and Session Initialization}
+The first stage establishes a stable capture session from the camera source and creates a synchronized stream of RGB frames with timestamps. In practical deployment, the capture layer must handle variable lighting, motion blur, camera jitter, and temporary frame drops without breaking sequence continuity. Therefore, the system initializes device-level controls such as target frame rate, input resolution, and stream synchronization before any recognition module is invoked. Session metadata is logged along with frame timing so that downstream modules can preserve temporal order during inference. This stage also defines operating boundaries such as minimum valid frame count and buffer limits, which are critical for predictable behavior in real-time use.
 
-\subsubsection{Step 3: Spatial Feature Extraction using CNN}
-Pass each frame through EfficientNet-based CNN layers to extract spatial features.
+\subsection{Frame Sampling, Cleaning, and Normalization}
+Once capture begins, the stream is converted into a standardized sequence through uniform sampling and preprocessing. Uniform sampling is used to retain meaningful gesture progression while removing redundant neighboring frames that increase compute cost without adding information. The selected frames are resized to a fixed spatial dimension and normalized into a stable intensity distribution so that the feature extractor receives comparable inputs across devices and sessions. For training and batch inference, clips are standardized to configured lengths; for live inference, the same preprocessed frames are accumulated in rolling windows. At this stage, basic quality safeguards are also applied to reject unstable segments with severe blur or invalid frame counts.
 
-\subsubsection{Step 4: Temporal Feature Extraction using RNN}
-Feed frame-level features to an RNN model (GRU/LSTM) to capture temporal dependencies.
+\subsection{RGB Backbone Feature Extraction}
+In the third stage, each normalized frame is passed through the implemented RGB backbone encoder to derive compact spatial descriptors. The default backend configuration uses ResNet18 (with optional ResNet34/50 variants) to capture discriminative cues such as hand contour, finger configuration, palm orientation, and signer-centric appearance context. Instead of classifying directly from pixels, the model transforms raw images into latent features that are suitable for multimodal fusion and temporal decoding.
 
-\subsubsection{Step 5: Apply Attention Mechanism}
-Apply attention to emphasize informative spatial-temporal features and suppress noisy data.
+\subsection{Pose Stream Feature Encoding}
+Sign language understanding depends strongly on geometric motion; therefore, aligned landmark vectors are processed through the pose stream encoder. This stage captures inter-frame relationships such as movement direction, transition velocity, repeated motion patterns, and timing boundaries between gesture units. Pose encoding improves robustness when texture-based appearance cues are weak and remains synchronized with RGB features at each time step, enabling consistent multimodal fusion.
 
-\subsubsection{Step 6: Feature Fusion}
-Combine weighted spatial and temporal features to form a unified spatiotemporal representation.
+\subsection{Gated Feature Prioritization and Fusion}
+The fifth stage applies learnable gates to estimate modality contribution at each time step. Rather than assigning fixed fusion weights, the implemented pipeline computes adaptive RGB and pose gates and combines both streams into a normalized fused representation. This gating behavior suppresses noisy activations and preserves high-value cues under signer variation, background clutter, and motion uncertainty. As a result, downstream sequence modeling receives a higher signal-to-noise representation, and a concise procedural mapping is provided in Appendix Algorithms~A1.1--A1.4.
 
-\subsubsection{Step 7: Sequence Modeling}
-Use a Transformer sequence model to learn long-range contextual relationships across frames.
+\subsection{Multimodal Feature Fusion}
+After gated prioritization, the refined RGB and pose features are combined into a unified multimodal representation. Fusion is designed to preserve complementary information: RGB encoding contributes visual detail, while pose encoding contributes geometric motion continuity and articulation structure. A balanced fused representation is essential for complex signs where either modality alone is ambiguous. In addition, fusion stabilizes performance under real-world variability by reducing over-dependence on a single modality. The fused sequence becomes the canonical input for higher-level sequence modeling and decoding layers.
 
-\subsubsection{Step 8: Gesture Prediction}
-Classify processed features into gesture classes using a fully connected layer with softmax activation.
+\subsection{Sequence Context Modeling}
+The fused multimodal sequence is then processed by the temporal modeling stage to learn contextual dependencies across time. The modular backend uses BiLSTM by default, while Transformer remains an optional configuration and the deployed checkpoint runtime uses a causal-TCN plus self-attention variant. This stage captures how local gesture units combine into larger semantic structures and produces context-aware embeddings for decoding.
 
-\subsubsection{Step 9: Output Generation (Text and Speech)}
-Convert predicted gestures into readable text and optionally generate speech using text-to-speech.
+\subsection{Gesture Token Prediction and Validation}
+In this stage, contextual embeddings are converted to gesture-token predictions using CTC alignment and mode-aware decoding. CTC supports variable-length input/output mapping without strict frame-level annotation boundaries, which is suitable for continuous sign streams. Full-video inference uses beam search for hypothesis stability, while frame and streaming inference use greedy decoding for lower latency. Prediction confidence is monitored to reduce unstable outputs, and low-confidence hypotheses can be flagged for re-decode or downstream correction.
+
+\subsection{Language Rendering and Speech Synthesis}
+The final stage converts the predicted gesture-token sequence into user-facing communication output. First, token sequences are mapped to text and passed through grammar refinement so that the resulting sentence is readable, structurally correct, and suitable for non-signer interaction. Next, if speech output is enabled, the corrected sentence is passed to the TTS module to produce audio. This stage also supports presentation controls such as caption buffering, sentence validation, and final output formatting for screen display. By combining linguistic correction with audio synthesis, the system closes the assistive communication loop from sign capture to understandable multimodal output.

@@ -1,10 +1,17 @@
 \section{Achievements}
-The major achievements of this project include:
+The major achievements of this project include the following technical and system-level outcomes:
+
 \begin{itemize}[leftmargin=1.5em]
-\item Successful development of a real-time ISL recognition system,
-\item Integration of spatial and temporal feature extraction techniques,
-\item Implementation of an attention-based feature fusion mechanism,
-\item Use of advanced models such as EfficientNet and Transformer,
-\item Generation of text and speech output for user interaction,
-\item Good accuracy with computational efficiency for isolated gestures.
+\item \textbf{End-to-end backend realization:} completed a full CSLR backend pipeline from raw input acquisition to final text/audio response instead of isolated model-only experimentation.
+\item \textbf{4-module runtime integration:} connected preprocessing, multimodal feature extraction, temporal decoding, and language post-processing into a unified inference service.
+\item \textbf{Multimodal modeling implementation:} integrated RGB and pose streams with gated fusion to improve representation robustness under variable signing conditions.
+\item \textbf{Sequence prediction framework:} implemented CTC-based temporal alignment and practical decoding strategies (beam for quality-focused paths, greedy for low-latency paths).
+\item \textbf{Real-time inference support:} enabled WebSocket-based live processing with windowed buffering and progressive output updates.
+\item \textbf{API-facing deployment readiness:} provided usable REST endpoints for health checks and inference, enabling straightforward client integration and service validation.
+\item \textbf{Language output pipeline:} integrated gloss-to-text mapping, grammar refinement, and optional speech synthesis to produce human-consumable output.
+\item \textbf{Data pipeline formalization:} established a reproducible workflow for iSign dataset preparation, split generation, vocabulary handling, and training/inference input standardization.
+\item \textbf{Verification and test coverage:} structured test cases for endpoint behavior, schema validity, decoding stability, and robustness against invalid inputs.
+\item \textbf{Documentation and thesis alignment:} synchronized architecture, equations, workflow, and chapter narrative with the implemented code path for technical consistency.
 \end{itemize}
+
+Collectively, these achievements move the project from a conceptual recognition prototype to an implementation-grounded system that is suitable for continued optimization and practical assistive deployment.

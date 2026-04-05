@@ -190,9 +190,14 @@
 	\RequirePackage[T1]{fontenc}
 	\RequirePackage[utf8]{inputenc}
 	\RequirePackage{newtxtext,newtxmath}
+	\newcommand{\tamilfont}{}
 \else
 	\RequirePackage{fontspec}
-	\setmainfont[Ligatures=TeX]{Times New Roman}
+	\IfFontExistsTF{Times New Roman}{
+		\setmainfont[Ligatures=TeX]{Times New Roman}
+	}{
+		\setmainfont[Ligatures=TeX]{TeX Gyre Termes}
+	}
 \fi
 % note that default baselineskip is 1.15 x fontsize
 \def\normalsize{\fontsize{13pt}{14.95pt}\selectfont}
@@ -204,7 +209,7 @@
 %%%%%%%%%%%%%%%%%%%%%
 \RequirePackage{indentfirst}
 \parindent 20mm
-\parskip 2em
+\parskip 1em
 
 %%%%%%%%%%%%%%%%%
 % Citation style
@@ -353,16 +358,35 @@
 %%%%%%%%%%%
 % Abstract
 %%%%%%%%%%%
-\newenvironment{abstract}{
+\newenvironment{abstractwithtitle}[1]{
 	% begin environment commands
 	\hrule height 0pt % to ensure the following vskip at beginning of page works
 	\vskip 5mm
-	{ \fontsize{16pt}{18.4pt}\selectfont \begin{center} \textbf{ABSTRACT} \end{center} }
+	{ \fontsize{16pt}{18.4pt}\selectfont \begin{center} \textbf{#1} \end{center} }
 	\phantomsection
-	\addcontentsline{toc}{chapter}{\hskip \cftchapnumwidth ABSTRACT}
+	\addcontentsline{toc}{chapter}{\hskip \cftchapnumwidth #1}
 }{
 	% end environment commands
 	\clearpage
+}
+
+\newenvironment{abstractenglish}{
+	\begin{abstractwithtitle}{ABSTRACT}
+}{
+	\end{abstractwithtitle}
+}
+
+\newenvironment{abstracttamil}{
+	\begin{abstractwithtitle}{{\tamilfont திட்டப்பணி சுருக்கம்}}
+}{
+	\end{abstractwithtitle}
+}
+
+% Backward compatibility
+\newenvironment{abstract}{
+	\begin{abstractenglish}
+}{
+	\end{abstractenglish}
 }
 
 
@@ -405,9 +429,9 @@
 }
 
 %%%%%%%%%%%%%%%%%%
-% List of symbols
-%%%%%%%%%%%%%%%%%%
-\newenvironment{listofsymbols}{
+% List of abbreviations
+%%%%%%%%%%%%%%%%%%%
+\newenvironment{listofabbreviations}{
 	\clearpage
 	% begin environment commands
 	\phantomsection
@@ -416,6 +440,22 @@
 	{ \fontsize{14pt}{16.1pt}\selectfont \begin{center} \textbf{LIST OF ABBREVIATIONS} \end{center} }
 	\vskip 2em
 	\addcontentsline{toc}{chapter}{\hskip \cftchapnumwidth LIST OF ABBREVIATIONS}
+}{
+	% end environment commands
+}
+
+%%%%%%%%%%%%%%%%%%
+% List of symbols
+%%%%%%%%%%%%%%%%%%
+\newenvironment{listofsymbols}{
+	\clearpage
+	% begin environment commands
+	\phantomsection
+	\parindent 0pt
+	\parskip 0pt
+	{ \fontsize{14pt}{16.1pt}\selectfont \begin{center} \textbf{LIST OF SYMBOLS} \end{center} }
+	\vskip 2em
+	\addcontentsline{toc}{chapter}{\hskip \cftchapnumwidth LIST OF SYMBOLS}
 }{
 	% end environment commands
 }
@@ -573,27 +613,27 @@
 \titleformat{\section}
 	{\bf}
 	{\thesection}{3.15em}{\MakeUppercase}{}	
-\titlespacing{\section}{0pt}{0pt}{0pt}
+\titlespacing{\section}{0pt}{1.1em}{0.6em}
 
 \titleformat{\subsection}
 	{\bf}
 	{\thesubsection}{2.4em}{}{}	
-\titlespacing{\subsection}{0pt}{0pt}{0pt}
+\titlespacing{\subsection}{0pt}{0.9em}{0.5em}
 
 \titleformat{\subsubsection}
 	{\bf}
 	{\thesubsubsection}{1.65em}{}{}	
-\titlespacing{\subsubsection}{0pt}{0pt}{0pt}
+\titlespacing{\subsubsection}{0pt}{0.8em}{0.4em}
 
 \titleformat{\paragraph}
 	{\bf}
 	{\theparagraph}{.9em}{}{}
-\titlespacing{\paragraph}{0pt}{0pt}{0pt}
+\titlespacing{\paragraph}{0pt}{0.6em}{0.3em}
 
 \titleformat{\subparagraph}
 	{\bf}
 	{\thesubparagraph}{0.15em}{}{}
-\titlespacing{\subparagraph}{0pt}{0pt}{0pt}
+\titlespacing{\subparagraph}{0pt}{0.5em}{0.2em}
 
 %%%%%%%%%%%%%%%
 % Environments for Algorithm, Figure, Table, Itemize and Enumerate
@@ -609,14 +649,18 @@
 \captionsetup{
     width=0.9\textwidth,
     justification=centering,
-    singlelinecheck=false
+	singlelinecheck=false,
+	skip=0.75em
 }
+\setlength{\textfloatsep}{1.2em}
+\setlength{\floatsep}{1em}
+\setlength{\intextsep}{1em}
 
 % List (itemize and enumerate) indentation
 \RequirePackage[shortlabels]{enumitem}
 %\RequirePackage[nameinlink]{cleveref}	% display only number if \ref is used and display word and number if \cref is used
-\setlist{leftmargin=5.8em,labelsep=1em}
-\renewcommand{\labelitemi}{{$\vcenter{\hbox{\LARGE$\textbullet$}}$}}
+\setlist{leftmargin=5.8em,labelsep=1em,topsep=0.6em,itemsep=0.4em,parsep=0pt,partopsep=0pt}
+\renewcommand{\labelitemi}{\textbullet}
 
 
 

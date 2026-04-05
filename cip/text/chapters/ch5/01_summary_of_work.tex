@@ -1,4 +1,16 @@
 \section{Summary of the Work}
-This project presented the design and implementation of a real-time Indian Sign Language (ISL) recognition system using deep learning techniques. The proposed system processes RGB video input and extracts both spatial and temporal features to accurately recognize hand gestures.
+This project delivered an end-to-end Continuous Sign Language Recognition (CSLR) system for Indian Sign Language use cases, with a complete pipeline from video input to user-facing text/speech output. The implementation was developed as a modular Python backend and validated through chapter-wise design, mathematical modeling, workflow analysis, and test-case based evaluation.
 
-Spatial features are extracted using EfficientNet, while temporal dependencies are captured using a CNN--RNN architecture. A multi-feature attention mechanism is incorporated to improve feature selection by focusing on relevant gesture components. The system further uses a Transformer model for sequence modeling and a CTC layer for temporal alignment. The final output is generated in both text and speech form, enabling effective communication between sign language users and non-signers.
+The final system integrates four connected runtime modules:
+\begin{itemize}[leftmargin=1.5em]
+\item preprocessing and pose extraction,
+\item multimodal feature extraction and gated fusion,
+\item temporal sequence modeling with CTC-based decoding,
+\item language refinement and output rendering.
+\end{itemize}
+
+From an operational viewpoint, the project supports both batch and live modes. Batch mode processes uploaded videos or frame sequences through REST APIs, while live mode uses WebSocket streaming with sliding-window temporal buffering for low-latency partial updates. This dual-mode design makes the system suitable for both offline experimentation and interactive demonstration.
+
+Methodologically, the work progressed from architecture design (Chapter 3), to implementation environment and dataset formalization (Chapter 4), to practical testing and result interpretation. The mathematical formulations were aligned to the implemented code path, including modality-gated fusion, temporal encoding, CTC objective, decoding strategy, and confidence computation. As a result, the thesis now reflects the real execution behavior of the current backend rather than a generic conceptual pipeline.
+
+Overall, the project establishes a deployable CSLR baseline that combines engineering completeness, reproducible data flow, and assistive communication output. It demonstrates that a modular multimodal pipeline can bridge model-level sign recognition and user-level interaction in a practical ISL-oriented setting.

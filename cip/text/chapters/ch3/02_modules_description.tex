@@ -5,18 +5,22 @@ This module is responsible for converting raw video input into a structured and 
 
 Frame extraction is performed using uniform sampling, where a fixed number of frames are selected from each video sequence. Uniform sampling preserves temporal information while avoiding redundant frames that do not contribute meaningful information. This step is especially important for real-time processing because it reduces computational overhead without losing critical motion cues.
 
-Once extracted, each frame is resized to a predefined spatial resolution compatible with convolutional neural networks. Frame normalization is then applied by scaling pixel intensity values to a standard range. Normalization improves numerical stability during training and ensures consistent feature learning across videos captured under varying lighting conditions. Finally, all frame sequences are standardized to a fixed temporal length using padding or truncation, enabling efficient batch processing during training and inference.
+Once extracted, each frame is resized to a predefined spatial resolution compatible with convolutional backbones and normalized to a stable intensity range. In the implemented inference path, sampling is normalized to a target frame rate (25 FPS) before feature extraction. For training and batch inference, sequences are standardized to configured clip lengths; for live mode, the same preprocessing is applied but frames are accumulated in rolling windows rather than fixed full clips.
 
-\textbf{Output:} A fixed-length sequence of normalized RGB frames.
+From a deployment perspective, this module also acts as a reliability gate for the full pipeline. Input stabilization prevents early-stage defects from cascading into later feature and decoding blocks. In practical terms, maintaining consistent frame quality and sequence length improves both convergence during training and confidence stability during inference. This module therefore combines data engineering and model-readiness objectives: it reduces runtime variability while preserving the temporal structure needed for continuous sign interpretation.
+
+\textbf{Output:} A fixed-length sequence of normalized RGB frames, denoted by $\{X_t\}_{t=1}^{T}$.
 
 \subsubsection{Pose and Landmark Extraction}
-This sub-module extracts structured motion and positional information from video frames. From each frame, key body, hand, and facial landmarks are detected to represent the signer's movements in a compact and meaningful form. These landmarks encode geometric relationships such as joint positions, hand orientation, and finger movement patterns.
+This sub-module extracts structured motion and positional information from video frames. In the modular backend, MediaPipe-based extraction provides body and hand landmarks (75 keypoints in the default path), which are converted into compact pose vectors aligned with each frame. These landmarks encode geometric relationships such as joint positions, hand orientation, and finger movement patterns.
 
 Pose and landmark information provides complementary motion cues that are invariant to background noise and illumination changes. By representing gestures in terms of relative positions and movements, the system improves robustness to environmental variations. The extracted landmark features are temporally aligned with the corresponding RGB frames to preserve synchronization between visual appearance and motion information.
 
-\textbf{Output:} A sequence of landmark feature vectors aligned with video frames.
+This structured representation is especially useful when appearance cues are weak, for example under low contrast clothing or cluttered backgrounds. Landmark trajectories carry geometric motion information that remains informative even when pixel-level texture is ambiguous. As a result, pose and landmark extraction improves model generalization across signer styles, camera positions, and recording conditions. The alignment between $X_t$ and $P_t$ is preserved throughout the pipeline so that multimodal fusion remains temporally consistent.
 
-The end-to-end preprocessing pipeline is shown in Fig.~\ref{fig:module-preprocess}.
+\textbf{Output:} A sequence of pose-landmark feature vectors aligned with video frames, denoted by $\{P_t\}_{t=1}^{T}$.
+
+The end-to-end preprocessing pipeline is shown in Fig.~\ref{fig:module-preprocess}, where green blocks denote the established preprocessing path, blue highlights denote enhanced structured extraction components, magenta denotes project-specific recapture or corrective control, and white blocks denote decision and interface nodes.
 
 \begin{figure}[H]
 \centering
@@ -26,23 +30,23 @@ The end-to-end preprocessing pipeline is shown in Fig.~\ref{fig:module-preproces
 \end{figure}
 
 \subsection{Feature Extraction and Fusion}
-\subsubsection{RGB Feature Extraction Using CNN}
-This module extracts spatial appearance features from RGB frames using a convolutional neural network (CNN). Each normalized frame is passed through multiple convolutional layers that learn hierarchical visual representations. Early layers capture low-level patterns such as edges and textures, while deeper layers learn high-level semantic features such as hand shape, orientation, and configuration.
+\subsubsection{RGB Feature Extraction Using ResNet Backbone}
+This module extracts spatial appearance features from RGB frames using the \texttt{RGBStream} encoder. The default implementation uses ImageNet-pretrained ResNet18, with configurable ResNet34/50 alternatives for different compute-accuracy budgets. Each normalized frame is passed through the backbone to produce compact feature vectors that encode hand shape, orientation, and other discriminative appearance cues.
 
-The CNN transforms each frame into a compact feature vector that encodes visual characteristics relevant to sign language gestures. These features capture fine-grained appearance details that are critical for distinguishing visually similar signs.
+The RGB stream is designed for practical deployment: it preserves fine-grained visual information while keeping inference cost manageable. These frame-wise descriptors provide the appearance branch of multimodal recognition and are dimension-aligned with pose features for fusion.
 
-\textbf{Output:} Frame-wise RGB feature vectors.
+\textbf{Output:} Frame-wise RGB feature vectors, denoted by $\{F_t^{\mathrm{rgb}}\}_{t=1}^{T}$.
 
-\subsubsection{Pose Feature Extraction and Attention-Based Fusion}
-This sub-module processes the landmark feature vectors extracted in the preprocessing stage and integrates them with RGB features using an attention-based fusion mechanism. Pose features capture motion trajectories and relative positional changes, while RGB features provide detailed appearance information.
+\subsubsection{Pose Encoding and Gated Fusion}
+This sub-module processes landmark vectors through a pose encoder and then fuses pose and RGB features with learnable gates. In the modular backend, pose inputs are projected by an MLP encoder (default input formed from aligned landmark coordinates), producing frame-wise pose embeddings with the same feature dimensionality as the RGB stream.
 
-An attention mechanism is applied to dynamically assign importance weights to both RGB and pose features. During training, the model learns which feature type contributes more to recognizing a particular sign. For example, signs with subtle finger movements may rely more on landmark features, while signs with distinctive hand shapes may rely more on RGB features.
+Fusion is implemented with modality-specific sigmoid gates and normalization, so RGB and pose contributions are reweighted adaptively at each time step. This is more robust than fixed-weight fusion when signer style, motion intensity, or visual quality changes across samples.
 
-The attention-based fusion module suppresses irrelevant or noisy features and emphasizes discriminative information. The weighted RGB and pose features are then combined to form a unified spatiotemporal representation.
+From a systems viewpoint, this module is the principal integration point between appearance-driven and geometry-driven evidence. Adaptive gating allows the network to increase pose contribution for subtle articulation and increase RGB contribution for strong visual-shape cues, improving resilience under domain shifts and capture noise.
 
-\textbf{Output:} Fused feature sequence containing both appearance and motion information.
+\textbf{Output:} Fused multimodal feature sequence, denoted by $\{F_t^{\mathrm{fuse}}\}_{t=1}^{T}$.
 
-The feature extraction and fusion stage is presented in Fig.~\ref{fig:module-fusion}.
+The feature extraction and fusion stage is presented in Fig.~\ref{fig:module-fusion}. In this diagram, green blocks depict the core RGB/base-paper compatible feature path, blue blocks depict the pose-stream encoding path, magenta blocks represent newly added fusion-control and recalibration logic in this project, and white nodes represent neutral merge/decision interfaces.
 
 \begin{figure}[H]
 \centering
@@ -52,29 +56,34 @@ The feature extraction and fusion stage is presented in Fig.~\ref{fig:module-fus
 \end{figure}
 
 \subsection{Continuous Sign Recognition}
-\subsubsection{Temporal Modeling Using Transformer or BiLSTM}
+\subsubsection{Temporal Modeling  }
 This module models the temporal evolution of the fused feature sequence. Since sign language gestures unfold over time, temporal modeling is essential for understanding gesture progression and context.
 
 Two alternatives are considered:
 \begin{itemize}[leftmargin=1.5em]
-\item \textbf{BiLSTM:} processes the feature sequence in forward and backward directions to capture past and future dependencies.
-\item \textbf{Transformer:} uses multi-head self-attention to model long-range dependencies across the sequence.
+\item \textbf{BiLSTM (default modular path):} processes the feature sequence in forward and backward directions to capture past and future dependencies.
+\item \textbf{Transformer (configurable):} uses multi-head self-attention to model long-range dependencies across the sequence.
+\item \textbf{Causal-TCN + self-attention (deployed checkpoint path):} supports low-latency online behavior with causal temporal processing.
 \end{itemize}
 
 Temporal modeling enables the system to learn motion patterns, transitions between gesture components, and contextual relationships between frames. This is particularly important for continuous sign recognition, where multiple signs appear in a single video sequence.
 
-\textbf{Output:} Context-aware temporal feature sequence.
+This module directly influences sentence-level consistency because token quality depends on context retention across time. BiLSTM provides stable bidirectional temporal context in the baseline backend, while Transformer and causal-convolution alternatives provide flexibility for long-context modeling or latency-focused deployment. In all variants, temporal modeling converts fused local observations into context-aware sequence representations suitable for CTC alignment.
+
+\textbf{Output:} Context-aware temporal feature sequence, denoted by $\{H_t\}_{t=1}^{T}$.
 
 \subsubsection{Sign Prediction Using CTC Decoder}
 The temporally modeled feature sequence is passed to a Connectionist Temporal Classification (CTC) decoder. CTC enables sequence-to-sequence learning without requiring explicit alignment between frames and output labels.
 
-During training, the CTC loss function allows the model to learn the most probable label sequence corresponding to the input feature sequence. During inference, a decoding strategy such as beam search is applied to generate the final predicted sign or sign sequence.
+During training, the CTC loss function allows the model to learn the most probable label sequence corresponding to the input feature sequence. During inference, decoding is mode-aware: beam search is used for full-video paths to improve sequence stability, while greedy decoding is used in low-latency frame and streaming paths.
 
 CTC is particularly effective for continuous sign recognition because it handles variable-length input and output sequences and naturally accounts for timing variations in gesture execution.
 
-\textbf{Output:} Predicted sign or sign sequence.
+Operationally, CTC reduces annotation burden by avoiding strict frame-to-label supervision and still enables reliable sequence prediction. During inference, decoding strategy can be adapted between latency-focused and accuracy-focused modes depending on application constraints. Confidence-aware post checks can reject unstable paths and trigger correction routines. Therefore, this module acts as both an inference engine and an error-control boundary before language rendering.
 
-The recognition module behavior is illustrated in Fig.~\ref{fig:module-recognition}.
+\textbf{Output:} Predicted sign or sign sequence, denoted by $\hat{Y}$.
+
+The recognition module behavior is illustrated in Fig.~\ref{fig:module-recognition}. Here, green blocks indicate the established recognition flow aligned with common CSLR pipelines, blue blocks indicate advanced sequence/alignment modeling components emphasized in the proposed method, white blocks indicate decision and validation interfaces, and magenta correction paths (where present) indicate project-specific re-decode or error-handling additions.
 
 \begin{figure}[H]
 \centering
@@ -89,9 +98,11 @@ The predicted sign sequence is converted into textual form using a gloss-to-text
 
 A sentence correction module refines the generated text by correcting word order, grammatical errors, and incomplete phrases. A caption buffer is maintained to accumulate recognized signs over time, enabling smooth sentence formation in continuous recognition scenarios.
 
+This module is essential for converting technically correct token streams into human-readable communication output. Buffering provides temporal continuity and reduces abrupt sentence breaks in live operation. Correction logic also minimizes repeated tokens, ordering artifacts, and incomplete phrase fragments that often appear in raw sequence decoding. By combining buffering with grammar-aware refinement, the system improves both readability and conversational usability.
+
 \textbf{Output:} Grammatically corrected text sentences.
 
-The language and audio pipeline is shown in Fig.~\ref{fig:module-language-audio}.
+The language and audio pipeline is shown in Fig.~\ref{fig:module-language-audio}. In this figure, green blocks represent the core text-handling flow, blue blocks represent language-model enhancement components, magenta blocks represent project-specific correction and speech-delivery controls, and white blocks represent interface or output wrappers.
 
 \begin{figure}[H]
 \centering
@@ -102,5 +113,7 @@ The language and audio pipeline is shown in Fig.~\ref{fig:module-language-audio}
 
 \subsubsection{Text-to-Speech Output}
 In the final module, corrected text is converted into audible speech using a text-to-speech engine. The TTS system generates natural-sounding audio corresponding to the recognized sign language content. This module enables real-time verbal communication between signing users and non-signing individuals.
+
+Beyond synthesis quality, this stage is designed for assistive reliability: generated speech must be synchronized with final caption output and should avoid unstable rapid updates from low-confidence text. Therefore, TTS triggering is typically performed after sentence-level validation. In practical deployments, this module bridges recognition technology and real user interaction by enabling direct spoken communication in mixed signer/non-signer environments.
 
 \textbf{Output:} Spoken audio output.

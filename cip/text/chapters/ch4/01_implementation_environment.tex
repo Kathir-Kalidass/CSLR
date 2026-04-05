@@ -1,12 +1,38 @@
 \section{Implementation Environment}
-The proposed Indian Sign Language recognition system is implemented using modern deep learning frameworks and tools. Development is carried out in a Python environment due to broad support for machine learning libraries.
+The proposed CSLR system is implemented as a Python-based machine learning backend with a production-oriented API layer for batch and live inference. The implementation is organized as a modular pipeline and deployed through REST/WebSocket services so that model training, offline testing, and real-time interaction can be handled within one consistent environment.
 
+\subsection{Software and Framework Stack}
+The implementation stack used in this project is summarized below:
 \begin{itemize}[leftmargin=1.5em]
-\item Programming language: Python
-\item Libraries used: TensorFlow or PyTorch, OpenCV, NumPy, and Pandas
-\item Deep learning models: EfficientNet, CNN--RNN, Transformer
-\item Development tools: Jupyter Notebook or Google Colab
-\item Hardware requirements: GPU-enabled system for faster training and inference
+\item \textbf{Language and runtime:} Python 3.11+ with virtual-environment based dependency management.
+\item \textbf{Deep learning framework:} PyTorch (training and inference), torchvision/timm utilities, and mixed-precision support (AMP) for GPU acceleration.
+\item \textbf{Vision and signal processing:} OpenCV for frame processing and MediaPipe for landmark extraction in the modular pipeline.
+\item \textbf{Backend serving layer:} FastAPI + Uvicorn, with REST endpoints for file/frame inference and WebSocket endpoints for live streaming.
+\item \textbf{Data and analytics libraries:} NumPy, Pandas, SciPy, and scikit-learn for preprocessing, statistics, and evaluation.
+\item \textbf{Language/audio utilities:} grammar correction modules with optional text-to-speech output (pyttsx3/gTTS).
 \end{itemize}
 
-These tools enable efficient implementation of video processing, feature extraction, and model training.
+\subsection{Model Execution Environment}
+The backend is implemented as a 4-module connected runtime, with explicit Python-package support at each stage:
+\begin{enumerate}[leftmargin=1.5em]
+\item \textbf{Module 1 -- Preprocessing:} video loading, temporal sampling, normalization, and pose extraction. \textbf{Key packages:} \texttt{opencv-python}, \texttt{mediapipe}, \texttt{numpy}, \texttt{torch}.
+\item \textbf{Module 2 -- Feature extraction and fusion:} ResNet-based RGB stream, pose-stream encoder, and gated multimodal fusion. \textbf{Key packages:} \texttt{torch}, \texttt{torchvision}, \texttt{timm}, \texttt{einops}.
+\item \textbf{Module 3 -- Sequence modeling and decoding:} temporal encoder (BiLSTM as default modular path, with alternative temporal variants) and CTC decoding. \textbf{Key packages:} \texttt{torch}, optional \texttt{kenlm} for language-model-assisted beam scoring.
+\item \textbf{Module 4 -- Language output:} gloss-to-text conversion, grammar refinement, post-processing, and optional TTS rendering. \textbf{Key packages:} \texttt{pyttsx3}, \texttt{gTTS}, \texttt{soundfile}, \texttt{librosa}.
+\end{enumerate}
+
+In live operation, the serving layer uses \texttt{fastapi}, \texttt{uvicorn}, and \texttt{websockets}, and supports temporal buffering (windowed processing) so that partial results can be emitted with low latency before full-sequence completion.
+
+\subsection{Deployment and Runtime Configuration}
+The system is configured through environment variables and supports both CPU and CUDA execution. If a compatible GPU is available, inference and training can use accelerated execution with mixed precision for better throughput. In the current implementation flow, runtime parameters such as clip length, confidence threshold, beam width, and decoding behavior are configurable without changing core model code.
+
+The same environment supports:
+\begin{itemize}[leftmargin=1.5em]
+\item \textbf{Offline evaluation:} full-clip video inference and metrics analysis.
+\item \textbf{Batch API inference:} uploaded video or frame-sequence requests.
+\item \textbf{Real-time inference:} WebSocket streaming with stateful decoding and response updates.
+\item \textbf{Training pipeline execution:} dataset loading, checkpointing, and experiment logging.
+\end{itemize}
+
+\subsection{Practical Hardware Profile}
+For model development and experimentation, the pipeline is designed to run on Linux systems with Python 3.10+ and optionally CUDA-enabled GPUs. CPU-only execution is supported for smoke tests and debugging, while GPU execution is recommended for full training and low-latency inference. For large-scale iSign training, the project documentation recommends higher storage/RAM capacity and at least mid-range VRAM to maintain practical training times.

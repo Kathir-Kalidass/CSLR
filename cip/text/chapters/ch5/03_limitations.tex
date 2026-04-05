@@ -1,8 +1,14 @@
 \section{Limitations}
-Despite promising results, the system has certain limitations:
+Despite the achieved progress, the current project still has important limitations that define the next development stage:
+
 \begin{itemize}[leftmargin=1.5em]
-\item The system is limited to isolated gesture recognition and does not support continuous sentence-level translation,
-\item Performance depends on dataset quality and size,
-\item Computational requirements can be high for low-end devices,
-\item Accuracy may reduce for complex gestures or noisy environments.
+\item \textbf{Dataset and annotation constraints:} model behavior is strongly influenced by the quality, coverage, and annotation consistency of available ISL data.
+\item \textbf{Signer and domain variability:} recognition stability can degrade for unseen signer styles, camera viewpoints, rapid motion, or heavy occlusion/background clutter.
+\item \textbf{Hardware sensitivity:} low-latency operation depends on compute resources; lower-end devices may face higher delay and reduced throughput.
+\item \textbf{Language post-processing limits:} grammar correction currently improves readability but does not yet provide full semantic translation quality in all sentence contexts.
+\item \textbf{Long-context understanding limits:} very long or complex continuous signing segments can still challenge temporal boundary handling and decoding confidence.
+\item \textbf{Real-world deployment variability:} practical conditions such as illumination changes, camera quality differences, and network constraints can impact live performance.
+\item \textbf{Evaluation depth:} current evaluation emphasizes technical and interface validation; broader user-centered field validation across diverse signer groups remains to be expanded.
 \end{itemize}
+
+These limitations do not invalidate the system; instead, they indicate where targeted engineering and data improvements are required to move from a strong prototype baseline to robust large-scale assistive adoption.

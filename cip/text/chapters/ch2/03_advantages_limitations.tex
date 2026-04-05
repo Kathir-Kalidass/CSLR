@@ -1,15 +1,38 @@
-\section{Advantages and Limitations of Existing Approaches}
-Advantages:
+\section{Strengths and Limitations}
+\subsection{Advantages}
+Recent approaches demonstrate several clear advantages. Deep visual encoders and temporal models can learn rich gesture representations directly from data, significantly improving recognition quality over handcrafted pipelines. Attention-based fusion further improves reliability by focusing computation on informative spatial and temporal regions, which is valuable for signs with subtle finger or motion distinctions \cite{yenisari2025deep,geetha2025toward}. Large curated datasets and multilingual benchmark expansion also improved comparability and reproducibility in model evaluation \cite{joze2019msasl,li2020wlasl,joshi2024isign,kezar2023semlex}. In addition, transformer-based translation frameworks have strengthened sequence-level language modeling and enabled better sentence-level generation than earlier isolated-recognition-only systems \cite{camgoz2020transformers,yin2023gaslt}.
+
+\subsection{Limitations}
+Despite these strengths, limitations remain substantial. First, many high-performing models are computationally expensive, making them difficult to deploy in low-latency, low-resource settings. Second, data requirements are still high, and annotation bottlenecks remain severe for continuous sign streams and low-resource sign languages. Third, cross-dataset and cross-signer generalization is often weaker than reported in single-benchmark evaluations, which limits practical transferability \cite{alqurishi2021deep,alabdullah2024advancements}. Fourth, a gap persists between offline benchmark success and real-time assistive usability, particularly under unconstrained camera conditions, variable frame rates, and signer diversity \cite{pandey2025realtime,geetha2025toward}. Therefore, existing systems are technically strong but not yet sufficient as fully reliable real-world communication solutions.
+
+An important practical implication is that deployment quality is determined by trade-offs rather than any single metric. A model with slightly lower benchmark accuracy may still be more useful in real settings if it offers stable frame-rate processing, predictable latency, and reduced sensitivity to camera and signer variation. Hence, robust ISL system design should prioritize balanced performance profiles instead of maximizing isolated leaderboard scores.
+
+Table~\ref{tab:approach-advantages-limitations} compares major approach families in terms of practical strengths and trade-offs.
+
+\begin{table}[htbp]
+\centering
+\small
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash}p{2.8cm}|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}p{2.4cm}|}
+\hline
+\textbf{Approach Family} & \textbf{Key Advantage} & \textbf{Key Limitation} & \textbf{Deployment Suitability} \\ \hline
+RGB-only deep models & Simple capture setup; strong appearance learning without extra sensors & Sensitive to background/illumination noise and subtle motion ambiguity & Medium \\ \hline
+RGB + pose multimodal models & Better robustness by combining appearance and geometric motion cues & Fusion and synchronization overhead during training/inference & High (with optimization) \\ \hline
+Transformer-based sequence models & Strong long-range temporal/context modeling for CSLR/SLT tasks & Higher compute and memory demand; data-hungry behavior & Medium to High \\ \hline
+CTC-aligned continuous models & Supports variable-length sequences without strict frame-level labels & May lose fine boundary detail in ambiguous transitions & High \\ \hline
+Large-scale pretraining and benchmark-driven methods & Improves transferability and reproducibility across tasks & Strong dependence on domain match and annotation quality & Medium to High \\ \hline
+\end{tabularx}
+\normalsize
+\caption{Major SLR families: advantages and limits}
+\label{tab:approach-advantages-limitations}
+\end{table}
+
+\textbf{Key observations:}
 \begin{itemize}[leftmargin=1.5em]
-\item High accuracy due to deep feature learning,
-\item Ability to handle complex gesture patterns,
-\item Improved temporal modeling.
+\item Real-time ISL systems benefit most from multimodal fusion combined with alignment-aware decoding.
+\item Benchmark accuracy alone is insufficient; latency and robustness must be reported together.
+\item Data quality and domain fit remain as important as model architecture choice.
 \end{itemize}
 
-Limitations:
-\begin{itemize}[leftmargin=1.5em]
-\item High computational complexity,
-\item Dependency on large datasets,
-\item Limited focus on real-time performance,
-\item Insufficient research on Indian Sign Language.
-\end{itemize}
+Taken together, these findings suggest that deployment-oriented ISL systems should be evaluated with multi-objective criteria. A robust system is one that maintains acceptable recognition quality while preserving low latency, stable behavior across signers, and transparent performance under variable capture conditions.

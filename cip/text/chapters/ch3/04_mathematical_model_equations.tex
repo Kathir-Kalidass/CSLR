@@ -1,20 +1,150 @@
 \section{Mathematical Model / Equations}
-There are many criteria that can be used to evaluate the performance of a sign language recognition model. For isolated sign recognition, the commonly used metric is accuracy. Precision, recall, and F1-score are also widely used as complementary metrics. The performance metrics used in this study are given in Equations (1)--(4).
+This section formalizes the equations used in the implemented pipeline. Only equations that map to the current project code path are retained. Let the sampled RGB sequence be $\mathbf{X}=\{X_t\}_{t=1}^{T}$ and aligned pose sequence be $\mathbf{P}=\{P_t\}_{t=1}^{T}$, where $X_t\in\mathbb{R}^{3\times H\times W}$ and $P_t\in\mathbb{R}^{D_p}$.
 
+\subsection{Input Standardization}
+If a raw clip has $L$ frames and the model uses $T$ frames, uniform sampling indices are
 \begin{equation}
-\text{Accuracy} = \frac{TP + TN}{TP + TN + FP + FN}
+i_k = \left\lfloor \frac{(k-1)(L-1)}{T-1} \right\rfloor + 1, \qquad k=1,\dots,T.
+\end{equation}
+Each selected frame is normalized as
+\begin{equation}
+\tilde{X}_k = \frac{X_{i_k}-\mu}{\sigma},
+\end{equation}
+where $\mu$ and $\sigma$ are channel-wise normalization constants.
+
+\subsection{Spatial and Pose Feature Encoding}
+The RGB and pose encoders produce
+\begin{equation}
+F_t^{\mathrm{rgb}} = f_{\mathrm{rgb}}(\tilde{X}_t),
+\qquad
+F_t^{\mathrm{pose}} = f_{\mathrm{pose}}(P_t).
+\end{equation}
+For the MLP-style pose encoder used in the code, a representative form is
+\begin{equation}
+h_t^{(1)} = \phi(W_1P_t + b_1),
+\qquad
+F_t^{\mathrm{pose}} = \phi(W_2h_t^{(1)} + b_2),
+\end{equation}
+where $\phi(\cdot)$ is ReLU.
+
+\subsection{Implemented Fusion Models}
+\textbf{(A) Gated fusion in the modular backend path.} The implemented fusion in \texttt{module2\_feature/fusion.py} is
+\begin{equation}
+\bar{F}_t^{\mathrm{pose}} = W_pF_t^{\mathrm{pose}} + b_p,
+\end{equation}
+\begin{equation}
+\alpha_t = \sigma(W_rF_t^{\mathrm{rgb}} + b_r),
+\qquad
+\beta_t = \sigma(W_qF_t^{\mathrm{pose}} + b_q),
+\end{equation}
+\begin{equation}
+F_t^{\mathrm{fuse}} = \mathrm{LN}\!\left(\alpha_t\odot F_t^{\mathrm{rgb}} + \beta_t\odot \bar{F}_t^{\mathrm{pose}}\right).
+\end{equation}
+Here $\alpha_t$ and $\beta_t$ are element-wise gates. They are \emph{not} constrained by $\alpha_t+\beta_t=1$, so the previous softmax-sum formulation is removed.
+
+\textbf{(B) Pose-weighted fusion in iSign checkpoint runtime.} In the trained iSign model path, a learnable scalar gate is used:
+\begin{equation}
+p = \mathrm{clip}(\sigma(\theta),0.1,0.9),
+\end{equation}
+\begin{equation}
+F_t^{\mathrm{mix}} = \left[pF_t^{\mathrm{pose}}\,;\,(1-p)F_t^{\mathrm{rgb}}\right],
+\qquad
+F_t^{\mathrm{fuse}} = \phi(W_fF_t^{\mathrm{mix}} + b_f) + 0.1F_t^{\mathrm{pose}}.
 \end{equation}
 
+\subsection{Temporal Modeling and Logit Projection}
+The general sequence encoder is
 \begin{equation}
-\text{Precision} = \frac{TP}{TP + FP}
+H_{1:T} = \mathrm{Enc}(F_{1:T}^{\mathrm{fuse}}),
+\quad
+\mathrm{Enc}\in\{\text{BiLSTM},\text{Transformer},\text{Causal-TCN+Attention}\}.
+\end{equation}
+For BiLSTM,
+\begin{equation}
+H_t = \left[\overrightarrow{h_t};\overleftarrow{h_t}\right].
+\end{equation}
+For the deployed checkpoint variant,
+\begin{equation}
+U_{1:T}=\mathrm{TCN}(F_{1:T}^{\mathrm{fuse}}),
+\quad
+A_{1:T}=\mathrm{MHA}(U_{1:T},U_{1:T},U_{1:T}),
+\end{equation}
+\begin{equation}
+\hat{U}_{1:T}=\mathrm{LN}(U_{1:T}+A_{1:T}),
+\qquad
+w_t=\frac{\exp(s_t)}{\sum_{j=1}^{T}\exp(s_j)},\ s_t=W_s\hat{U}_t+b_s,
+\end{equation}
+\begin{equation}
+Z_t = w_t\hat{U}_t,
+\qquad
+z_t = W_oZ_t+b_o,
+\qquad
+\pi_t = \mathrm{softmax}(z_t).
 \end{equation}
 
+\subsection{CTC Objective and Decoding}
+Given target sequence $Y$, CTC defines
 \begin{equation}
-\text{Recall} = \frac{TP}{TP + FN}
+P(Y\mid \mathbf{X}) = \sum_{\mathbf{a}\in\mathcal{B}^{-1}(Y)}\prod_{t=1}^{T}\pi_t(a_t),
+\end{equation}
+\begin{equation}
+L_{\mathrm{CTC}} = -\log P(Y\mid \mathbf{X}),
+\end{equation}
+where $\mathcal{B}$ collapses repeats and removes blank symbols.
+
+Greedy decoding uses
+\begin{equation}
+\hat{a}_t = \arg\max_c \pi_t(c),
+\qquad
+\hat{Y}_{\mathrm{greedy}} = \mathcal{B}(\hat{a}_{1:T}).
 \end{equation}
 
+Beam-search ranking (implemented in \texttt{app/utils/ctc\_decoder.py}) is
 \begin{equation}
-F_1\text{ Score} = \frac{2TP}{2TP + FP + FN}
+S_{\mathrm{acoustic}}(y) = \frac{s(y)}{|y|^{\alpha_{\mathrm{len}}}} - \lambda_{\mathrm{rep}}\,\mathrm{Rep}(y),
+\end{equation}
+\begin{equation}
+S_{\mathrm{total}}(y)=S_{\mathrm{acoustic}}(y)+\lambda_{\mathrm{lm}}S_{\mathrm{lm}}(y)+\lambda_{\mathrm{tok}}|y|,
+\quad
+\hat{Y}_{\mathrm{beam}}=\arg\max_y S_{\mathrm{total}}(y).
 \end{equation}
 
-where $TP$ is true positive, $TN$ is true negative, $FP$ is false positive, and $FN$ is false negative.
+\subsection{Confidence and Output Rendering}
+For beam decoding, the confidence proxy is
+\begin{equation}
+c_{\mathrm{beam}}=\mathrm{clip}\!\left(\exp\left(\frac{s^*}{T}\right)+\mathrm{clip}\left(\frac{S_1-S_2}{T},0,0.2\right),0,1\right),
+\end{equation}
+where $s^*$ is best log-score, and $S_1,S_2$ are top-2 total beam scores.
+
+The final sentence is produced by
+\begin{equation}
+\hat{S}=\mathrm{PostProcess}\!\left(\mathrm{GrammarCorrect}\!\left(\mathrm{MapToText}(\hat{Y})\right)\right),
+\end{equation}
+with optional TTS generation from $\hat{S}$.
+
+\subsection{Evaluation Metrics}
+The report and implementation use classification-level and sequence-level metrics:
+\begin{equation}
+\mathrm{Acc} = \frac{TP + TN}{TP + TN + FP + FN},
+\qquad
+\mathrm{Prec} = \frac{TP}{TP + FP},
+\end{equation}
+\begin{equation}
+\mathrm{Rec} = \frac{TP}{TP + FN},
+\qquad
+F_1 = \frac{2TP}{2TP + FP + FN}.
+\end{equation}
+
+For sequence quality:
+\begin{equation}
+\mathrm{WER} = \frac{S + D + I}{N_w},
+\qquad
+\mathrm{CER} = \frac{S_c + D_c + I_c}{N_c},
+\end{equation}
+where $S,D,I$ are substitutions, deletions, and insertions, and $N_w,N_c$ are reference lengths.
+
+For runtime behavior:
+\begin{equation}
+\mathrm{FPS} = \frac{N_f}{t_{\mathrm{total}}},
+\end{equation}
+where $N_f$ is processed frame count and $t_{\mathrm{total}}$ is total inference time.

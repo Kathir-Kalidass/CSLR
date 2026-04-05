@@ -1,10 +1,12 @@
 \section{Research Gap Identified}
-From the literature, the following gaps are identified:
-\begin{itemize}[leftmargin=1.5em]
-\item Lack of efficient real-time ISL recognition systems,
-\item Limited use of feature fusion techniques,
-\item High computational overhead in advanced models,
-\item Insufficient datasets and benchmarks for ISL.
-\end{itemize}
+The reviewed literature indicates that the central gap is no longer only model accuracy, but the integration of accuracy, robustness, and real-time deployability in ISL-specific settings. Existing methods provide strong isolated-task results, yet many are still optimized for offline benchmarks rather than continuous assistive interaction. This is particularly critical in Indian contexts, where practical deployment must handle signer variation, unconstrained backgrounds, and device-level frame-rate differences while maintaining low latency.
 
-These gaps highlight the need for a lightweight and efficient hybrid model for practical ISL recognition.
+A second gap is multimodal alignment quality. Although recent works confirm that combining RGB and pose improves recognition robustness, many systems still lack stable fusion mechanisms that remain effective under noisy capture conditions and cross-domain shifts \cite{geetha2025toward,yenisari2025deep}. In continuous recognition and translation, temporal alignment remains a bottleneck, especially when gloss supervision is limited or unavailable \cite{camgoz2020transformers,yin2023gaslt,zhang2024scaling}.
+
+A third gap concerns ISL-focused resources and evaluation depth. The emergence of iSign and new ISL studies is a major step forward, but compared with mature ASL/DGS ecosystems, ISL still needs broader benchmark standardization, stronger real-time evaluation protocols, and more systematic reporting of deployment metrics beyond offline accuracy \cite{joshi2024isign,alqurishi2021deep,alabdullah2024advancements}. 
+
+Additionally, many prior studies evaluate components independently (feature extraction, sequence modeling, or decoding) but do not provide integrated analysis of failure propagation across the full pipeline. In real-time operation, small errors introduced at early stages such as frame sampling, landmark estimation, or temporal segmentation can accumulate and significantly affect final recognition quality. This indicates a need for end-to-end evaluation frameworks that explicitly connect component-level behavior with sequence-level outcomes.
+
+Therefore, the research gap addressed in this thesis is the need for an ISL-oriented, dual-stream (RGB + pose), attention-guided, and computationally practical pipeline that is evaluated not only for recognition quality but also for real-time applicability. This gap definition directly motivates the proposed methodology in Chapter 3.
+
+In summary, the gap is not the absence of promising components, but the absence of a consistently integrated real-time ISL framework that links component-level design with deployment-level constraints. This positioning provides the foundation for the architecture and evaluation strategy introduced in the next chapter.

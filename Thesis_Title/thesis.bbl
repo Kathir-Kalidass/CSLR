@@ -1,0 +1,23 @@
+\begin{thebibliography}{2}
+\newcommand{\enquote}[1]{`#1'}
+\providecommand{\natexlab}[1]{#1}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi:\discretionary{}{}{}#1}\else
+  \providecommand{\doi}{doi:\discretionary{}{}{}\begingroup
+  \urlstyle{rm}\Url}\fi
+
+\bibitem[{Agarwal et~al.(1988)Agarwal, Hennessy \& Horowitz}]{agarwal1988cache}
+\parbox[t]{1cm}{\hfill 1.}\hskip .5cm\parbox[t]{13cm}{Agarwal, A, Hennessy, J
+  \& Horowitz, M 1988, `Cache performance of operating system and
+  multiprogramming workloads', ACM Transactions on Computer Systems (TOCS),
+  vol.~6, no.~4, pp. 393--431.}\vskip 1em
+
+\bibitem[{Geetha et~al.(2025)Geetha, Aloysius, Somasundaran, Raghunath \&
+  Nedungadi}]{geetha2025toward}
+\parbox[t]{1cm}{\hfill 2.}\hskip .5cm\parbox[t]{13cm}{Geetha, M, Aloysius, N,
+  Somasundaran, D.~A, Raghunath, A \& Nedungadi, P 2025, `Toward real-time
+  recognition of continuous indian sign language: A multi-modal approach using
+  rgb and pose', IEEE Access, vol.~13.
+\newblock \doi{10.1109/ACCESS.2025.3554618}.}\vskip 1em
+
+\end{thebibliography}

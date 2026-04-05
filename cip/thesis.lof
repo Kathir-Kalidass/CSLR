@@ -1,16 +1,18 @@
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {3.1}{\ignorespaces Architecture diagram of proposed model.\relax }}{11}{figure.caption.5}%
-\contentsline {figure}{\numberline {3.2}{\ignorespaces Video Acquisition and Preprocessing Module.\relax }}{16}{figure.caption.6}%
-\contentsline {figure}{\numberline {3.3}{\ignorespaces Feature Extraction and Fusion Module.\relax }}{18}{figure.caption.7}%
-\contentsline {figure}{\numberline {3.4}{\ignorespaces Continuous Sign Recognition Module.\relax }}{20}{figure.caption.8}%
-\contentsline {figure}{\numberline {3.5}{\ignorespaces Language and Audio Output Module.\relax }}{21}{figure.caption.9}%
+\contentsline {figure}{\numberline {3.1}{\ignorespaces Architecture diagram of proposed model.\relax }}{17}{figure.caption.9}%
+\contentsline {figure}{\numberline {3.2}{\ignorespaces Video Acquisition and Preprocessing Module.\relax }}{24}{figure.caption.10}%
+\contentsline {figure}{\numberline {3.3}{\ignorespaces Feature Extraction and Fusion Module.\relax }}{26}{figure.caption.11}%
+\contentsline {figure}{\numberline {3.4}{\ignorespaces Continuous Sign Recognition Module.\relax }}{29}{figure.caption.12}%
+\contentsline {figure}{\numberline {3.5}{\ignorespaces Language and Audio Output Module.\relax }}{30}{figure.caption.13}%
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {4.1}{\ignorespaces Dataset and input representation snapshot.\relax }}{26}{figure.caption.10}%
-\contentsline {figure}{\numberline {4.2}{\ignorespaces Test case setup and evaluation snapshot.\relax }}{27}{figure.caption.11}%
-\contentsline {figure}{\numberline {4.3}{\ignorespaces Intermediate output snapshot 1.\relax }}{28}{figure.caption.12}%
-\contentsline {figure}{\numberline {4.4}{\ignorespaces Intermediate output snapshot 2.\relax }}{29}{figure.caption.13}%
-\contentsline {figure}{\numberline {4.5}{\ignorespaces Result analysis snapshot.\relax }}{30}{figure.caption.14}%
+\contentsline {figure}{\numberline {4.1}{\ignorespaces Dataset and input representation snapshot.\relax }}{48}{figure.caption.14}%
+\contentsline {figure}{\numberline {4.2}{\ignorespaces Test case setup and evaluation snapshot.\relax }}{50}{figure.caption.16}%
+\contentsline {figure}{\numberline {4.3}{\ignorespaces Heatmap view of key performance metrics across compared methods.\relax }}{52}{figure.caption.18}%
+\contentsline {figure}{\numberline {4.4}{\ignorespaces Accuracy and F1-score comparison across reference methods and current work.\relax }}{52}{figure.caption.19}%
+\contentsline {figure}{\numberline {4.5}{\ignorespaces Latency versus WER trade-off comparison (lower-left region indicates better combined behavior).\relax }}{53}{figure.caption.20}%
+\contentsline {figure}{\numberline {4.6}{\ignorespaces Intermediate output snapshot 1.\relax }}{54}{figure.caption.21}%
+\contentsline {figure}{\numberline {4.7}{\ignorespaces Intermediate output snapshot 2.\relax }}{54}{figure.caption.22}%
 \addvspace {10\p@ }
 \addvspace {10\p@ }
