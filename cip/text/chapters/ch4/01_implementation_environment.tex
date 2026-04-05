@@ -17,11 +17,14 @@ The backend is implemented as a 4-module connected runtime, with explicit Python
 \begin{enumerate}[leftmargin=1.5em]
 \item \textbf{Module 1 -- Preprocessing:} video loading, temporal sampling, normalization, and pose extraction. \textbf{Key packages:} \texttt{opencv-python}, \texttt{mediapipe}, \texttt{numpy}, \texttt{torch}.
 \item \textbf{Module 2 -- Feature extraction and fusion:} ResNet-based RGB stream, pose-stream encoder, and gated multimodal fusion. \textbf{Key packages:} \texttt{torch}, \texttt{torchvision}, \texttt{timm}, \texttt{einops}.
-\item \textbf{Module 3 -- Sequence modeling and decoding:} temporal encoder (BiLSTM as default modular path, with alternative temporal variants) and CTC decoding. \textbf{Key packages:} \texttt{torch}, optional \texttt{kenlm} for language-model-assisted beam scoring.
-\item \textbf{Module 4 -- Language output:} gloss-to-text conversion, grammar refinement, post-processing, and optional TTS rendering. \textbf{Key packages:} \texttt{pyttsx3}, \texttt{gTTS}, \texttt{soundfile}, \texttt{librosa}.
+\item \textbf{Module 3 -- Sequence modeling and decoding:} temporal encoder (BiLSTM as default modular path, with alternative temporal variants) and CTC decoding.\\
+\textbf{Key packages:} \texttt{torch}; optional \texttt{kenlm} for language-model-assisted beam scoring.
+\item \textbf{Module 4 -- Language output:} gloss-to-text conversion, grammar refinement, post-processing, and optional TTS rendering.\\
+\textbf{Key packages:} \texttt{pyttsx3}, \texttt{gTTS}, \texttt{soundfile}, and \texttt{librosa}.
 \end{enumerate}
 
-In live operation, the serving layer uses \texttt{fastapi}, \texttt{uvicorn}, and \texttt{websockets}, and supports temporal buffering (windowed processing) so that partial results can be emitted with low latency before full-sequence completion.
+In live operation, the serving layer uses FastAPI, Uvicorn, and WebSocket channels.
+It also supports temporal buffering (windowed processing), which allows partial results to be emitted at low latency before full-sequence completion.
 
 \subsection{Deployment and Runtime Configuration}
 The system is configured through environment variables and supports both CPU and CUDA execution. If a compatible GPU is available, inference and training can use accelerated execution with mixed precision for better throughput. In the current implementation flow, runtime parameters such as clip length, confidence threshold, beam width, and decoding behavior are configurable without changing core model code.
